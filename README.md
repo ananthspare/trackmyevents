@@ -1,25 +1,63 @@
-## AWS Amplify Angular.js Starter Template
+# Event Countdown App
 
-This repository provides a starter template for creating applications using Angular.js and AWS Amplify, emphasizing easy setup for authentication, API, and database capabilities.
-
-## Overview
-
-This template equips you with a foundational Angular.js application integrated with AWS Amplify, streamlined for scalability and performance. It is ideal for developers looking to jumpstart their project with pre-configured AWS services like Cognito, AppSync, and DynamoDB.
+An Angular application with AWS Amplify backend that allows users to:
+- Create, edit, and delete categories
+- Add events with countdowns to categories
+- Add todo items to events
 
 ## Features
 
-- **Authentication**: Setup with Amazon Cognito for secure user authentication.
-- **API**: Ready-to-use GraphQL endpoint with AWS AppSync.
-- **Database**: Real-time database powered by Amazon DynamoDB.
+- **User Authentication**: Secure login and registration using AWS Cognito
+- **Categories Management**: Create, edit, and delete categories
+- **Event Countdowns**: Add events with target dates and see real-time countdowns
+- **Todo Management**: Add, edit, and mark todo items as complete within events
+- **Real-time Updates**: Changes sync across devices in real-time
 
-## Deploying to AWS
+## Getting Started
 
-For detailed instructions on deploying your application, refer to the [deployment section](https://docs.amplify.aws/angular/start/quickstart/#deploy-a-fullstack-app-to-aws) of our documentation.
+### Prerequisites
 
-## Security
+- Node.js (v14 or later)
+- npm or yarn
+- AWS Account
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Deploy the Amplify backend:
+   ```
+   npx amplify sandbox
+   ```
+4. Start the development server:
+   ```
+   npm start
+   ```
+
+## Project Structure
+
+- `src/app/categories`: Components for managing categories
+- `src/app/events`: Components for managing events with countdowns
+- `src/app/todo-list`: Components for managing todo items within events
+- `amplify/`: AWS Amplify backend configuration
+
+## Data Model
+
+- **Category**: Contains name and description
+- **Event**: Contains title, description, target date, and belongs to a category
+- **Todo**: Contains content, completion status, and belongs to an event
+
+## Usage
+
+1. Sign in or create an account
+2. Create categories to organize your events
+3. Add events with target dates to categories
+4. Add todo items to events to track tasks
+5. Mark todo items as complete as you finish them
 
 ## License
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
+This project is licensed under the MIT License - see the LICENSE file for details.

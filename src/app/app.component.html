@@ -4,8 +4,22 @@
     let-user="user"
     let-signOut="signOut"
   >
-    <h1>Hello {{user?.signInDetails?.loginId}}'s todos</h1>
-    <app-todos></app-todos>
-    <button (click)="signOut()">Sign Out</button>
+    <div class="app-container">
+      <header>
+        <h1>Event Countdown App</h1>
+        <div class="user-info">
+          <span>Hello, {{user?.signInDetails?.loginId}}</span>
+          <button (click)="signOut()" class="sign-out-btn">Sign Out</button>
+        </div>
+      </header>
+      
+      <main>
+        <router-outlet></router-outlet>
+      </main>
+      
+      <footer>
+        <p>© {{currentYear}} Event Countdown App</p>
+      </footer>
+    </div>
   </ng-template>
 </amplify-authenticator>
