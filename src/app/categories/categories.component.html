@@ -1,0 +1,68 @@
+<div class="categories-container">
+  <h2>Categories</h2>
+  
+  <!-- Add new category form -->
+  <form (ngSubmit)="createCategory()" class="add-category-form">
+    <input 
+      type="text" 
+      [(ngModel)]="newCategory.name" 
+      name="categoryName"
+      placeholder="Category name" 
+      required
+    />
+    <input 
+      type="text" 
+      [(ngModel)]="newCategory.description" 
+      name="categoryDescription"
+      placeholder="Description (optional)"
+    />
+    <button type="submit">Add Category</button>
+  </form>
+
+  <!-- Categories list -->
+  <div class="categories-list">
+    <div *ngIf="categories.length === 0" class="empty-state">
+      No categories yet. Create one to get started!
+    </div>
+    
+    <div *ngFor="let category of categories" class="category-item">
+      <!-- View mode -->
+      <div *ngIf="editingCategory?.id !== category.id" class="category-view">
+        <div class="category-header">
+          <h3>{{ category.name }}</h3>
+          <div class="category-actions">
+            <button (click)="startEdit(category)" class="edit-btn">Edit</button>
+            <button (click)="deleteCategory(category.id)" class="delete-btn">Delete</button>
+          </div>
+        </div>
+        <p *ngIf="category.description">{{ category.description }}</p>
+        
+        <!-- Link to events for this category -->
+        <a [routerLink]="['/events', category.id]" class="view-events-btn">
+          View Events
+        </a>
+      </div>
+      
+      <!-- Edit mode -->
+      <div *ngIf="editingCategory?.id === category.id" class="category-edit">
+        <input 
+          type="text" 
+          [(ngModel)]="editingCategory.name" 
+          name="editName"
+          placeholder="Category name" 
+          required
+        />
+        <input 
+          type="text" 
+          [(ngModel)]="editingCategory.description" 
+          name="editDescription"
+          placeholder="Description (optional)"
+        />
+        <div class="edit-actions">
+          <button (click)="saveEdit()" class="save-btn">Save</button>
+          <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
