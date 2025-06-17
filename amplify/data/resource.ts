@@ -4,14 +4,14 @@ const schema = a.schema({
   Category: a
     .model({
       name: a.string(),
-      description: a.string().optional(), // Make description optional
+      description: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 
   Event: a
     .model({
       title: a.string(),
-      description: a.string().optional(), // Make description optional
+      description: a.string(),
       targetDate: a.string(),
       categoryID: a.string(),
     })
