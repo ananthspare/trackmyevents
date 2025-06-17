@@ -1,21 +1,28 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { TodosComponent } from './todos/todos.component';
+import { RouterOutlet, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { Amplify } from 'aws-amplify';
 import outputs from '../../amplify_outputs.json';
 import { AmplifyAuthenticatorModule, AuthenticatorService } from '@aws-amplify/ui-angular';
+
+// Configure Amplify
 Amplify.configure(outputs);
 
 @Component({
   selector: 'app-root',
   standalone: true,
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterModule,
+    AmplifyAuthenticatorModule
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
-  imports: [RouterOutlet, TodosComponent, AmplifyAuthenticatorModule],})
+})
 export class AppComponent {
-  title = 'amplify-angular-template';
+  title = 'Event Countdown App';
+  currentYear = new Date().getFullYear();
 
-  constructor(public authenticator: AuthenticatorService) {
-    Amplify.configure(outputs);
-  }
+  constructor(public authenticator: AuthenticatorService) {}
 }
