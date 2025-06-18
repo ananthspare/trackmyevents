@@ -1,9 +1,8 @@
 import { Routes } from '@angular/router';
-import { CategoriesComponent } from './categories/categories.component';
-import { EventsComponent } from './events/events.component';
+import { CategoryEventsComponent } from './category-events/category-events.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/categories', pathMatch: 'full' },
-  { path: 'categories', component: CategoriesComponent },
-  { path: 'events/:id', component: EventsComponent },
+  { path: 'categories', component: CategoryEventsComponent },
+  { path: 'calendar', component: CategoryEventsComponent } // Placeholder until we create a calendar component
 ];
