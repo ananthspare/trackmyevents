@@ -4,19 +4,61 @@
   padding: 20px;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.calendar-link {
+  color: #2196F3;
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid #2196F3;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.calendar-link::before {
+  content: '📅';
+  margin-right: 5px;
+}
+
+.calendar-link:hover {
+  background-color: #2196F3;
+  color: white;
+}
+
 .add-category-form {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-.add-category-form input {
+.add-category-form input[type="text"] {
   flex: 1;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
   min-width: 200px;
+}
+
+.add-category-form input[type="color"] {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .add-category-form button {
@@ -50,6 +92,17 @@
 
 .category-header h3 {
   margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.color-indicator {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 1px solid #ddd;
 }
 
 .category-actions {
@@ -78,6 +131,21 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-picker input[type="color"] {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .edit-actions {

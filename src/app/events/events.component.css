@@ -8,11 +8,25 @@
   margin-bottom: 20px;
 }
 
-.back-link {
-  display: inline-block;
+.nav-links {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 10px;
+}
+
+.back-link, .calendar-link {
   color: #2196F3;
   text-decoration: none;
+}
+
+.calendar-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.calendar-link::before {
+  content: '📅';
+  margin-right: 5px;
 }
 
 .add-event-form {

@@ -1,5 +1,8 @@
 <div class="categories-container">
-  <h2>Categories</h2>
+  <div class="header">
+    <h2>Categories</h2>
+    <a routerLink="/calendar" class="calendar-link">View Calendar</a>
+  </div>
   
   <!-- Add new category form -->
   <form (ngSubmit)="createCategory()" class="add-category-form">
@@ -16,6 +19,12 @@
       name="categoryDescription"
       placeholder="Description (optional)"
     />
+    <input 
+      type="color" 
+      [(ngModel)]="newCategory.color" 
+      name="categoryColor"
+      title="Choose category color"
+    />
     <button type="submit">Add Category</button>
   </form>
 
@@ -29,7 +38,10 @@
       <!-- View mode -->
       <div *ngIf="editingCategory?.id !== category.id" class="category-view">
         <div class="category-header">
-          <h3>{{ category.name }}</h3>
+          <h3>
+            <span class="color-indicator" [style.backgroundColor]="category.color || '#ccc'"></span>
+            {{ category.name }}
+          </h3>
           <div class="category-actions">
             <button (click)="startEdit(category)" class="edit-btn">Edit</button>
             <button (click)="deleteCategory(category.id)" class="delete-btn">Delete</button>
@@ -38,7 +50,7 @@
         <p *ngIf="category.description">{{ category.description }}</p>
         
         <!-- Link to events for this category -->
-        <a [routerLink]="['/events', category.id]" class="view-events-btn">
+        <a [routerLink]="['/categories', category.id, 'events']" class="view-events-btn">
           View Events
         </a>
       </div>
@@ -58,6 +70,14 @@
           name="editDescription"
           placeholder="Description (optional)"
         />
+        <div class="color-picker">
+          <label>Category Color:</label>
+          <input 
+            type="color" 
+            [(ngModel)]="editingCategory.color" 
+            name="editColor"
+          />
+        </div>
         <div class="edit-actions">
           <button (click)="saveEdit()" class="save-btn">Save</button>
           <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>

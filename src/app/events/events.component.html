@@ -1,6 +1,9 @@
 <div class="events-container">
   <div class="header">
-    <a routerLink="/categories" class="back-link">← Back to Categories</a>
+    <div class="nav-links">
+      <a routerLink="/categories" class="back-link">← Back to Categories</a>
+      <a routerLink="/calendar" class="calendar-link">View Calendar</a>
+    </div>
     <h2 *ngIf="category">Events for {{ category.name }}</h2>
     <h2 *ngIf="!category">Events</h2>
   </div>

@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { RouterModule } from '@angular/router';
+import { EventService } from '../services/event.service';
+import { Subscription } from 'rxjs';
 
 const client = generateClient<Schema>();
 
@@ -14,40 +16,36 @@ const client = generateClient<Schema>();
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.css',
 })
-export class CategoriesComponent implements OnInit {
+export class CategoriesComponent implements OnInit, OnDestroy {
   categories: any[] = [];
-  newCategory = { name: '', description: '' };
+  newCategory = { name: '', description: '', color: '#4285F4' };
   editingCategory: any = null;
+  private categorySubscription: Subscription | null = null;
+
+  constructor(private eventService: EventService) {}
 
   ngOnInit(): void {
-    this.listCategories();
+    this.categorySubscription = this.eventService.categories$.subscribe(categories => {
+      this.categories = categories;
+    });
   }
 
-  listCategories() {
-    try {
-      client.models.Category.observeQuery().subscribe({
-        next: ({ items }) => {
-          console.log('Categories received:', items);
-          this.categories = items;
-        },
-        error: (error) => console.error('Error fetching categories', error)
-      });
-    } catch (error) {
-      console.error('Error setting up categories subscription', error);
+  ngOnDestroy(): void {
+    if (this.categorySubscription) {
+      this.categorySubscription.unsubscribe();
     }
   }
 
   async createCategory() {
     if (!this.newCategory.name.trim()) return;
     
-    console.log('Creating category:', this.newCategory);
     try {
-      const result = await client.models.Category.create({
+      await client.models.Category.create({
         name: this.newCategory.name,
-        description: this.newCategory.description || '' // Ensure description is not undefined
+        description: this.newCategory.description || '',
+        color: this.newCategory.color
       });
-      console.log('Category created:', result);
-      this.newCategory = { name: '', description: '' };
+      this.newCategory = { name: '', description: '', color: '#4285F4' };
     } catch (error) {
       console.error('Error creating category', error);
     }
@@ -56,7 +54,8 @@ export class CategoriesComponent implements OnInit {
   startEdit(category: any) {
     this.editingCategory = { 
       ...category,
-      description: category.description || '' // Ensure description is not undefined
+      description: category.description || '',
+      color: category.color || '#4285F4'
     };
   }
 
@@ -71,7 +70,8 @@ export class CategoriesComponent implements OnInit {
       await client.models.Category.update({
         id: this.editingCategory.id,
         name: this.editingCategory.name,
-        description: this.editingCategory.description || '' // Ensure description is not undefined
+        description: this.editingCategory.description || '',
+        color: this.editingCategory.color
       });
       this.editingCategory = null;
     } catch (error) {

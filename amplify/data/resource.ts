@@ -5,6 +5,7 @@ const schema = a.schema({
     .model({
       name: a.string(),
       description: a.string(),
+      color: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 

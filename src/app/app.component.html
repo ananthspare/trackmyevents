@@ -7,13 +7,17 @@
     <div class="app-container">
       <header>
         <h1>Event Countdown App</h1>
+        <nav class="main-nav">
+          <a routerLink="/categories" routerLinkActive="active">Categories</a>
+          <a routerLink="/calendar" routerLinkActive="active">Calendar</a>
+        </nav>
         <div class="user-info">
-          <span>Hello, {{user?.signInDetails?.loginId}}</span>
+          <span>Welcome, {{user?.signInDetails?.loginId}}</span>
           <button (click)="signOut()" class="sign-out-btn">Sign Out</button>
         </div>
       </header>
       
-      <main>
+      <main class="main-content">
         <router-outlet></router-outlet>
       </main>
       

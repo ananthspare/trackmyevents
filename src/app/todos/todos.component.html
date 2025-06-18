@@ -1,19 +1,102 @@
-<!-- todos.component.html -->
-<main>
-    <h1>My todos</h1>
-    <button (click)="createTodo()">+ new</button>
-    <ul>
-      <ul>
-        <li *ngFor="let todo of todos;" (click)="deleteTodo(todo.id)">
-          {{ todo.content }}
+<main class="container">
+  <!-- Categories Section -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Categories</h2>
+      <button class="add-button" (click)="createCategory()">+ Add Category</button>
+    </div>
+    
+    <div class="tiles-wrapper">
+      <div *ngIf="categories.length === 0" class="empty-state">
+        <p>No categories yet. Click the button above to add your first category!</p>
+      </div>
+      
+      <div class="tiles-container">
+        <div *ngFor="let category of categories" class="tile category-tile">
+          <div class="tile-header">
+            <h3>{{ category.name }}</h3>
+            <div class="tile-actions">
+              <button class="icon-button edit" (click)="editCategory(category)">Edit</button>
+              <button class="icon-button delete" (click)="deleteCategory(category.id)">Delete</button>
+            </div>
+          </div>
+          <p *ngIf="category.description" class="tile-description">{{ category.description }}</p>
+          <button class="view-button" (click)="selectCategory(category)">View Events</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Events Section -->
+  <section class="section" *ngIf="selectedCategory">
+    <div class="section-header">
+      <h2>Events in {{ selectedCategory.name }}</h2>
+      <button class="add-button" (click)="createEvent()">+ Add Event</button>
+    </div>
+    
+    <div class="tiles-wrapper">
+      <div *ngIf="events.length === 0" class="empty-state">
+        <p>No events yet. Click the button above to add your first event!</p>
+      </div>
+      
+      <div class="tiles-container">
+        <div *ngFor="let event of events" class="tile event-tile">
+          <div class="tile-header">
+            <h3>{{ event.title }}</h3>
+            <div class="tile-actions">
+              <button class="icon-button edit" (click)="editEvent(event)">Edit</button>
+              <button class="icon-button delete" (click)="deleteEvent(event.id)">Delete</button>
+            </div>
+          </div>
+          <p *ngIf="event.description" class="tile-description">{{ event.description }}</p>
+          
+          <!-- Countdown -->
+          <div class="countdown" [ngClass]="{'expired': isEventExpired(event)}">
+            <div *ngIf="!isEventExpired(event)" class="countdown-time">
+              {{ getCountdownText(event) }}
+            </div>
+            <div *ngIf="isEventExpired(event)" class="expired-text">
+              Event has passed!
+            </div>
+            <div class="target-date">
+              Target: {{ formatDate(event.targetDate) }}
+            </div>
+          </div>
+          
+          <button class="view-button" (click)="selectEvent(event)">View Tasks</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Tasks Section -->
+  <section class="section" *ngIf="selectedEvent">
+    <div class="section-header">
+      <h2>Tasks for {{ selectedEvent.title }}</h2>
+      <button class="add-button" (click)="createTodo()">+ Add Task</button>
+    </div>
+    
+    <div class="todo-list">
+      <div *ngIf="todos.length === 0" class="empty-state">
+        <p>No tasks yet. Click the button above to add your first task!</p>
+      </div>
+      
+      <ul *ngIf="todos.length > 0">
+        <li *ngFor="let todo of todos" [class.completed]="todo.isDone">
+          <div class="todo-item">
+            <div class="todo-content">
+              <input 
+                type="checkbox" 
+                [checked]="todo.isDone" 
+                (change)="toggleTodo(todo)"
+                class="todo-checkbox"
+              />
+              <span [class.completed-text]="todo.isDone">{{ todo.content }}</span>
+            </div>
+            <button class="delete-button" (click)="deleteTodo(todo.id)">Delete</button>
+          </div>
         </li>
       </ul>
-    </ul>
-    <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/gen2/start/quickstart/">
-            Review next steps of this tutorial.
-        </a>
     </div>
+  </section>
 </main>

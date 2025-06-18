@@ -5,6 +5,8 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { TodoListComponent } from '../todo-list/todo-list.component';
+import { EventService } from '../services/event.service';
+import { Subscription } from 'rxjs';
 
 const client = generateClient<Schema>();
 
@@ -23,14 +25,31 @@ export class EventsComponent implements OnInit, OnDestroy {
   editingEvent: any = null;
   countdowns: { [key: string]: any } = {};
   countdownInterval: any;
+  
+  private categorySubscription: Subscription | null = null;
+  private eventsSubscription: Subscription | null = null;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private eventService: EventService
+  ) {}
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.categoryId = params['id'];
-      this.loadCategory();
-      this.listEvents();
+      
+      // Get category details
+      this.categorySubscription = this.eventService.getCategoryById(this.categoryId)
+        .subscribe(category => {
+          this.category = category;
+        });
+      
+      // Get events for this category
+      this.eventsSubscription = this.eventService.getEventsByCategory(this.categoryId)
+        .subscribe(events => {
+          this.events = events;
+          this.updateCountdowns();
+        });
     });
 
     // Update countdowns every second
@@ -41,33 +60,13 @@ export class EventsComponent implements OnInit, OnDestroy {
     if (this.countdownInterval) {
       clearInterval(this.countdownInterval);
     }
-  }
-
-  loadCategory() {
-    if (!this.categoryId) return;
     
-    client.models.Category.get({ id: this.categoryId })
-      .then(category => {
-        this.category = category;
-      })
-      .catch(error => console.error('Error loading category', error));
-  }
-
-  listEvents() {
-    if (!this.categoryId) return;
+    if (this.categorySubscription) {
+      this.categorySubscription.unsubscribe();
+    }
     
-    try {
-      client.models.Event.observeQuery({
-        filter: { categoryID: { eq: this.categoryId } }
-      }).subscribe({
-        next: ({ items }) => {
-          this.events = items;
-          this.updateCountdowns();
-        },
-        error: (error) => console.error('Error fetching events', error)
-      });
-    } catch (error) {
-      console.error('Error setting up events subscription', error);
+    if (this.eventsSubscription) {
+      this.eventsSubscription.unsubscribe();
     }
   }
 
