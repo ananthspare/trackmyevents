@@ -9,7 +9,9 @@
       placeholder="Add a new todo item" 
       (keyup.enter)="createTodo()"
     />
-    <button (click)="createTodo()">Add</button>
+    <button (click)="createTodo()">
+      <i class="glyphicon glyphicon-plus"></i>
+    </button>
   </div>
 
   <!-- Todos list -->
@@ -30,8 +32,12 @@
           <span [ngClass]="{'completed-text': todo.isDone}">{{ todo.content }}</span>
         </div>
         <div class="todo-actions">
-          <button (click)="startEdit(todo)" class="edit-btn">Edit</button>
-          <button (click)="deleteTodo(todo.id)" class="delete-btn">Delete</button>
+          <button (click)="startEdit(todo)" class="icon-btn">
+            <i class="glyphicon glyphicon-pencil"></i>
+          </button>
+          <button (click)="deleteTodo(todo.id)" class="icon-btn">
+            <i class="glyphicon glyphicon-trash"></i>
+          </button>
         </div>
       </div>
       
@@ -44,8 +50,12 @@
           required
         />
         <div class="edit-actions">
-          <button (click)="saveEdit()" class="save-btn">Save</button>
-          <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
+          <button (click)="saveEdit()" class="save-btn">
+            <i class="glyphicon glyphicon-ok"></i>
+          </button>
+          <button (click)="cancelEdit()" class="cancel-btn">
+            <i class="glyphicon glyphicon-remove"></i>
+          </button>
         </div>
       </div>
     </div>

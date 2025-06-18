@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
+import { Subscription } from 'rxjs';
 
 const client = generateClient<Schema>();
 
@@ -13,12 +14,13 @@ const client = generateClient<Schema>();
   templateUrl: './todo-list.component.html',
   styleUrl: './todo-list.component.css',
 })
-export class TodoListComponent implements OnInit, OnChanges {
+export class TodoListComponent implements OnInit, OnChanges, OnDestroy {
   @Input() eventId: string = '';
   
   todos: any[] = [];
   newTodoContent: string = '';
   editingTodo: any = null;
+  private todoSubscription: Subscription | null = null;
 
   ngOnInit(): void {
     if (this.eventId) {
@@ -32,11 +34,22 @@ export class TodoListComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.todoSubscription) {
+      this.todoSubscription.unsubscribe();
+    }
+  }
+
   listTodos() {
     if (!this.eventId) return;
     
+    // Unsubscribe from previous subscription if exists
+    if (this.todoSubscription) {
+      this.todoSubscription.unsubscribe();
+    }
+    
     try {
-      client.models.Todo.observeQuery({
+      this.todoSubscription = client.models.Todo.observeQuery({
         filter: { eventID: { eq: this.eventId } }
       }).subscribe({
         next: ({ items }) => {
@@ -65,6 +78,8 @@ export class TodoListComponent implements OnInit, OnChanges {
   }
 
   toggleTodoStatus(todo: any) {
+    if (!todo || !todo.id) return;
+    
     try {
       client.models.Todo.update({
         id: todo.id,
@@ -76,6 +91,7 @@ export class TodoListComponent implements OnInit, OnChanges {
   }
 
   startEdit(todo: any) {
+    if (!todo) return;
     this.editingTodo = { ...todo };
   }
 
@@ -98,6 +114,8 @@ export class TodoListComponent implements OnInit, OnChanges {
   }
 
   deleteTodo(id: string) {
+    if (!id) return;
+    
     try {
       client.models.Todo.delete({ id });
     } catch (error) {
