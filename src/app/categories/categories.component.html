@@ -1,68 +1,195 @@
-<div class="categories-container">
-  <h2>Categories</h2>
-  
-  <!-- Add new category form -->
-  <form (ngSubmit)="createCategory()" class="add-category-form">
-    <input 
-      type="text" 
-      [(ngModel)]="newCategory.name" 
-      name="categoryName"
-      placeholder="Category name" 
-      required
-    />
-    <input 
-      type="text" 
-      [(ngModel)]="newCategory.description" 
-      name="categoryDescription"
-      placeholder="Description (optional)"
-    />
-    <button type="submit">Add Category</button>
-  </form>
-
-  <!-- Categories list -->
-  <div class="categories-list">
-    <div *ngIf="categories.length === 0" class="empty-state">
-      No categories yet. Create one to get started!
+<div class="two-column-layout">
+  <!-- Left Column: Categories (with draggable handle) -->
+  <div class="categories-sidebar" id="categoriesSidebar">
+    <div class="sidebar-header" id="dragHandle">
+      <h2>Categories</h2>
+      <i class="glyphicon glyphicon-move drag-handle"></i>
     </div>
-    
-    <div *ngFor="let category of categories" class="category-item">
-      <!-- View mode -->
-      <div *ngIf="editingCategory?.id !== category.id" class="category-view">
+
+    <!-- Add new category form -->
+    <form (ngSubmit)="createCategory()" class="add-category-form">
+      <input
+        type="text"
+        [(ngModel)]="newCategory.name"
+        name="categoryName"
+        placeholder="Category name"
+        required
+      /> 
+      <input
+        type="text"
+        [(ngModel)]="newCategory.description"
+        name="categoryDescription"
+        placeholder="Description (optional)"
+      />
+      <button type="submit">
+        <i class="glyphicon glyphicon-plus"></i>
+      </button>
+    </form>
+
+    <!-- Categories list -->
+    <div class="categories-list">
+      <div *ngIf="categories.length === 0" class="empty-state">
+        No categories yet. Create one to get started!
+      </div>
+
+      <div *ngFor="let category of categories"
+           class="category-item"
+           [class.active]="selectedCategoryId === category.id"
+           (click)="selectCategory(category.id)">
         <div class="category-header">
           <h3>{{ category.name }}</h3>
           <div class="category-actions">
-            <button (click)="startEdit(category)" class="edit-btn">Edit</button>
-            <button (click)="deleteCategory(category.id)" class="delete-btn">Delete</button>
+            <button (click)="startEdit(category); $event.stopPropagation()" class="icon-btn">
+              <i class="glyphicon glyphicon-pencil"></i>
+            </button>
+            <button (click)="deleteCategory(category.id); $event.stopPropagation()" class="icon-btn">
+              <i class="glyphicon glyphicon-trash"></i>
+            </button>
           </div>
         </div>
-        <p *ngIf="category.description">{{ category.description }}</p>
-        
-        <!-- Link to events for this category -->
-        <a [routerLink]="['/events', category.id]" class="view-events-btn">
-          View Events
-        </a>
+        <p *ngIf="category.description" class="category-description">{{ category.description }}</p>
       </div>
-      
-      <!-- Edit mode -->
-      <div *ngIf="editingCategory?.id === category.id" class="category-edit">
-        <input 
-          type="text" 
-          [(ngModel)]="editingCategory.name" 
-          name="editName"
-          placeholder="Category name" 
+    </div>
+  </div>
+
+  <!-- Right Column: Events -->
+  <div class="events-content">
+    <div *ngIf="selectedCategory" class="events-container">
+      <h2>Events for {{ selectedCategory.name }}</h2>
+
+      <!-- Add new event form -->
+      <div class="add-event-form">
+        <input
+          type="text"
+          [(ngModel)]="newEvent.title"
+          placeholder="Event title"
           required
         />
-        <input 
-          type="text" 
-          [(ngModel)]="editingCategory.description" 
-          name="editDescription"
+        <input
+          type="text"
+          [(ngModel)]="newEvent.description"
           placeholder="Description (optional)"
         />
-        <div class="edit-actions">
-          <button (click)="saveEdit()" class="save-btn">Save</button>
-          <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
+        <input
+          type="datetime-local"
+          [(ngModel)]="newEvent.targetDate"
+          placeholder="Target date"
+          required
+        />
+        <button (click)="createEvent()">
+          <i class="glyphicon glyphicon-plus"></i>
+        </button>
+      </div>
+
+      <!-- Events list -->
+      <div class="events-list">
+        <div *ngIf="events.length === 0" class="empty-state">
+          No events yet. Create one to get started!
+        </div>
+
+        <div *ngFor="let event of events" class="event-item">
+          <!-- View mode -->
+          <div *ngIf="editingEvent?.id !== event.id" class="event-view">
+            <div class="event-header">
+              <h3>{{ event.title }}</h3>
+              <div class="event-actions">
+                <button (click)="startEditEvent(event)" class="icon-btn">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                </button>
+                <button (click)="deleteEvent(event.id)" class="icon-btn">
+                  <i class="glyphicon glyphicon-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <p *ngIf="event.description">{{ event.description }}</p>
+
+            <!-- Countdown display -->
+            <div class="countdown" [ngClass]="{'expired': countdowns[event.id]?.expired}">
+              <div *ngIf="!countdowns[event.id]?.expired" class="countdown-timer">
+                <div class="countdown-item">
+                  <span class="count">{{ countdowns[event.id]?.days || 0 }}</span>
+                  <span class="label">Days</span>
+                </div>
+                <div class="countdown-item">
+                  <span class="count">{{ countdowns[event.id]?.hours || 0 }}</span>
+                  <span class="label">Hours</span>
+                </div>
+                <div class="countdown-item">
+                  <span class="count">{{ countdowns[event.id]?.minutes || 0 }}</span>
+                  <span class="label">Minutes</span>
+                </div>
+                <div class="countdown-item">
+                  <span class="count">{{ countdowns[event.id]?.seconds || 0 }}</span>
+                  <span class="label">Seconds</span>
+                </div>
+              </div>
+              <div *ngIf="countdowns[event.id]?.expired" class="expired-message">
+                Event has passed!
+              </div>
+              <div class="target-date">
+                Target: {{ event.targetDate | date:'medium' }}
+              </div>
+            </div>
+
+            <!-- Todo list for this event -->
+            <app-todo-list [eventId]="event.id"></app-todo-list>
+          </div>
+
+          <!-- Edit mode -->
+          <div *ngIf="editingEvent?.id === event.id" class="event-edit">
+            <input
+              type="text"
+              [(ngModel)]="editingEvent.title"
+              placeholder="Event title"
+              required
+            />
+            <input
+              type="text"
+              [(ngModel)]="editingEvent.description"
+              placeholder="Description (optional)"
+            />
+            <input
+              type="datetime-local"
+              [(ngModel)]="editingEvent.targetDate"
+              placeholder="Target date"
+              required
+            />
+            <div class="edit-actions">
+              <button (click)="saveEditEvent()" class="save-btn">Save</button>
+              <button (click)="cancelEditEvent()" class="cancel-btn">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div *ngIf="!selectedCategory" class="no-selection">
+      <p>Select a category to view events</p>
+    </div>
+  </div>
+</div>
+
+<!-- Edit category modal -->
+<div *ngIf="editingCategory" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Edit Category</h3>
+    <input
+      type="text"
+      [(ngModel)]="editingCategory.name"
+      name="editName"
+      placeholder="Category name"
+      required
+    />
+    <input
+      type="text"
+      [(ngModel)]="editingCategory.description"
+      name="editDescription"
+      placeholder="Description (optional)"
+    />
+    <div class="edit-actions">
+      <button (click)="saveEdit()" class="save-btn">Save</button>
+      <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
     </div>
   </div>
 </div>
