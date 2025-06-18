@@ -1,0 +1,40 @@
+.calendar-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.calendar-header h2 {
+  margin: 0;
+}
+
+.nav-link {
+  color: #2196F3;
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid #2196F3;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nav-link:hover {
+  background-color: #2196F3;
+  color: white;
+}
+
+.calendar-wrapper {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
