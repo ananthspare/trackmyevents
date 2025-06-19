@@ -1,0 +1,167 @@
+<div class="calendar-layout">
+  <!-- Left Column: Event List -->
+  <div class="events-sidebar">
+    <div class="view-selector">
+      <label for="viewType">View:</label>
+      <select id="viewType" [(ngModel)]="viewType" (change)="onViewChange()">
+        <option value="month">Month</option>
+        <option value="week">Week</option>
+        <option value="day">Day</option>
+      </select>
+    </div>
+
+    <div class="events-list-container">
+      <h3>{{ getEventListTitle() }}</h3>
+      <div class="events-list">
+        <div *ngIf="filteredEvents.length === 0" class="empty-state">
+          No events for this {{ viewType }}
+        </div>
+        <div *ngFor="let event of filteredEvents; let i = index" 
+             class="event-item" 
+             [class.even-row]="i % 2 === 0" 
+             [class.odd-row]="i % 2 === 1"
+             (click)="openEventPopup(event)">
+          <div class="event-title">{{ event.title }}</div>
+          <div class="event-date">{{ event.targetDate | date:'MMM d, y h:mm a' }}</div>
+          <div *ngIf="event.description" class="event-description">{{ event.description }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Calendar -->
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <button (click)="previousMonth()" class="nav-btn">
+        <i class="glyphicon glyphicon-chevron-left"></i>
+      </button>
+      <h2>{{ monthNames[currentMonth] }} {{ currentYear }}</h2>
+      <button (click)="nextMonth()" class="nav-btn">
+        <i class="glyphicon glyphicon-chevron-right"></i>
+      </button>
+    </div>
+
+    <div class="calendar-grid">
+      <div class="day-header">Sun</div>
+      <div class="day-header">Mon</div>
+      <div class="day-header">Tue</div>
+      <div class="day-header">Wed</div>
+      <div class="day-header">Thu</div>
+      <div class="day-header">Fri</div>
+      <div class="day-header">Sat</div>
+
+      <div 
+        *ngFor="let day of calendarDays" 
+        class="calendar-day"
+        [class.other-month]="!day.isCurrentMonth"
+        [class.today]="day.isToday"
+        [class.has-events]="day.events.length > 0"
+        (click)="selectDay(day.date)">
+        
+        <div class="day-number">{{ day.day }}</div>
+        
+        <div class="events-preview" *ngIf="day.events.length > 0">
+          <div 
+            *ngFor="let event of day.events.slice(0, 2)" 
+            class="event-dot"
+            [title]="event.title">
+            {{ event.title.substring(0, 8) }}{{ event.title.length > 8 ? '...' : '' }}
+          </div>
+          <div *ngIf="day.events.length > 2" class="more-events">
+            +{{ day.events.length - 2 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Event Details Popup -->
+<div *ngIf="selectedEvent" class="modal-overlay" (click)="closeEventPopup()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ selectedEvent.title }}</h3>
+      <div class="header-actions">
+        <button class="edit-btn" (click)="startEditEvent()" *ngIf="!isEditingEvent">
+          <i class="glyphicon glyphicon-pencil"></i>
+        </button>
+        <button class="close-btn" (click)="closeEventPopup()">
+          <i class="glyphicon glyphicon-remove"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="event-details">
+      <!-- View Mode -->
+      <div *ngIf="!isEditingEvent">
+        <div class="detail-row">
+          <strong>Date & Time:</strong>
+          <span>{{ selectedEvent.targetDate | date:'MMM d, y h:mm a' }}</span>
+        </div>
+        
+        <div *ngIf="selectedEvent.description" class="detail-row">
+          <strong>Description:</strong>
+          <span>{{ selectedEvent.description }}</span>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div *ngIf="isEditingEvent" class="edit-form">
+        <div class="form-group">
+          <label>Title:</label>
+          <input type="text" [(ngModel)]="editingEventData.title" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Date & Time:</label>
+          <input type="datetime-local" [(ngModel)]="editingEventData.targetDate" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Description:</label>
+          <textarea [(ngModel)]="editingEventData.description" class="form-textarea"></textarea>
+        </div>
+        
+        <div class="edit-actions">
+          <button class="save-btn" (click)="saveEventEdit()">Save</button>
+          <button class="cancel-btn" (click)="cancelEventEdit()">Cancel</button>
+        </div>
+      </div>
+      
+      <div class="detail-row">
+        <strong>Time Remaining:</strong>
+        <div class="countdown-display" [ngClass]="{
+          'expired': selectedEventCountdown?.expired,
+          'urgent': !selectedEventCountdown?.expired && (selectedEventCountdown?.days || 0) < 3,
+          'warning': !selectedEventCountdown?.expired && (selectedEventCountdown?.days || 0) >= 3 && (selectedEventCountdown?.days || 0) < 7,
+          'caution': !selectedEventCountdown?.expired && (selectedEventCountdown?.days || 0) >= 7 && (selectedEventCountdown?.days || 0) < 14
+        }">
+          <div *ngIf="!selectedEventCountdown?.expired" class="countdown-timer">
+            <span class="countdown-item">
+              <strong>{{ selectedEventCountdown?.days || 0 }}</strong> days
+            </span>
+            <span class="countdown-item">
+              <strong>{{ selectedEventCountdown?.hours || 0 }}</strong> hours
+            </span>
+            <span class="countdown-item">
+              <strong>{{ selectedEventCountdown?.minutes || 0 }}</strong> minutes
+            </span>
+            <span class="countdown-item">
+              <strong>{{ selectedEventCountdown?.seconds || 0 }}</strong> seconds
+            </span>
+          </div>
+          <div *ngIf="selectedEventCountdown?.expired" class="expired-message">
+            Event has passed!
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-row">
+        <strong>Todo Items:</strong>
+        <div class="todos-container">
+          <app-todo-list [eventId]="selectedEvent.id"></app-todo-list>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
