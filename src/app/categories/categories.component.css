@@ -268,11 +268,11 @@
 }
 
 .event-item.even-row {
-  background-color: #f8fafe;
+  background-color: #fafbfd;
 }
 
 .event-item.odd-row {
-  background-color: #fefefe;
+  background-color: #eef5fd;
 }
 
 .event-item:hover {
@@ -509,21 +509,21 @@
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .countdown-section {
     width: 100%;
     align-self: stretch;
   }
-  
+
   .event-actions {
     width: auto;
     justify-content: center;
   }
-  
+
   .add-event-form {
     flex-direction: column;
   }
-  
+
   .add-event-form input {
     width: 100%;
   }
