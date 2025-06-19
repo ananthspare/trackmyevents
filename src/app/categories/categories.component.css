@@ -263,8 +263,20 @@
 .event-item {
   padding: 10px;
   border-radius: 4px;
-  background-color: #f9f9f9;
   border: 1px solid #eee;
+  transition: background-color 0.2s ease;
+}
+
+.event-item.even-row {
+  background-color: #f8fafe;
+}
+
+.event-item.odd-row {
+  background-color: #fefefe;
+}
+
+.event-item:hover {
+  background-color: #f0f4f8;
 }
 
 /* Event header section with spanning countdown */

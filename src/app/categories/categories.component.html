@@ -94,7 +94,7 @@
           No events yet. Create one to get started!
         </div>
 
-        <div *ngFor="let event of events" class="event-item">
+        <div *ngFor="let event of events; let i = index" class="event-item" [class.even-row]="i % 2 === 0" [class.odd-row]="i % 2 === 1">
           <!-- View mode -->
           <div *ngIf="editingEvent?.id !== event.id" class="event-view">
             <div class="event-header-section">
