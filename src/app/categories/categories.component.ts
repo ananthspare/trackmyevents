@@ -27,6 +27,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   editingEvent: any = null;
   countdowns: { [key: string]: any } = {};
   countdownInterval: any;
+  isDragging = false;
   
   private categorySubscription: Subscription | null = null;
   private eventSubscription: Subscription | null = null;
@@ -65,42 +66,31 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!sidebar || !dragHandle) return;
     
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    let isDragging = false;
     
-    dragHandle.onmousedown = dragMouseDown;
-    
-    function dragMouseDown(e: MouseEvent) {
+    dragHandle.onmousedown = (e: MouseEvent) => {
       e.preventDefault();
-      // Get the mouse cursor position at startup
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      isDragging = true;
-      
-      // Call a function whenever the cursor moves
-      document.onmousemove = elementDrag;
-      document.onmouseup = closeDragElement;
-    }
-    
-    function elementDrag(e: MouseEvent) {
-      if (!isDragging) return;
-      
-      e.preventDefault();
-      // Calculate the new cursor position
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
+      this.isDragging = true;
       pos3 = e.clientX;
       pos4 = e.clientY;
       
-      // Set the element's new position
-      sidebar.style.left = (sidebar.offsetLeft - pos1) + "px";
-    }
-    
-    function closeDragElement() {
-      // Stop moving when mouse button is released
-      isDragging = false;
-      document.onmouseup = null;
-      document.onmousemove = null;
-    }
+      document.onmousemove = (e: MouseEvent) => {
+        if (!this.isDragging) return;
+        
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        
+        sidebar.style.left = (sidebar.offsetLeft - pos1) + "px";
+      };
+      
+      document.onmouseup = () => {
+        this.isDragging = false;
+        document.onmouseup = null;
+        document.onmousemove = null;
+      };
+    };
   }
 
   listCategories() {

@@ -14,7 +14,7 @@
         name="categoryName"
         placeholder="Category name"
         required
-      /> 
+      />
       <input
         type="text"
         [(ngModel)]="newCategory.description"
@@ -37,7 +37,7 @@
            [class.active]="selectedCategoryId === category.id"
            (click)="selectCategory(category.id)">
         <div class="category-header">
-          <h3>{{ category.name }}</h3>
+          <h3 [title]="category.name">{{ category.name }}</h3>
           <div class="category-actions">
             <button (click)="startEdit(category); $event.stopPropagation()" class="icon-btn">
               <i class="glyphicon glyphicon-pencil"></i>
@@ -47,7 +47,11 @@
             </button>
           </div>
         </div>
-        <p *ngIf="category.description" class="category-description">{{ category.description }}</p>
+        <p *ngIf="category.description"
+           class="category-description"
+           [title]="category.description">
+          {{ category.description }}
+        </p>
       </div>
     </div>
   </div>
@@ -90,45 +94,47 @@
         <div *ngFor="let event of events" class="event-item">
           <!-- View mode -->
           <div *ngIf="editingEvent?.id !== event.id" class="event-view">
-            <div class="event-header">
-              <h3>{{ event.title }}</h3>
-              <div class="event-actions">
-                <button (click)="startEditEvent(event)" class="icon-btn">
-                  <i class="glyphicon glyphicon-pencil"></i>
-                </button>
-                <button (click)="deleteEvent(event.id)" class="icon-btn">
-                  <i class="glyphicon glyphicon-trash"></i>
-                </button>
-              </div>
-            </div>
-
-            <p *ngIf="event.description">{{ event.description }}</p>
-
-            <!-- Countdown display -->
-            <div class="countdown" [ngClass]="{'expired': countdowns[event.id]?.expired}">
-              <div *ngIf="!countdowns[event.id]?.expired" class="countdown-timer">
-                <div class="countdown-item">
-                  <span class="count">{{ countdowns[event.id]?.days || 0 }}</span>
-                  <span class="label">Days</span>
+            <div class="event-header-section">
+              <div class="event-content-row">
+                <div class="event-text-section">
+                  <h3>{{ event.title }}</h3>
+                  <p *ngIf="event.description" class="event-description">{{ event.description }}</p>
                 </div>
-                <div class="countdown-item">
-                  <span class="count">{{ countdowns[event.id]?.hours || 0 }}</span>
-                  <span class="label">Hours</span>
+                
+                <div class="countdown-section">
+                  <div class="countdown-inline" [ngClass]="{'expired': countdowns[event.id]?.expired}">
+                    <div *ngIf="!countdowns[event.id]?.expired" class="countdown-timer-inline">
+                      <span class="countdown-item-inline">
+                        <strong>{{ countdowns[event.id]?.days || 0 }}</strong>d
+                      </span>
+                      <span class="countdown-item-inline">
+                        <strong>{{ countdowns[event.id]?.hours || 0 }}</strong>h
+                      </span>
+                      <span class="countdown-item-inline">
+                        <strong>{{ countdowns[event.id]?.minutes || 0 }}</strong>m
+                      </span>
+                      <span class="countdown-item-inline">
+                        <strong>{{ countdowns[event.id]?.seconds || 0 }}</strong>s
+                      </span>
+                    </div>
+                    <div *ngIf="countdowns[event.id]?.expired" class="expired-message-inline">
+                      Event passed!
+                    </div>
+                  </div>
+                  
+                  <div *ngIf="event.targetDate" class="target-date">
+                    {{ event.targetDate | date:'MMM d, y h:mm a' }}
+                  </div>
                 </div>
-                <div class="countdown-item">
-                  <span class="count">{{ countdowns[event.id]?.minutes || 0 }}</span>
-                  <span class="label">Minutes</span>
+                
+                <div class="event-actions">
+                  <button (click)="startEditEvent(event)" class="icon-btn">
+                    <i class="glyphicon glyphicon-pencil"></i>
+                  </button>
+                  <button (click)="deleteEvent(event.id)" class="icon-btn">
+                    <i class="glyphicon glyphicon-trash"></i>
+                  </button>
                 </div>
-                <div class="countdown-item">
-                  <span class="count">{{ countdowns[event.id]?.seconds || 0 }}</span>
-                  <span class="label">Seconds</span>
-                </div>
-              </div>
-              <div *ngIf="countdowns[event.id]?.expired" class="expired-message">
-                Event has passed!
-              </div>
-              <div class="target-date">
-                Target: {{ event.targetDate | date:'medium' }}
               </div>
             </div>
 
