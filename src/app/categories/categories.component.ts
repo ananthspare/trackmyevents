@@ -43,6 +43,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.initDraggableSidebar();
+    this.initResizeHandle();
   }
 
   ngOnDestroy(): void {
@@ -87,6 +88,37 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       
       document.onmouseup = () => {
         this.isDragging = false;
+        document.onmouseup = null;
+        document.onmousemove = null;
+      };
+    };
+  }
+
+  initResizeHandle(): void {
+    const resizeHandle = this.elementRef.nativeElement.querySelector('#resizeHandle');
+    const sidebar = this.elementRef.nativeElement.querySelector('#categoriesSidebar');
+    
+    if (!resizeHandle || !sidebar) return;
+    
+    let isResizing = false;
+    
+    resizeHandle.onmousedown = (e: MouseEvent) => {
+      e.preventDefault();
+      isResizing = true;
+      
+      document.onmousemove = (e: MouseEvent) => {
+        if (!isResizing) return;
+        
+        const containerRect = this.elementRef.nativeElement.querySelector('.two-column-layout').getBoundingClientRect();
+        const newWidth = e.clientX - containerRect.left;
+        
+        if (newWidth >= 200 && newWidth <= 400) {
+          sidebar.style.width = newWidth + 'px';
+        }
+      };
+      
+      document.onmouseup = () => {
+        isResizing = false;
         document.onmouseup = null;
         document.onmousemove = null;
       };
