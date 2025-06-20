@@ -167,7 +167,16 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
         filter: { categoryID: { eq: this.selectedCategoryId } }
       }).subscribe({
         next: ({ items }) => {
-          this.events = items;
+          // Sort events by target date (nearest first), handling null values
+          this.events = items.sort((a, b) => {
+            if (!a.targetDate && !b.targetDate) return 0;
+            if (!a.targetDate) return 1;
+            if (!b.targetDate) return -1;
+            
+            const dateA = new Date(a.targetDate).getTime();
+            const dateB = new Date(b.targetDate).getTime();
+            return dateA - dateB;
+          });
           this.updateCountdowns();
         },
         error: (error) => console.error('Error fetching events', error)
