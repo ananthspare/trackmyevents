@@ -132,6 +132,25 @@
   overflow-wrap: break-word;
 }
 
+.category-item[draggable="true"] {
+  cursor: grab;
+}
+
+.category-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.category-item:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.category-item.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
 .category-item:hover {
   background-color: #f0f0f0;
 }

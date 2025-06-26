@@ -32,10 +32,15 @@
         No categories yet. Create one to get started!
       </div>
 
-      <div *ngFor="let category of categories"
+      <div *ngFor="let category of categories; let i = index"
            class="category-item"
            [class.active]="selectedCategoryId === category.id"
-           (click)="selectCategory(category.id)">
+           (click)="selectCategory(category.id)"
+           draggable="true"
+           (dragstart)="onDragStart($event, i)"
+           (dragover)="onDragOver($event)"
+           (drop)="onDrop($event, i)"
+           (dragend)="onDragEnd($event)">
         <div class="category-header">
           <h3 [title]="category.name">{{ category.name }}</h3>
           <div class="category-actions">

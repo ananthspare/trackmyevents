@@ -28,6 +28,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   countdowns: { [key: string]: any } = {};
   countdownInterval: any;
   isDragging = false;
+  draggedIndex: number = -1;
   
   private categorySubscription: Subscription | null = null;
   private eventSubscription: Subscription | null = null;
@@ -134,7 +135,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       
       this.categorySubscription = client.models.Category.observeQuery().subscribe({
         next: ({ items }) => {
-          this.categories = items;
+          this.categories = items.sort((a, b) => (a.order || 0) - (b.order || 0));
           
           // Select first category if none selected
           if (this.categories.length > 0 && !this.selectedCategoryId) {
@@ -218,9 +219,11 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.newCategory.name.trim()) return;
     
     try {
+      const maxOrder = this.categories.length > 0 ? Math.max(...this.categories.map(c => c.order || 0)) : -1;
       const result = await client.models.Category.create({
         name: this.newCategory.name,
-        description: this.newCategory.description || ''
+        description: this.newCategory.description || '',
+        order: maxOrder + 1
       });
       this.newCategory = { name: '', description: '' };
       
@@ -353,5 +356,65 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
         console.error('Error deleting event', error);
       }
     }
+  }
+
+  onDragStart(event: DragEvent, index: number) {
+    this.draggedIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+    // Add visual feedback
+    const target = event.target as HTMLElement;
+    target.classList.add('dragging');
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  async onDrop(event: DragEvent, dropIndex: number) {
+    event.preventDefault();
+    
+    if (this.draggedIndex === dropIndex || this.draggedIndex === -1) return;
+    
+    const draggedCategory = this.categories[this.draggedIndex];
+    const newCategories = [...this.categories];
+    
+    // Remove dragged item
+    newCategories.splice(this.draggedIndex, 1);
+    // Insert at new position
+    newCategories.splice(dropIndex, 0, draggedCategory);
+    
+    // Update local array immediately for UI feedback
+    this.categories = newCategories;
+    
+    // Update order values in database
+    try {
+      const updatePromises = newCategories.map((category, index) => 
+        client.models.Category.update({
+          id: category.id,
+          name: category.name,
+          description: category.description,
+          order: index
+        })
+      );
+      
+      await Promise.all(updatePromises);
+      console.log('Category order updated successfully');
+    } catch (error) {
+      console.error('Error updating category order:', error);
+      // Reload categories on error
+      this.listCategories();
+    }
+  }
+
+  onDragEnd(event: DragEvent) {
+    this.draggedIndex = -1;
+    // Remove visual feedback
+    const target = event.target as HTMLElement;
+    target.classList.remove('dragging');
   }
 }
