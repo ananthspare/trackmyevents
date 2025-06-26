@@ -130,23 +130,94 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   filterEvents() {
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     switch (this.viewType) {
       case 'day':
         this.filteredEvents = this.events.filter(event => {
           const eventDate = new Date(event.targetDate);
-          return this.isSameDay(eventDate, this.selectedDate);
+          return this.isSameDay(eventDate, today);
         });
         break;
         
       case 'week':
-        const weekStart = this.getWeekStart(this.selectedDate);
+        const weekStart = this.getWeekStart(today);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
         
         this.filteredEvents = this.events.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= weekStart && eventDate <= weekEnd;
+        });
+        break;
+        
+      case 'next2':
+        const next2End = new Date(today);
+        next2End.setDate(today.getDate() + 2);
+        
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate >= today && eventDate <= next2End;
+        });
+        break;
+        
+      case 'next7':
+        const next7End = new Date(today);
+        next7End.setDate(today.getDate() + 7);
+        
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate >= today && eventDate <= next7End;
+        });
+        break;
+        
+      case 'next30':
+        const next30End = new Date(today);
+        next30End.setDate(today.getDate() + 30);
+        
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate >= today && eventDate <= next30End;
+        });
+        break;
+        
+      case 'nextMonth':
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+        
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate >= nextMonth && eventDate <= nextMonthEnd;
+        });
+        break;
+        
+      case 'past2':
+        const past2Start = new Date(today);
+        past2Start.setDate(today.getDate() - 2);
+        
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate >= past2Start && eventDate < today;
+        });
+        break;
+        
+      case 'pastWeek':
+        const pastWeekStart = new Date(today);
+        pastWeekStart.setDate(today.getDate() - 7);
+        
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate >= pastWeekStart && eventDate < today;
+        });
+        break;
+        
+      case 'pastMonth':
+        const pastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const pastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate >= pastMonth && eventDate <= pastMonthEnd;
         });
         break;
         
@@ -171,14 +242,29 @@ export class CalendarComponent implements OnInit, OnDestroy {
   }
 
   getEventListTitle(): string {
+    const today = new Date();
+    
     switch (this.viewType) {
       case 'day':
-        return `Events for ${this.selectedDate.toLocaleDateString()}`;
+        return `Events for Today`;
       case 'week':
-        const weekStart = this.getWeekStart(this.selectedDate);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        return `Events for Week of ${weekStart.toLocaleDateString()}`;
+        return `Events for This Week`;
+      case 'next2':
+        return `Events for Next 2 Days`;
+      case 'next7':
+        return `Events for Next 7 Days`;
+      case 'next30':
+        return `Events for Next 30 Days`;
+      case 'nextMonth':
+        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        return `Events for ${this.monthNames[nextMonth.getMonth()]} ${nextMonth.getFullYear()}`;
+      case 'past2':
+        return `Events from Past 2 Days`;
+      case 'pastWeek':
+        return `Events from Past Week`;
+      case 'pastMonth':
+        const pastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        return `Events from ${this.monthNames[pastMonth.getMonth()]} ${pastMonth.getFullYear()}`;
       case 'month':
       default:
         return `Events for ${this.monthNames[this.currentMonth]} ${this.currentYear}`;
@@ -247,6 +333,19 @@ export class CalendarComponent implements OnInit, OnDestroy {
   formatDateForInput(dateString: string): string {
     const date = new Date(dateString);
     return date.toISOString().slice(0, 16);
+  }
+
+  async deleteEvent(eventId: string) {
+    if (!eventId) return;
+    
+    if (confirm('Are you sure you want to delete this event?')) {
+      try {
+        await client.models.Event.delete({ id: eventId });
+        await this.loadEvents();
+      } catch (error) {
+        console.error('Error deleting event:', error);
+      }
+    }
   }
 
   updateSelectedEventCountdown() {

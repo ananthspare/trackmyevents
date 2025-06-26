@@ -4,9 +4,16 @@
     <div class="view-selector">
       <label for="viewType">View:</label>
       <select id="viewType" [(ngModel)]="viewType" (change)="onViewChange()">
-        <option value="month">Month</option>
-        <option value="week">Week</option>
-        <option value="day">Day</option>
+        <option value="month">Current Month</option>
+        <option value="week">Current Week</option>
+        <option value="day">Today</option>
+        <option value="next30">Next 30 Days</option>
+        <option value="next7">Next 7 Days</option>
+        <option value="next2">Next 2 Days</option>
+        <option value="nextMonth">Next Month</option>
+        <option value="pastMonth">Past Month</option>
+        <option value="pastWeek">Past Week</option>
+        <option value="past2">Past 2 Days</option>
       </select>
     </div>
 
@@ -19,11 +26,17 @@
         <div *ngFor="let event of filteredEvents; let i = index" 
              class="event-item" 
              [class.even-row]="i % 2 === 0" 
-             [class.odd-row]="i % 2 === 1"
-             (click)="openEventPopup(event)">
-          <div class="event-title">{{ event.title }}</div>
-          <div class="event-date">{{ event.targetDate | date:'MMM d, y h:mm a' }}</div>
-          <div *ngIf="event.description" class="event-description">{{ event.description }}</div>
+             [class.odd-row]="i % 2 === 1">
+          <div class="event-content" (click)="openEventPopup(event)">
+            <div class="event-title">{{ event.title }}</div>
+            <div class="event-date">{{ event.targetDate | date:'MMM d, y h:mm a' }}</div>
+            <div *ngIf="event.description" class="event-description">{{ event.description }}</div>
+          </div>
+          <div class="event-actions">
+            <button class="delete-btn" (click)="deleteEvent(event.id)" title="Delete Event">
+              <i class="glyphicon glyphicon-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
