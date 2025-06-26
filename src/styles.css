@@ -277,16 +277,31 @@ amplify-authenticator .amplify-loader {
 }
 
 /* Password Field Eye Icon Fix */
-amplify-authenticator button svg {
-  width: 16px !important;
-  height: 16px !important;
+amplify-authenticator .amplify-field {
+  position: relative !important;
 }
 
-amplify-authenticator button {
-  width: auto !important;
-  height: auto !important;
-  min-width: auto !important;
+amplify-authenticator input[type="password"] {
+  padding-right: 40px !important;
+}
+
+amplify-authenticator .amplify-field button {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 24px !important;
+  height: 24px !important;
   padding: 4px !important;
+  background: transparent !important;
+  border: none !important;
+  z-index: 2 !important;
+}
+
+amplify-authenticator .amplify-field button svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: #666 !important;
 }
 
 /* Responsive Design */
