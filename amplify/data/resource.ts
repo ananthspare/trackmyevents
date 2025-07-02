@@ -5,7 +5,6 @@ const schema = a.schema({
     .model({
       name: a.string(),
       description: a.string(),
-      parentID: a.string(),
       order: a.integer().default(0),
     })
     .authorization(allow => [allow.owner()]),
