@@ -1,9 +1,8 @@
 <div class="two-column-layout">
-  <!-- Left Column: Categories (with draggable handle) -->
-  <div class="categories-sidebar" id="categoriesSidebar">
-    <div class="sidebar-header" id="dragHandle">
+  <!-- Left Column: Categories -->
+  <div class="categories-sidebar">
+    <div class="sidebar-header">
       <h2>Categories</h2>
-      <i class="glyphicon glyphicon-move drag-handle"></i>
     </div>
 
     <!-- Add new category form -->
@@ -21,53 +20,123 @@
         name="categoryDescription"
         placeholder="Description (optional)"
       />
-      <button type="submit">
-        <i class="glyphicon glyphicon-plus"></i>
-      </button>
+      <select [(ngModel)]="newCategory.parentID" name="parentCategory">
+        <option value="">Root Category</option>
+        <option *ngFor="let cat of categories" [value]="cat.id">
+          {{ cat.name }}
+        </option>
+      </select>
+      <button type="submit">Add</button>
     </form>
 
-    <!-- Categories list -->
-    <div class="categories-list">
+    <!-- Categories tree -->
+    <div class="categories-tree">
       <div *ngIf="categories.length === 0" class="empty-state">
         No categories yet. Create one to get started!
       </div>
 
-      <div *ngFor="let category of categories; let i = index"
-           class="category-item"
-           [class.active]="selectedCategoryId === category.id"
-           (click)="selectCategory(category.id)"
-           draggable="true"
-           (dragstart)="onDragStart($event, i)"
-           (dragover)="onDragOver($event)"
-           (drop)="onDrop($event, i)"
-           (dragend)="onDragEnd($event)">
-        <div class="category-header">
-          <h3 [title]="category.name">{{ category.name }}</h3>
-          <div class="category-actions">
-            <button (click)="startEdit(category); $event.stopPropagation()" class="icon-btn">
-              <i class="glyphicon glyphicon-pencil"></i>
-            </button>
-            <button (click)="deleteCategory(category.id); $event.stopPropagation()" class="icon-btn">
-              <i class="glyphicon glyphicon-trash"></i>
-            </button>
+      <!-- Root Categories -->
+      <div *ngFor="let category of getRootCategories()" class="category-branch">
+        <div 
+          class="category-item"
+          [class.active]="selectedCategoryId === category.id"
+          [class.drag-over]="dragOverCategory === category.id"
+          (click)="selectCategory(category.id)"
+          (dragstart)="onDragStart($event, category)"
+          (dragover)="onDragOver($event, category)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event, category)"
+          draggable="true">
+          
+          <div class="category-header">
+            <span class="expand-icon" 
+                  (click)="toggleExpand(category.id); $event.stopPropagation()">
+              <span *ngIf="hasChildren(category.id)">
+                {{ expandedCategories.has(category.id) ? '▼' : '▶' }}
+              </span>
+              <span *ngIf="!hasChildren(category.id)" class="no-children">•</span>
+            </span>
+            <span class="drag-handle">⋮⋮</span>
+            <h3>{{ category.name }}</h3>
+            <div class="category-actions">
+              <button (click)="addSubCategory(category); $event.stopPropagation()" class="icon-btn" title="Add Subcategory">+</button>
+              <button (click)="startEdit(category); $event.stopPropagation()" class="icon-btn">✏️</button>
+              <button (click)="deleteCategory(category.id); $event.stopPropagation()" class="icon-btn">🗑️</button>
+            </div>
+          </div>
+          <p *ngIf="getDescription(category)" class="category-description">{{ getDescription(category) }}</p>
+        </div>
+
+        <!-- Subcategories -->
+        <div *ngIf="expandedCategories.has(category.id) && hasChildren(category.id)" class="subcategories">
+          <div *ngFor="let subCategory of getSubCategories(category.id)" class="category-branch">
+            <div 
+              class="category-item subcategory"
+              [class.active]="selectedCategoryId === subCategory.id"
+              [class.drag-over]="dragOverCategory === subCategory.id"
+              (click)="selectCategory(subCategory.id)"
+              (dragstart)="onDragStart($event, subCategory)"
+              (dragover)="onDragOver($event, subCategory)"
+              (dragleave)="onDragLeave()"
+              (drop)="onDrop($event, subCategory)"
+              draggable="true">
+              
+              <div class="category-header">
+                <span class="expand-icon" 
+                      (click)="toggleExpand(subCategory.id); $event.stopPropagation()">
+                  <span *ngIf="hasChildren(subCategory.id)">
+                    {{ expandedCategories.has(subCategory.id) ? '▼' : '▶' }}
+                  </span>
+                  <span *ngIf="!hasChildren(subCategory.id)" class="no-children">•</span>
+                </span>
+                <span class="drag-handle">⋮⋮</span>
+                <h3>{{ subCategory.name }}</h3>
+                <div class="category-actions">
+                  <button (click)="addSubCategory(subCategory); $event.stopPropagation()" class="icon-btn" title="Add Subcategory">+</button>
+                  <button (click)="startEdit(subCategory); $event.stopPropagation()" class="icon-btn">✏️</button>
+                  <button (click)="deleteCategory(subCategory.id); $event.stopPropagation()" class="icon-btn">🗑️</button>
+                </div>
+              </div>
+              <p *ngIf="getDescription(subCategory)" class="category-description">{{ getDescription(subCategory) }}</p>
+            </div>
+
+            <!-- Sub-subcategories -->
+            <div *ngIf="expandedCategories.has(subCategory.id) && hasChildren(subCategory.id)" class="subcategories">
+              <div *ngFor="let subSubCategory of getSubCategories(subCategory.id)" class="category-branch">
+                <div 
+                  class="category-item subcategory"
+                  [class.active]="selectedCategoryId === subSubCategory.id"
+                  [class.drag-over]="dragOverCategory === subSubCategory.id"
+                  (click)="selectCategory(subSubCategory.id)"
+                  (dragstart)="onDragStart($event, subSubCategory)"
+                  (dragover)="onDragOver($event, subSubCategory)"
+                  (dragleave)="onDragLeave()"
+                  (drop)="onDrop($event, subSubCategory)"
+                  draggable="true">
+                  
+                  <div class="category-header">
+                    <span class="no-children">•</span>
+                    <span class="drag-handle">⋮⋮</span>
+                    <h3>{{ subSubCategory.name }}</h3>
+                    <div class="category-actions">
+                      <button (click)="startEdit(subSubCategory); $event.stopPropagation()" class="icon-btn">✏️</button>
+                      <button (click)="deleteCategory(subSubCategory.id); $event.stopPropagation()" class="icon-btn">🗑️</button>
+                    </div>
+                  </div>
+                  <p *ngIf="getDescription(subSubCategory)" class="category-description">{{ getDescription(subSubCategory) }}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <p *ngIf="category.description"
-           class="category-description"
-           [title]="category.description">
-          {{ category.description }}
-        </p>
       </div>
     </div>
   </div>
 
-  <!-- Resize handle -->
-  <div class="resize-handle" id="resizeHandle"></div>
-
   <!-- Right Column: Events -->
   <div class="events-content">
     <div *ngIf="selectedCategory" class="events-container">
-      <h2>Events for {{ selectedCategory.name }}</h2>
+      <h2>Events for {{ getCategoryPath(selectedCategory) }}</h2>
 
       <!-- Add new event form -->
       <div class="add-event-form">
@@ -88,9 +157,7 @@
           placeholder="Target date"
           required
         />
-        <button (click)="createEvent()">
-          <i class="glyphicon glyphicon-plus"></i>
-        </button>
+        <button (click)="createEvent()">Add Event</button>
       </div>
 
       <!-- Events list -->
@@ -99,85 +166,45 @@
           No events yet. Create one to get started!
         </div>
 
-        <div *ngFor="let event of events; let i = index" class="event-item" [class.even-row]="i % 2 === 0" [class.odd-row]="i % 2 === 1">
-          <!-- View mode -->
+        <div *ngFor="let event of events" class="event-item">
           <div *ngIf="editingEvent?.id !== event.id" class="event-view">
-            <div class="event-header-section">
-              <div class="event-content-row">
-                <div class="event-text-section">
-                  <h3>{{ event.title }}</h3>
-                  <p *ngIf="event.description" class="event-description">{{ event.description }}</p>
-                </div>
-                
-                <div class="countdown-section">
-                  <div class="countdown-inline" [ngClass]="{
-                    'expired': countdowns[event.id]?.expired,
-                    'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
-                    'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
-                    'caution': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 7 && (countdowns[event.id]?.days || 0) < 14
-                  }">
-                    <div *ngIf="!countdowns[event.id]?.expired" class="countdown-timer-inline">
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.days || 0 }}</strong>d
-                      </span>
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.hours || 0 }}</strong>h
-                      </span>
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.minutes || 0 }}</strong>m
-                      </span>
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.seconds || 0 }}</strong>s
-                      </span>
-                    </div>
-                    <div *ngIf="countdowns[event.id]?.expired" class="expired-message-inline">
-                      Event passed!
-                    </div>
+            <div class="event-content-row">
+              <div class="event-text-section">
+                <h3>{{ event.title }}</h3>
+                <p *ngIf="event.description" class="event-description">{{ event.description }}</p>
+              </div>
+              
+              <div class="countdown-section">
+                <div class="countdown-inline" [ngClass]="{
+                  'expired': countdowns[event.id]?.expired,
+                  'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3
+                }">
+                  <div *ngIf="!countdowns[event.id]?.expired" class="countdown-timer-inline">
+                    <span>{{ countdowns[event.id]?.days || 0 }}d {{ countdowns[event.id]?.hours || 0 }}h {{ countdowns[event.id]?.minutes || 0 }}m</span>
                   </div>
-                  
-                  <div *ngIf="event.targetDate" class="target-date" [ngClass]="{
-                    'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
-                    'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
-                    'caution': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 7 && (countdowns[event.id]?.days || 0) < 14
-                  }">
-                    {{ event.targetDate | date:'MMM d, y h:mm a' }}
+                  <div *ngIf="countdowns[event.id]?.expired" class="expired-message-inline">
+                    Event passed!
                   </div>
                 </div>
                 
-                <div class="event-actions">
-                  <button (click)="startEditEvent(event)" class="icon-btn">
-                    <i class="glyphicon glyphicon-pencil"></i>
-                  </button>
-                  <button (click)="deleteEvent(event.id)" class="icon-btn">
-                    <i class="glyphicon glyphicon-trash"></i>
-                  </button>
+                <div *ngIf="event.targetDate" class="target-date">
+                  {{ event.targetDate | date:'MMM d, y h:mm a' }}
                 </div>
+              </div>
+              
+              <div class="event-actions">
+                <button (click)="startEditEvent(event)" class="icon-btn">✏️</button>
+                <button (click)="deleteEvent(event.id)" class="icon-btn">🗑️</button>
               </div>
             </div>
 
-            <!-- Todo list for this event -->
             <app-todo-list [eventId]="event.id"></app-todo-list>
           </div>
 
-          <!-- Edit mode -->
           <div *ngIf="editingEvent?.id === event.id" class="event-edit">
-            <input
-              type="text"
-              [(ngModel)]="editingEvent.title"
-              placeholder="Event title"
-              required
-            />
-            <input
-              type="text"
-              [(ngModel)]="editingEvent.description"
-              placeholder="Description (optional)"
-            />
-            <input
-              type="datetime-local"
-              [(ngModel)]="editingEvent.targetDate"
-              placeholder="Target date"
-              required
-            />
+            <input type="text" [(ngModel)]="editingEvent.title" placeholder="Event title" required />
+            <input type="text" [(ngModel)]="editingEvent.description" placeholder="Description (optional)" />
+            <input type="datetime-local" [(ngModel)]="editingEvent.targetDate" placeholder="Target date" required />
             <div class="edit-actions">
               <button (click)="saveEditEvent()" class="save-btn">Save</button>
               <button (click)="cancelEditEvent()" class="cancel-btn">Cancel</button>
@@ -197,19 +224,14 @@
 <div *ngIf="editingCategory" class="modal-overlay">
   <div class="modal-content">
     <h3>Edit Category</h3>
-    <input
-      type="text"
-      [(ngModel)]="editingCategory.name"
-      name="editName"
-      placeholder="Category name"
-      required
-    />
-    <input
-      type="text"
-      [(ngModel)]="editingCategory.description"
-      name="editDescription"
-      placeholder="Description (optional)"
-    />
+    <input type="text" [(ngModel)]="editingCategory.name" placeholder="Category name" required />
+    <input type="text" [(ngModel)]="editingCategory.description" placeholder="Description (optional)" />
+    <select [(ngModel)]="editingCategory.parentID">
+      <option value="">Root Category</option>
+      <option *ngFor="let cat of categories" [value]="cat.id" [disabled]="cat.id === editingCategory.id">
+        {{ cat.name }}
+      </option>
+    </select>
     <div class="edit-actions">
       <button (click)="saveEdit()" class="save-btn">Save</button>
       <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
