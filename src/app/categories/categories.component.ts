@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
@@ -16,128 +16,43 @@ const client = generateClient<Schema>();
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.css',
 })
-export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CategoriesComponent implements OnInit, OnDestroy {
   categories: any[] = [];
   selectedCategoryId: string | null = null;
   selectedCategory: any = null;
   events: any[] = [];
-  newCategory = { name: '', description: '' };
+  newCategory = { name: '', description: '', parentID: '' };
   editingCategory: any = null;
   newEvent = { title: '', description: '', targetDate: '' };
   editingEvent: any = null;
   countdowns: { [key: string]: any } = {};
   countdownInterval: any;
-  isDragging = false;
-  draggedIndex: number = -1;
+  expandedCategories = new Set<string>();
+  dragOverCategory: string | null = null;
   
   private categorySubscription: Subscription | null = null;
   private eventSubscription: Subscription | null = null;
 
-  constructor(private elementRef: ElementRef) {}
-
   ngOnInit(): void {
     this.listCategories();
-    
-    // Update countdowns every second
     this.countdownInterval = setInterval(() => this.updateCountdowns(), 1000);
   }
 
-  ngAfterViewInit(): void {
-    this.initDraggableSidebar();
-    this.initResizeHandle();
-  }
-
   ngOnDestroy(): void {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-    }
-    
-    if (this.categorySubscription) {
-      this.categorySubscription.unsubscribe();
-    }
-    
-    if (this.eventSubscription) {
-      this.eventSubscription.unsubscribe();
-    }
-  }
-
-  initDraggableSidebar(): void {
-    const sidebar = this.elementRef.nativeElement.querySelector('#categoriesSidebar');
-    const dragHandle = this.elementRef.nativeElement.querySelector('#dragHandle');
-    
-    if (!sidebar || !dragHandle) return;
-    
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
-    dragHandle.onmousedown = (e: MouseEvent) => {
-      e.preventDefault();
-      this.isDragging = true;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      
-      document.onmousemove = (e: MouseEvent) => {
-        if (!this.isDragging) return;
-        
-        e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        
-        sidebar.style.left = (sidebar.offsetLeft - pos1) + "px";
-      };
-      
-      document.onmouseup = () => {
-        this.isDragging = false;
-        document.onmouseup = null;
-        document.onmousemove = null;
-      };
-    };
-  }
-
-  initResizeHandle(): void {
-    const resizeHandle = this.elementRef.nativeElement.querySelector('#resizeHandle');
-    const sidebar = this.elementRef.nativeElement.querySelector('#categoriesSidebar');
-    
-    if (!resizeHandle || !sidebar) return;
-    
-    let isResizing = false;
-    
-    resizeHandle.onmousedown = (e: MouseEvent) => {
-      e.preventDefault();
-      isResizing = true;
-      
-      document.onmousemove = (e: MouseEvent) => {
-        if (!isResizing) return;
-        
-        const containerRect = this.elementRef.nativeElement.querySelector('.two-column-layout').getBoundingClientRect();
-        const newWidth = e.clientX - containerRect.left;
-        
-        if (newWidth >= 200 && newWidth <= 400) {
-          sidebar.style.width = newWidth + 'px';
-        }
-      };
-      
-      document.onmouseup = () => {
-        isResizing = false;
-        document.onmouseup = null;
-        document.onmousemove = null;
-      };
-    };
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
+    if (this.categorySubscription) this.categorySubscription.unsubscribe();
+    if (this.eventSubscription) this.eventSubscription.unsubscribe();
   }
 
   listCategories() {
     try {
-      // Unsubscribe from previous subscription if exists
-      if (this.categorySubscription) {
-        this.categorySubscription.unsubscribe();
-      }
+      if (this.categorySubscription) this.categorySubscription.unsubscribe();
       
       this.categorySubscription = client.models.Category.observeQuery().subscribe({
         next: ({ items }) => {
-          this.categories = items.sort((a, b) => (a.order || 0) - (b.order || 0));
+          console.log('All categories from DB:', items);
+          this.categories = items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           
-          // Select first category if none selected
           if (this.categories.length > 0 && !this.selectedCategoryId) {
             this.selectCategory(this.categories[0].id);
           }
@@ -147,6 +62,36 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     } catch (error) {
       console.error('Error setting up categories subscription', error);
     }
+  }
+
+  getRootCategories() {
+    // Use description field to store parent ID if parentID field is not available
+    const roots = this.categories.filter(cat => {
+      if (cat.parentID) return false;
+      if (cat.description && cat.description.startsWith('PARENT:')) return false;
+      return true;
+    });
+    console.log('Root categories:', roots);
+    return roots;
+  }
+
+  getSubCategories(parentId: string) {
+    // Check both parentID field and description field
+    const subs = this.categories.filter(cat => {
+      if (cat.parentID === parentId) return true;
+      if (cat.description && cat.description.startsWith(`PARENT:${parentId}`)) return true;
+      return false;
+    });
+    console.log(`Subcategories for ${parentId}:`, subs);
+    return subs;
+  }
+
+  hasChildren(categoryId: string): boolean {
+    return this.categories.some(cat => {
+      if (cat.parentID === categoryId) return true;
+      if (cat.description && cat.description.startsWith(`PARENT:${categoryId}`)) return true;
+      return false;
+    });
   }
 
   selectCategory(categoryId: string) {
@@ -159,24 +104,17 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.selectedCategoryId) return;
     
     try {
-      // Unsubscribe from previous subscription if exists
-      if (this.eventSubscription) {
-        this.eventSubscription.unsubscribe();
-      }
+      if (this.eventSubscription) this.eventSubscription.unsubscribe();
       
       this.eventSubscription = client.models.Event.observeQuery({
         filter: { categoryID: { eq: this.selectedCategoryId } }
       }).subscribe({
         next: ({ items }) => {
-          // Sort events by target date (nearest first), handling null values
           this.events = items.sort((a, b) => {
             if (!a.targetDate && !b.targetDate) return 0;
             if (!a.targetDate) return 1;
             if (!b.targetDate) return -1;
-            
-            const dateA = new Date(a.targetDate).getTime();
-            const dateB = new Date(b.targetDate).getTime();
-            return dateA - dateB;
+            return new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime();
           });
           this.updateCountdowns();
         },
@@ -191,9 +129,8 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.events) return;
     
     const now = new Date().getTime();
-    
     this.events.forEach(event => {
-      if (!event || !event.targetDate) return;
+      if (!event?.targetDate) return;
       
       try {
         const targetTime = new Date(event.targetDate).getTime();
@@ -210,7 +147,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
           this.countdowns[event.id] = { days, hours, minutes, seconds, expired: false };
         }
       } catch (error) {
-        console.error('Error calculating countdown for event', event.id, error);
+        console.error('Error calculating countdown', error);
       }
     });
   }
@@ -219,27 +156,74 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.newCategory.name.trim()) return;
     
     try {
-      const maxOrder = this.categories.length > 0 ? Math.max(...this.categories.map(c => c.order || 0)) : -1;
+      console.log('Creating category with data:', this.newCategory);
+      
+      // Store parent ID in description if parentID field is not available
+      let description = this.newCategory.description || '';
+      if (this.newCategory.parentID) {
+        description = `PARENT:${this.newCategory.parentID}|${description}`;
+      }
+      
+      // Create the category
       const result = await client.models.Category.create({
         name: this.newCategory.name,
-        description: this.newCategory.description || '',
-        order: maxOrder + 1
+        description: description,
+        order: 0
       });
-      this.newCategory = { name: '', description: '' };
       
-      // Access the id from the data property
-      if (result && result.data && result.data.id) {
-        this.selectCategory(result.data.id);
-      }
+      console.log('Category created:', result);
+      
+      // Reset the form
+      this.newCategory = { name: '', description: '', parentID: '' };
     } catch (error) {
       console.error('Error creating category', error);
     }
   }
 
+  addSubCategory(parentCategory: any) {
+    console.log('Adding subcategory to parent:', parentCategory.id);
+    this.newCategory = { 
+      name: '', 
+      description: '', 
+      parentID: parentCategory.id 
+    };
+    this.expandedCategories.add(parentCategory.id);
+    
+    // Focus on the name input
+    setTimeout(() => {
+      const nameInput = document.querySelector('.add-category-form input[name="categoryName"]') as HTMLInputElement;
+      if (nameInput) nameInput.focus();
+    }, 100);
+  }
+
+  toggleExpand(categoryId: string) {
+    if (this.expandedCategories.has(categoryId)) {
+      this.expandedCategories.delete(categoryId);
+    } else {
+      this.expandedCategories.add(categoryId);
+    }
+  }
+
   startEdit(category: any) {
+    // Extract parent ID from description if needed
+    let parentID = category.parentID || '';
+    if (!parentID && category.description && category.description.startsWith('PARENT:')) {
+      const match = category.description.match(/PARENT:([^|]+)\|/);
+      if (match) {
+        parentID = match[1];
+      }
+    }
+    
+    // Extract actual description
+    let description = category.description || '';
+    if (description.startsWith('PARENT:')) {
+      description = description.split('|')[1] || '';
+    }
+    
     this.editingCategory = { 
       ...category,
-      description: category.description || ''
+      description: description,
+      parentID: parentID
     };
   }
 
@@ -248,13 +232,19 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async saveEdit() {
-    if (!this.editingCategory || !this.editingCategory.name.trim()) return;
+    if (!this.editingCategory?.name.trim()) return;
     
     try {
+      // Store parent ID in description if needed
+      let description = this.editingCategory.description || '';
+      if (this.editingCategory.parentID) {
+        description = `PARENT:${this.editingCategory.parentID}|${description}`;
+      }
+      
       await client.models.Category.update({
         id: this.editingCategory.id,
         name: this.editingCategory.name,
-        description: this.editingCategory.description || ''
+        description: description
       });
       this.editingCategory = null;
     } catch (error) {
@@ -263,28 +253,101 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async deleteCategory(id: string) {
-    if (!id) return;
+    if (!confirm('Delete this category?')) return;
     
-    if (confirm('Are you sure you want to delete this category? All associated events will also be deleted.')) {
-      try {
-        await client.models.Category.delete({ id });
-        
-        // If the deleted category was selected, select another one
-        if (id === this.selectedCategoryId) {
-          this.selectedCategoryId = null;
-          this.selectedCategory = null;
-          this.events = [];
-          
-          // Find remaining categories after deletion
-          const remainingCategories = this.categories.filter(c => c.id !== id);
-          if (remainingCategories.length > 0) {
-            this.selectCategory(remainingCategories[0].id);
-          }
-        }
-      } catch (error) {
-        console.error('Error deleting category', error);
+    try {
+      await client.models.Category.delete({ id });
+      if (id === this.selectedCategoryId) {
+        this.selectedCategoryId = null;
+        this.selectedCategory = null;
+        this.events = [];
       }
+    } catch (error) {
+      console.error('Error deleting category', error);
     }
+  }
+
+  async onDrop(event: DragEvent, targetCategory: any) {
+    event.preventDefault();
+    const draggedId = event.dataTransfer?.getData('text/plain');
+    this.dragOverCategory = null;
+    
+    if (!draggedId || draggedId === targetCategory.id) return;
+    
+    try {
+      // Find the dragged category
+      const draggedCategory = this.categories.find(c => c.id === draggedId);
+      if (!draggedCategory) return;
+      
+      // Update with parent ID in description
+      let description = draggedCategory.description || '';
+      if (description.startsWith('PARENT:')) {
+        description = description.split('|')[1] || '';
+      }
+      
+      await client.models.Category.update({
+        id: draggedId,
+        description: `PARENT:${targetCategory.id}|${description}`
+      });
+      
+      this.expandedCategories.add(targetCategory.id);
+    } catch (error) {
+      console.error('Error moving category', error);
+    }
+  }
+
+  onDragStart(event: DragEvent, category: any) {
+    event.dataTransfer?.setData('text/plain', category.id);
+  }
+
+  onDragOver(event: DragEvent, category: any) {
+    event.preventDefault();
+    this.dragOverCategory = category.id;
+  }
+
+  onDragLeave() {
+    this.dragOverCategory = null;
+  }
+
+  getParentId(category: any): string | null {
+    if (category.parentID) return category.parentID;
+    
+    if (category.description && category.description.startsWith('PARENT:')) {
+      const match = category.description.match(/PARENT:([^|]+)\|/);
+      return match ? match[1] : null;
+    }
+    
+    return null;
+  }
+
+  getDescription(category: any): string {
+    if (!category.description) return '';
+    
+    if (category.description.startsWith('PARENT:')) {
+      const parts = category.description.split('|');
+      return parts.length > 1 ? parts[1] : '';
+    }
+    
+    return category.description;
+  }
+
+  getCategoryPath(category: any): string {
+    if (!category) return '';
+    const path = [category.name];
+    let current = category;
+    
+    while (true) {
+      const parentId = this.getParentId(current);
+      if (!parentId) break;
+      
+      const parent = this.categories.find(c => c.id === parentId);
+      if (parent) {
+        path.unshift(parent.name);
+        current = parent;
+      } else break;
+    }
+    
+    return path.join(' > ');
   }
 
   createEvent() {
@@ -304,25 +367,16 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   startEditEvent(event: any) {
-    if (!event) return;
-    
     try {
       const date = new Date(event.targetDate);
       const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      const formattedDate = localDate.toISOString().slice(0, 16);
-      
       this.editingEvent = { 
         ...event, 
         description: event.description || '',
-        targetDate: formattedDate
+        targetDate: localDate.toISOString().slice(0, 16)
       };
     } catch (error) {
-      console.error('Error formatting date', error);
-      this.editingEvent = { 
-        ...event, 
-        description: event.description || '',
-        targetDate: ''
-      };
+      this.editingEvent = { ...event, description: event.description || '', targetDate: '' };
     }
   }
 
@@ -331,7 +385,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   saveEditEvent() {
-    if (!this.editingEvent || !this.editingEvent.title.trim() || !this.editingEvent.targetDate) return;
+    if (!this.editingEvent?.title.trim() || !this.editingEvent.targetDate) return;
     
     try {
       client.models.Event.update({
@@ -347,74 +401,12 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   deleteEvent(id: string) {
-    if (!id) return;
+    if (!confirm('Delete this event?')) return;
     
-    if (confirm('Are you sure you want to delete this event?')) {
-      try {
-        client.models.Event.delete({ id });
-      } catch (error) {
-        console.error('Error deleting event', error);
-      }
-    }
-  }
-
-  onDragStart(event: DragEvent, index: number) {
-    this.draggedIndex = index;
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-    }
-    // Add visual feedback
-    const target = event.target as HTMLElement;
-    target.classList.add('dragging');
-  }
-
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-  }
-
-  async onDrop(event: DragEvent, dropIndex: number) {
-    event.preventDefault();
-    
-    if (this.draggedIndex === dropIndex || this.draggedIndex === -1) return;
-    
-    const draggedCategory = this.categories[this.draggedIndex];
-    const newCategories = [...this.categories];
-    
-    // Remove dragged item
-    newCategories.splice(this.draggedIndex, 1);
-    // Insert at new position
-    newCategories.splice(dropIndex, 0, draggedCategory);
-    
-    // Update local array immediately for UI feedback
-    this.categories = newCategories;
-    
-    // Update order values in database
     try {
-      const updatePromises = newCategories.map((category, index) => 
-        client.models.Category.update({
-          id: category.id,
-          name: category.name,
-          description: category.description,
-          order: index
-        })
-      );
-      
-      await Promise.all(updatePromises);
-      console.log('Category order updated successfully');
+      client.models.Event.delete({ id });
     } catch (error) {
-      console.error('Error updating category order:', error);
-      // Reload categories on error
-      this.listCategories();
+      console.error('Error deleting event', error);
     }
-  }
-
-  onDragEnd(event: DragEvent) {
-    this.draggedIndex = -1;
-    // Remove visual feedback
-    const target = event.target as HTMLElement;
-    target.classList.remove('dragging');
   }
 }
