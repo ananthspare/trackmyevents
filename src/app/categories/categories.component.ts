@@ -5,6 +5,7 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { RouterModule } from '@angular/router';
 import { TodoListComponent } from '../todo-list/todo-list.component';
+
 import { Subscription } from 'rxjs';
 
 const client = generateClient<Schema>();
@@ -18,10 +19,12 @@ const client = generateClient<Schema>();
 })
 export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   categories: any[] = [];
+  rootCategories: any[] = [];
+  subcategories: { [key: string]: any[] } = {};
   selectedCategoryId: string | null = null;
   selectedCategory: any = null;
   events: any[] = [];
-  newCategory = { name: '', description: '' };
+  newCategory = { name: '', description: '', parentCategoryID: null as string | null };
   editingCategory: any = null;
   newEvent = { title: '', description: '', targetDate: '' };
   editingEvent: any = null;
@@ -29,6 +32,8 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   countdownInterval: any;
   isDragging = false;
   draggedIndex: number = -1;
+  draggedCategoryId: string | null = null;
+  expandedCategories: Set<string> = new Set();
   
   private categorySubscription: Subscription | null = null;
   private eventSubscription: Subscription | null = null;
@@ -135,11 +140,33 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       
       this.categorySubscription = client.models.Category.observeQuery().subscribe({
         next: ({ items }) => {
+          // Store all categories sorted by order
           this.categories = items.sort((a, b) => (a.order || 0) - (b.order || 0));
+          
+          // Organize categories into hierarchy
+          this.rootCategories = this.categories
+            .filter(cat => !cat.parentCategoryID)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+          
+          // Group subcategories by parent
+          this.subcategories = {};
+          this.categories
+            .filter(cat => cat.parentCategoryID)
+            .forEach(cat => {
+              if (!this.subcategories[cat.parentCategoryID]) {
+                this.subcategories[cat.parentCategoryID] = [];
+              }
+              this.subcategories[cat.parentCategoryID].push(cat);
+            });
+          
+          // Sort subcategories by order
+          Object.keys(this.subcategories).forEach(parentId => {
+            this.subcategories[parentId].sort((a, b) => (a.order || 0) - (b.order || 0));
+          });
           
           // Select first category if none selected
           if (this.categories.length > 0 && !this.selectedCategoryId) {
-            this.selectCategory(this.categories[0].id);
+            this.selectCategory(this.rootCategories.length > 0 ? this.rootCategories[0].id : this.categories[0].id);
           }
         },
         error: (error) => console.error('Error fetching categories', error)
@@ -219,13 +246,29 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.newCategory.name.trim()) return;
     
     try {
-      const maxOrder = this.categories.length > 0 ? Math.max(...this.categories.map(c => c.order || 0)) : -1;
+      let maxOrder;
+      if (this.newCategory.parentCategoryID) {
+        // For subcategories, get max order within the parent's subcategories
+        const parentSubcategories = this.subcategories[this.newCategory.parentCategoryID] || [];
+        maxOrder = parentSubcategories.length > 0 
+          ? Math.max(...parentSubcategories.map(c => c.order || 0)) 
+          : -1;
+      } else {
+        // For root categories, get max order among root categories
+        maxOrder = this.rootCategories.length > 0 
+          ? Math.max(...this.rootCategories.map(c => c.order || 0)) 
+          : -1;
+      }
+      
       const result = await client.models.Category.create({
         name: this.newCategory.name,
         description: this.newCategory.description || '',
+        parentCategoryID: this.newCategory.parentCategoryID,
         order: maxOrder + 1
       });
-      this.newCategory = { name: '', description: '' };
+      
+      // Reset form
+      this.newCategory = { name: '', description: '', parentCategoryID: null as string | null };
       
       // Access the id from the data property
       if (result && result.data && result.data.id) {
@@ -242,6 +285,91 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       description: category.description || ''
     };
   }
+  
+  toggleCategoryExpansion(categoryId: string, event: Event) {
+    event.stopPropagation();
+    if (this.expandedCategories.has(categoryId)) {
+      this.expandedCategories.delete(categoryId);
+    } else {
+      this.expandedCategories.add(categoryId);
+    }
+  }
+  
+  addSubcategory(parentId: string, event: Event) {
+    event.stopPropagation();
+    this.newCategory.parentCategoryID = parentId as string | null;
+    // Expand the parent category to show the new subcategory when created
+    this.expandedCategories.add(parentId);
+  }
+  
+  hasSubcategories(categoryId: string): boolean {
+    return this.subcategories[categoryId] && this.subcategories[categoryId].length > 0;
+  }
+  
+  getCategoryName(categoryId: string): string {
+    const category = this.categories.find(c => c.id === categoryId);
+    return category ? category.name : '';
+  }
+  
+  hasAncestor(category: any, potentialAncestorId: string): boolean {
+    if (!category || !category.parentCategoryID) return false;
+    if (category.parentCategoryID === potentialAncestorId) return true;
+    
+    const parentCategory = this.categories.find(c => c.id === category.parentCategoryID);
+    return this.hasAncestor(parentCategory, potentialAncestorId);
+  }
+  
+  async moveCategory(categoryId: string, newParentId: string | null) {
+    const category = this.categories.find(c => c.id === categoryId);
+    if (!category) return;
+    
+    // Prevent circular relationships
+    if (newParentId && (categoryId === newParentId || this.hasAncestor({ parentCategoryID: newParentId }, categoryId))) {
+      alert('Cannot move category: This would create a circular relationship.');
+      return;
+    }
+    
+    const confirmMessage = newParentId 
+      ? `Move "${category.name}" to become a subcategory?`
+      : `Promote "${category.name}" to a root category?`;
+    
+    if (confirm(confirmMessage)) {
+      try {
+        await client.models.Category.update({
+          id: categoryId,
+          parentCategoryID: newParentId
+        });
+        
+        // Expand the new parent if moving to a subcategory
+        if (newParentId) {
+          this.expandedCategories.add(newParentId);
+        }
+      } catch (error) {
+        console.error('Error moving category:', error);
+        alert('Failed to move category. Please try again.');
+      }
+    }
+  }
+  
+  promoteToRoot(categoryId: string) {
+    this.moveCategory(categoryId, null);
+  }
+  
+  async deleteSubcategoriesRecursively(parentId: string) {
+    if (!this.subcategories[parentId]) return;
+    
+    // Get all direct subcategories
+    const directSubcategories = this.subcategories[parentId];
+    
+    // For each subcategory
+    for (const subcategory of directSubcategories) {
+      // Delete its subcategories first (recursive)
+      await this.deleteSubcategoriesRecursively(subcategory.id);
+      
+      // Then delete the subcategory itself
+      await client.models.Category.delete({ id: subcategory.id });
+    }
+  }
 
   cancelEdit() {
     this.editingCategory = null;
@@ -254,7 +382,8 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       await client.models.Category.update({
         id: this.editingCategory.id,
         name: this.editingCategory.name,
-        description: this.editingCategory.description || ''
+        description: this.editingCategory.description || '',
+        parentCategoryID: this.editingCategory.parentCategoryID
       });
       this.editingCategory = null;
     } catch (error) {
@@ -265,8 +394,19 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   async deleteCategory(id: string) {
     if (!id) return;
     
-    if (confirm('Are you sure you want to delete this category? All associated events will also be deleted.')) {
+    // Check if category has subcategories
+    const hasSubcats = this.hasSubcategories(id);
+    let confirmMessage = 'Are you sure you want to delete this category? All associated events will also be deleted.';
+    if (hasSubcats) {
+      confirmMessage = 'This category has subcategories that will also be deleted. Are you sure you want to proceed?';
+    }
+    
+    if (confirm(confirmMessage)) {
       try {
+        // First delete all subcategories recursively
+        await this.deleteSubcategoriesRecursively(id);
+        
+        // Then delete the category itself
         await client.models.Category.delete({ id });
         
         // If the deleted category was selected, select another one
@@ -358,14 +498,19 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  onDragStart(event: DragEvent, index: number) {
-    this.draggedIndex = index;
+  onDragStart(event: DragEvent, categoryId: string) {
+    this.isDragging = true;
+    this.draggedCategoryId = categoryId;
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', categoryId);
     }
-    // Add visual feedback
-    const target = event.target as HTMLElement;
-    target.classList.add('dragging');
+    
+    // Add dragging class for visual feedback
+    const element = event.target as HTMLElement;
+    setTimeout(() => {
+      element.classList.add('dragging');
+    }, 0);
   }
 
   onDragOver(event: DragEvent) {
@@ -373,48 +518,70 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
-  }
-
-  async onDrop(event: DragEvent, dropIndex: number) {
-    event.preventDefault();
     
-    if (this.draggedIndex === dropIndex || this.draggedIndex === -1) return;
-    
-    const draggedCategory = this.categories[this.draggedIndex];
-    const newCategories = [...this.categories];
-    
-    // Remove dragged item
-    newCategories.splice(this.draggedIndex, 1);
-    // Insert at new position
-    newCategories.splice(dropIndex, 0, draggedCategory);
-    
-    // Update local array immediately for UI feedback
-    this.categories = newCategories;
-    
-    // Update order values in database
-    try {
-      const updatePromises = newCategories.map((category, index) => 
-        client.models.Category.update({
-          id: category.id,
-          name: category.name,
-          description: category.description,
-          order: index
-        })
-      );
-      
-      await Promise.all(updatePromises);
-      console.log('Category order updated successfully');
-    } catch (error) {
-      console.error('Error updating category order:', error);
-      // Reload categories on error
-      this.listCategories();
+    // Add visual feedback for drop zones
+    const element = event.target as HTMLElement;
+    const categoryItem = element.closest('.category-item');
+    if (categoryItem) {
+      categoryItem.classList.add('drag-over');
     }
   }
 
-  onDragEnd(event: DragEvent) {
-    this.draggedIndex = -1;
+  onDragLeave(event: DragEvent) {
     // Remove visual feedback
-    const target = event.target as HTMLElement;
-    target.classList.remove('dragging');
+    const element = event.target as HTMLElement;
+    const categoryItem = element.closest('.category-item');
+    if (categoryItem) {
+      categoryItem.classList.remove('drag-over');
+    }
+  }
+
+  onDrop(event: DragEvent, targetCategoryId?: string) {
+    event.preventDefault();
+    if (!this.isDragging || !this.draggedCategoryId) return;
+    
+    // Remove visual feedback
+    const element = event.target as HTMLElement;
+    const categoryItem = element.closest('.category-item');
+    if (categoryItem) {
+      categoryItem.classList.remove('drag-over');
+    }
+    
+    // Check if dropping on root area (promote to root)
+    const isRootDrop = element.closest('.categories-list') && !targetCategoryId;
+    
+    if (isRootDrop) {
+      this.moveCategory(this.draggedCategoryId, null);
+    } else if (targetCategoryId && targetCategoryId !== this.draggedCategoryId) {
+      // Prevent subcategory to subcategory movement
+      const draggedCategory = this.categories.find(c => c.id === this.draggedCategoryId);
+      const targetCategory = this.categories.find(c => c.id === targetCategoryId);
+      
+      if (draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
+        alert('Cannot move subcategory to another subcategory. Only root categories can have subcategories.');
+        this.isDragging = false;
+        this.draggedCategoryId = null;
+        return;
+      }
+      
+      this.moveCategory(this.draggedCategoryId, targetCategoryId);
+    }
+    
+    // Reset drag state
+    this.isDragging = false;
+    this.draggedCategoryId = null;
+  }
+
+  onDragEnd(event: DragEvent) {
+    this.isDragging = false;
+    this.draggedCategoryId = null;
+    
+    // Remove dragging class
+    const element = event.target as HTMLElement;
+    element.classList.remove('dragging');
+    
+    // Remove any remaining drag-over classes
+    const dragOverElements = document.querySelectorAll('.drag-over');
+    dragOverElements.forEach(el => el.classList.remove('drag-over'));
   }
 }

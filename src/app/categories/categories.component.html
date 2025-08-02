@@ -27,37 +27,90 @@
     </form>
 
     <!-- Categories list -->
-    <div class="categories-list">
+    <div class="categories-list" 
+         (dragover)="onDragOver($event)"
+         (drop)="onDrop($event)">
       <div *ngIf="categories.length === 0" class="empty-state">
         No categories yet. Create one to get started!
       </div>
 
-      <div *ngFor="let category of categories; let i = index"
-           class="category-item"
-           [class.active]="selectedCategoryId === category.id"
-           (click)="selectCategory(category.id)"
-           draggable="true"
-           (dragstart)="onDragStart($event, i)"
-           (dragover)="onDragOver($event)"
-           (drop)="onDrop($event, i)"
-           (dragend)="onDragEnd($event)">
-        <div class="category-header">
-          <h3 [title]="category.name">{{ category.name }}</h3>
-          <div class="category-actions">
-            <button (click)="startEdit(category); $event.stopPropagation()" class="icon-btn">
-              <i class="glyphicon glyphicon-pencil"></i>
-            </button>
-            <button (click)="deleteCategory(category.id); $event.stopPropagation()" class="icon-btn">
-              <i class="glyphicon glyphicon-trash"></i>
-            </button>
+      <!-- Root categories -->
+      <ng-container *ngFor="let category of rootCategories">
+        <div class="category-item"
+             [class.active]="selectedCategoryId === category.id"
+             (click)="selectCategory(category.id)"
+             draggable="true"
+             (dragstart)="onDragStart($event, category.id)"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event, category.id)"
+             (dragend)="onDragEnd($event)">
+          <div class="category-header">
+            <div class="category-title-section">
+              <button *ngIf="hasSubcategories(category.id)" 
+                      (click)="toggleCategoryExpansion(category.id, $event)" 
+                      class="expand-btn">
+                <i class="glyphicon" 
+                   [class.glyphicon-chevron-down]="expandedCategories.has(category.id)" 
+                   [class.glyphicon-chevron-right]="!expandedCategories.has(category.id)"></i>
+              </button>
+              <h3 [title]="category.name">{{ category.name }}</h3>
+            </div>
+            <div class="category-actions">
+              <button (click)="addSubcategory(category.id, $event)" class="icon-btn" title="Add subcategory">
+                <i class="glyphicon glyphicon-plus-sign"></i>
+              </button>
+              <button (click)="startEdit(category); $event.stopPropagation()" class="icon-btn" title="Edit category">
+                <i class="glyphicon glyphicon-pencil"></i>
+              </button>
+              <button (click)="deleteCategory(category.id); $event.stopPropagation()" class="icon-btn" title="Delete category">
+                <i class="glyphicon glyphicon-trash"></i>
+              </button>
+            </div>
+          </div>
+          <p *ngIf="category.description"
+             class="category-description"
+             [title]="category.description">
+            {{ category.description }}
+          </p>
+        </div>
+        
+        <!-- Subcategories (one level only) -->
+        <div *ngIf="expandedCategories.has(category.id) && subcategories[category.id]" class="subcategories-container">
+          <div *ngFor="let subcategory of subcategories[category.id]"
+               class="category-item subcategory-item"
+               [class.active]="selectedCategoryId === subcategory.id"
+               (click)="selectCategory(subcategory.id)"
+               draggable="true"
+               (dragstart)="onDragStart($event, subcategory.id)"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event, subcategory.id)"
+               (dragend)="onDragEnd($event)">
+            <div class="category-header">
+              <div class="category-title-section">
+                <h3 [title]="subcategory.name">{{ subcategory.name }}</h3>
+              </div>
+              <div class="category-actions">
+                <button (click)="promoteToRoot(subcategory.id); $event.stopPropagation()" class="icon-btn" title="Promote to root">
+                  <i class="glyphicon glyphicon-arrow-up"></i>
+                </button>
+                <button (click)="startEdit(subcategory); $event.stopPropagation()" class="icon-btn" title="Edit category">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                </button>
+                <button (click)="deleteCategory(subcategory.id); $event.stopPropagation()" class="icon-btn" title="Delete category">
+                  <i class="glyphicon glyphicon-trash"></i>
+                </button>
+              </div>
+            </div>
+            <p *ngIf="subcategory.description"
+               class="category-description"
+               [title]="subcategory.description">
+              {{ subcategory.description }}
+            </p>
           </div>
         </div>
-        <p *ngIf="category.description"
-           class="category-description"
-           [title]="category.description">
-          {{ category.description }}
-        </p>
-      </div>
+      </ng-container>
     </div>
   </div>
 
@@ -68,6 +121,9 @@
   <div class="events-content">
     <div *ngIf="selectedCategory" class="events-container">
       <h2>Events for {{ selectedCategory.name }}</h2>
+      <div *ngIf="selectedCategory.parentCategoryID" class="parent-category-info">
+        <span>Subcategory of: {{ getCategoryName(selectedCategory.parentCategoryID) }}</span>
+      </div>
 
       <!-- Add new event form -->
       <div class="add-event-form">
@@ -210,6 +266,17 @@
       name="editDescription"
       placeholder="Description (optional)"
     />
+    <div class="parent-category-selector">
+      <label for="parentCategory">Parent Category:</label>
+      <select [(ngModel)]="editingCategory.parentCategoryID" name="parentCategory" id="parentCategory">
+        <option [ngValue]="null">None (Root Category)</option>
+        <option *ngFor="let category of rootCategories" 
+                [ngValue]="category.id"
+                [disabled]="category.id === editingCategory.id">
+          {{ category.name }}
+        </option>
+      </select>
+    </div>
     <div class="edit-actions">
       <button (click)="saveEdit()" class="save-btn">Save</button>
       <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>

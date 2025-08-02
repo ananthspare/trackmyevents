@@ -6,6 +6,7 @@ const schema = a.schema({
       name: a.string(),
       description: a.string(),
       order: a.integer().default(0),
+      parentCategoryID: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 

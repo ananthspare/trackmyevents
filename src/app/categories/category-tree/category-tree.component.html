@@ -1,0 +1,74 @@
+<div class="category-tree">
+  <div class="actions">
+    <button mat-raised-button color="primary" (click)="openAddCategoryDialog()">
+      <mat-icon>add</mat-icon> Add Root Category
+    </button>
+  </div>
+  
+  <div class="tree-container">
+    <div *ngIf="rootCategories.length === 0" class="empty-state">
+      No categories yet. Create one to get started!
+    </div>
+    
+    <ng-container *ngTemplateOutlet="categoryTemplate; context: { categories: rootCategories }"></ng-container>
+  </div>
+</div>
+
+<!-- Recursive template for categories -->
+<ng-template #categoryTemplate let-categories="categories">
+  <div class="category-list">
+    <div *ngFor="let category of categories" 
+         class="category-item" 
+         [class.selected]="selectedCategoryId === category.id"
+         [class.root-category]="category.isRoot"
+         [attr.data-category-id]="category.id"
+         draggable="true"
+         (dragstart)="onDragStart($event, category, $event.target as HTMLElement)"
+         (dragover)="onDragOver($event, category, $event.target as HTMLElement)"
+         (dragleave)="onDragLeave($event, $event.target as HTMLElement)"
+         (drop)="onDrop($event, category)"
+         (dragend)="onDragEnd($event)">
+      
+      <div class="category-header" (click)="selectCategory(category.id)">
+        <div class="category-info">
+          <mat-icon *ngIf="category.children && category.children.length > 0">folder</mat-icon>
+          <mat-icon *ngIf="!category.children || category.children.length === 0">folder_open</mat-icon>
+          <span class="category-name">{{ category.name }}</span>
+        </div>
+        
+        <div class="category-actions">
+          <button mat-icon-button [matMenuTriggerFor]="menu" (click)="$event.stopPropagation()">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="openEditCategoryDialog(category); $event.stopPropagation()">
+              <mat-icon>edit</mat-icon>
+              <span>Edit</span>
+            </button>
+            <button mat-menu-item (click)="openAddSubcategoryDialog(category); $event.stopPropagation()">
+              <mat-icon>add</mat-icon>
+              <span>Add Subcategory</span>
+            </button>
+            <button *ngIf="!category.isRoot" mat-menu-item (click)="convertToRootCategory(category.id); $event.stopPropagation()">
+              <mat-icon>arrow_upward</mat-icon>
+              <span>Convert to Root</span>
+            </button>
+            <button *ngIf="!category.isRoot" mat-menu-item (click)="openMoveCategoryDialog(category); $event.stopPropagation()">
+              <mat-icon>drive_file_move</mat-icon>
+              <span>Move</span>
+            </button>
+            <button mat-menu-item (click)="deleteCategory(category.id); $event.stopPropagation()">
+              <mat-icon>delete</mat-icon>
+              <span>Delete</span>
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+      
+      <!-- Subcategories -->
+      <div *ngIf="category.children && category.children.length > 0" class="subcategories">
+        <ng-container *ngTemplateOutlet="categoryTemplate; context: { categories: category.children }"></ng-container>
+      </div>
+    </div>
+  </div>
+</ng-template>

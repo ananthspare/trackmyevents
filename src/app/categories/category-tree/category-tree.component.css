@@ -1,0 +1,129 @@
+.category-tree {
+  margin: 20px 0;
+}
+
+.actions {
+  margin-bottom: 20px;
+}
+
+.tree-container {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-item {
+  margin-bottom: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.category-header:hover {
+  background-color: #e0e0e0;
+}
+
+.category-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.subcategories {
+  margin-left: 20px;
+  padding-left: 10px;
+  border-left: 2px solid #e0e0e0;
+  margin-top: 4px;
+}
+
+.category-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.category-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.mat-menu-item {
+  display: flex;
+  align-items: center;
+}
+
+.mat-menu-item mat-icon {
+  margin-right: 8px;
+}
+
+.category-item.selected > .category-header {
+  background-color: #3f51b5;
+  color: white;
+}
+
+.category-item.selected > .category-header mat-icon {
+  color: white;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: #757575;
+  font-style: italic;
+}
+
+/* Drag and drop styles */
+.category-item.dragging {
+  opacity: 0.5;
+}
+
+.category-item.drop-before {
+  border-top: 2px solid #3f51b5;
+}
+
+.category-item.drop-after {
+  border-bottom: 2px solid #3f51b5;
+}
+
+.category-item.drop-inside > .category-header {
+  background-color: rgba(63, 81, 181, 0.2);
+}
+
+/* Root category indicator */
+.root-category > .category-header {
+  border-left: 4px solid #3f51b5;
+}
+
+/* Level indicators */
+.subcategories .category-header {
+  position: relative;
+}
+
+.subcategories .category-header::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background-color: #e0e0e0;
+}
