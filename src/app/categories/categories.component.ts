@@ -33,6 +33,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   isDragging = false;
   draggedIndex: number = -1;
   draggedCategoryId: string | null = null;
+  draggedEventId: string | null = null;
   expandedCategories: Set<string> = new Set();
   
   private categorySubscription: Subscription | null = null;
@@ -317,6 +318,10 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     return category ? category.name : '';
   }
   
+  getParentIds(): string[] {
+    return Object.keys(this.subcategories);
+  }
+  
   hasAncestor(category: any, potentialAncestorId: string): boolean {
     if (!category || !category.parentCategoryID) return false;
     if (category.parentCategoryID === potentialAncestorId) return true;
@@ -521,14 +526,16 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       this.editingEvent = { 
         ...event, 
         description: event.description || '',
-        targetDate: formattedDate
+        targetDate: formattedDate,
+        categoryID: event.categoryID
       };
     } catch (error) {
       console.error('Error formatting date', error);
       this.editingEvent = { 
         ...event, 
         description: event.description || '',
-        targetDate: ''
+        targetDate: '',
+        categoryID: event.categoryID
       };
     }
   }
@@ -537,16 +544,23 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.editingEvent = null;
   }
 
-  saveEditEvent() {
+  async saveEditEvent() {
     if (!this.editingEvent || !this.editingEvent.title.trim() || !this.editingEvent.targetDate) return;
     
     try {
-      client.models.Event.update({
+      await client.models.Event.update({
         id: this.editingEvent.id,
         title: this.editingEvent.title,
         description: this.editingEvent.description || '',
-        targetDate: new Date(this.editingEvent.targetDate).toISOString()
+        targetDate: new Date(this.editingEvent.targetDate).toISOString(),
+        categoryID: this.editingEvent.categoryID
       });
+      
+      // If category changed, refresh the current view
+      if (this.editingEvent.categoryID !== this.selectedCategoryId) {
+        this.listEvents(); // Refresh current category events
+      }
+      
       this.editingEvent = null;
     } catch (error) {
       console.error('Error updating event', error);
@@ -593,14 +607,20 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       // Remove existing position classes
       categoryItem.classList.remove('drag-over', 'drag-over-above', 'drag-over-below', 'drag-over-center');
       
-      // Determine position and add appropriate class
-      const position = this.getDropPosition(event, categoryItem);
-      if (position === 'center') {
+      if (this.draggedEventId) {
+        // Event being dragged - always show as move to category
         categoryItem.classList.add('drag-over-center');
-        categoryItem.setAttribute('data-drop-action', 'MOVE');
+        categoryItem.setAttribute('data-drop-action', 'MOVE EVENT');
       } else {
-        categoryItem.classList.add(`drag-over-${position}`);
-        categoryItem.setAttribute('data-drop-action', 'ARRANGE');
+        // Category being dragged - show position-based feedback
+        const position = this.getDropPosition(event, categoryItem);
+        if (position === 'center') {
+          categoryItem.classList.add('drag-over-center');
+          categoryItem.setAttribute('data-drop-action', 'MOVE');
+        } else {
+          categoryItem.classList.add(`drag-over-${position}`);
+          categoryItem.setAttribute('data-drop-action', 'ARRANGE');
+        }
       }
     }
   }
@@ -617,7 +637,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onDrop(event: DragEvent, targetCategoryId?: string) {
     event.preventDefault();
-    if (!this.isDragging || !this.draggedCategoryId) return;
+    if (!this.isDragging) return;
     
     // Remove visual feedback
     const element = event.target as HTMLElement;
@@ -627,76 +647,70 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       categoryItem.removeAttribute('data-drop-action');
     }
     
-    // Check if dropping on root area (promote to root)
-    const isRootDrop = element.closest('.categories-list') && !targetCategoryId;
-    
-    if (isRootDrop) {
-      this.moveCategory(this.draggedCategoryId, null);
-    } else if (targetCategoryId && targetCategoryId !== this.draggedCategoryId) {
-      const draggedCategory = this.categories.find(c => c.id === this.draggedCategoryId);
-      const targetCategory = this.categories.find(c => c.id === targetCategoryId);
+    if (this.draggedEventId && targetCategoryId) {
+      // Event being dropped on category
+      this.moveEventToCategory(this.draggedEventId, targetCategoryId);
+    } else if (this.draggedCategoryId) {
+      // Category being dropped - existing logic
+      const isRootDrop = element.closest('.categories-list') && !targetCategoryId;
       
-      // Determine drop position (center vs above/below)
-      const dropPosition = this.getDropPosition(event, categoryItem);
-      
-      if (dropPosition === 'center') {
-        // Center drop = Movement (change hierarchy)
-        const bothAreRoot = !draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
-        const subcategoryToRoot = draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
+      if (isRootDrop) {
+        this.moveCategory(this.draggedCategoryId, null);
+      } else if (targetCategoryId && targetCategoryId !== this.draggedCategoryId) {
+        const draggedCategory = this.categories.find(c => c.id === this.draggedCategoryId);
+        const targetCategory = this.categories.find(c => c.id === targetCategoryId);
         
-        if (bothAreRoot) {
-          // Root to root - make subcategory
-          this.moveCategory(this.draggedCategoryId, targetCategoryId);
-        } else if (subcategoryToRoot) {
-          // Move subcategory to different root category
-          this.moveCategory(this.draggedCategoryId, targetCategoryId);
-        } else {
-          if (!draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
-            alert('Cannot move root category to subcategory. Only root categories can have subcategories.');
+        const dropPosition = this.getDropPosition(event, categoryItem);
+        
+        if (dropPosition === 'center') {
+          const bothAreRoot = !draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
+          const subcategoryToRoot = draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
+          
+          if (bothAreRoot) {
+            this.moveCategory(this.draggedCategoryId, targetCategoryId);
+          } else if (subcategoryToRoot) {
+            this.moveCategory(this.draggedCategoryId, targetCategoryId);
           } else {
-            alert('Invalid move operation.');
+            if (!draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
+              alert('Cannot move root category to subcategory. Only root categories can have subcategories.');
+            } else {
+              alert('Invalid move operation.');
+            }
+            this.resetDragState();
+            return;
           }
-          this.isDragging = false;
-          this.draggedCategoryId = null;
-          return;
-        }
-      } else {
-        // Above/Below drop = Arrangement (reorder within same level)
-        const bothAreRoot = !draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
-        const bothAreSubcategoriesOfSameParent = draggedCategory?.parentCategoryID && 
-          targetCategory?.parentCategoryID && 
-          draggedCategory.parentCategoryID === targetCategory.parentCategoryID;
-        
-        if (bothAreRoot || bothAreSubcategoriesOfSameParent) {
-          this.reorderCategories(this.draggedCategoryId, targetCategoryId, dropPosition);
         } else {
-          alert('Can only reorder items within the same level.');
-          this.isDragging = false;
-          this.draggedCategoryId = null;
-          return;
+          const bothAreRoot = !draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
+          const bothAreSubcategoriesOfSameParent = draggedCategory?.parentCategoryID && 
+            targetCategory?.parentCategoryID && 
+            draggedCategory.parentCategoryID === targetCategory.parentCategoryID;
+          
+          if (bothAreRoot || bothAreSubcategoriesOfSameParent) {
+            this.reorderCategories(this.draggedCategoryId, targetCategoryId, dropPosition);
+          } else {
+            alert('Can only reorder items within the same level.');
+            this.resetDragState();
+            return;
+          }
         }
       }
     }
     
-    // Reset drag state and clean up all visual feedback
-    this.isDragging = false;
-    this.draggedCategoryId = null;
-    
-    // Clean up any remaining drag feedback
-    const allCategoryItems = document.querySelectorAll('.category-item');
-    allCategoryItems.forEach(item => {
-      item.classList.remove('drag-over', 'drag-over-above', 'drag-over-below', 'drag-over-center');
-      item.removeAttribute('data-drop-action');
-    });
+    this.resetDragState();
   }
 
   onDragEnd(event: DragEvent) {
-    this.isDragging = false;
-    this.draggedCategoryId = null;
-    
     // Remove dragging class
     const element = event.target as HTMLElement;
     element.classList.remove('dragging');
+    
+    this.resetDragState();
+  }
+  
+  resetDragState() {
+    this.isDragging = false;
+    this.draggedCategoryId = null;
+    this.draggedEventId = null;
     
     // Remove all drag feedback classes
     const allCategoryItems = document.querySelectorAll('.category-item');
@@ -704,5 +718,46 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       item.classList.remove('drag-over', 'drag-over-above', 'drag-over-below', 'drag-over-center');
       item.removeAttribute('data-drop-action');
     });
+    
+    const allEventItems = document.querySelectorAll('.event-item');
+    allEventItems.forEach(item => {
+      item.classList.remove('dragging');
+    });
+  }
+  
+  onEventDragStart(event: DragEvent, eventId: string) {
+    this.isDragging = true;
+    this.draggedEventId = eventId;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', eventId);
+    }
+    
+    const element = event.target as HTMLElement;
+    setTimeout(() => {
+      element.classList.add('dragging');
+    }, 0);
+  }
+  
+  onEventDragEnd(event: DragEvent) {
+    const element = event.target as HTMLElement;
+    element.classList.remove('dragging');
+    this.resetDragState();
+  }
+  
+  async moveEventToCategory(eventId: string, categoryId: string) {
+    try {
+      await client.models.Event.update({
+        id: eventId,
+        categoryID: categoryId
+      });
+      
+      // Refresh current category events if event was moved away
+      if (categoryId !== this.selectedCategoryId) {
+        this.listEvents();
+      }
+    } catch (error) {
+      console.error('Error moving event to category:', error);
+    }
   }
 }

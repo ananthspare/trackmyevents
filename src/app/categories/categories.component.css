@@ -389,6 +389,17 @@
   border-radius: 4px;
   border: 1px solid #eee;
   transition: background-color 0.2s ease;
+  cursor: grab;
+}
+
+.event-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.event-item.dragging {
+  opacity: 0.6;
+  transform: rotate(1deg);
+  z-index: 1000;
 }
 
 .event-item.even-row {
@@ -552,11 +563,28 @@
   gap: 8px;
 }
 
-.event-edit input {
+.event-edit input,
+.event-edit .category-select {
   padding: 6px;
   border: 1px solid #ddd;
   border-radius: 3px;
   font-size: 13px;
+}
+
+.category-select {
+  background-color: white;
+  cursor: pointer;
+  width: 100%;
+}
+
+.category-select optgroup {
+  font-weight: bold;
+  color: #333;
+}
+
+.category-select option {
+  font-weight: normal;
+  padding: 4px 8px;
 }
 
 .edit-actions {
@@ -743,6 +771,20 @@
   bottom: -15px;
   right: 5px;
   background: #FF9800;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 10;
+}
+.drag-over-center::after {
+  content: attr(data-drop-action);
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  background: #2196F3;
   color: white;
   padding: 2px 6px;
   border-radius: 3px;
