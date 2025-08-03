@@ -297,9 +297,15 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   
   addSubcategory(parentId: string, event: Event) {
     event.stopPropagation();
-    this.newCategory.parentCategoryID = parentId as string | null;
+    // Reset form and set parent
+    this.newCategory = { name: '', description: '', parentCategoryID: parentId };
     // Expand the parent category to show the new subcategory when created
     this.expandedCategories.add(parentId);
+    // Focus on name input
+    setTimeout(() => {
+      const nameInput = document.querySelector('input[name="categoryName"]') as HTMLInputElement;
+      if (nameInput) nameInput.focus();
+    }, 0);
   }
   
   hasSubcategories(categoryId: string): boolean {

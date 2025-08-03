@@ -94,11 +94,17 @@
   gap: 5px;
 }
 
-.add-category-form input {
+.add-category-form input,
+.add-category-form .parent-select {
   padding: 6px;
   border: 1px solid #ddd;
   border-radius: 3px;
   font-size: 13px;
+}
+
+.parent-select {
+  background-color: white;
+  cursor: pointer;
 }
 
 .add-category-form button {

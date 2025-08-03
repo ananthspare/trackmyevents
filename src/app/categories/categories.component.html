@@ -21,6 +21,12 @@
         name="categoryDescription"
         placeholder="Description (optional)"
       />
+      <select [(ngModel)]="newCategory.parentCategoryID" name="parentCategory" class="parent-select">
+        <option [ngValue]="null">Root Category</option>
+        <option *ngFor="let category of rootCategories" [ngValue]="category.id">
+          {{ category.name }}
+        </option>
+      </select>
       <button type="submit">
         <i class="glyphicon glyphicon-plus"></i>
       </button>
