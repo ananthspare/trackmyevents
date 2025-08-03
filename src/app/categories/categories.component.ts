@@ -49,7 +49,6 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.initDraggableSidebar();
     this.initResizeHandle();
   }
 
@@ -67,39 +66,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  initDraggableSidebar(): void {
-    const sidebar = this.elementRef.nativeElement.querySelector('#categoriesSidebar');
-    const dragHandle = this.elementRef.nativeElement.querySelector('#dragHandle');
-    
-    if (!sidebar || !dragHandle) return;
-    
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
-    dragHandle.onmousedown = (e: MouseEvent) => {
-      e.preventDefault();
-      this.isDragging = true;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      
-      document.onmousemove = (e: MouseEvent) => {
-        if (!this.isDragging) return;
-        
-        e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        
-        sidebar.style.left = (sidebar.offsetLeft - pos1) + "px";
-      };
-      
-      document.onmouseup = () => {
-        this.isDragging = false;
-        document.onmouseup = null;
-        document.onmousemove = null;
-      };
-    };
-  }
+
 
   initResizeHandle(): void {
     const resizeHandle = this.elementRef.nativeElement.querySelector('#resizeHandle');

@@ -1,9 +1,8 @@
 <div class="two-column-layout">
   <!-- Left Column: Categories (with draggable handle) -->
   <div class="categories-sidebar" id="categoriesSidebar">
-    <div class="sidebar-header" id="dragHandle">
+    <div class="sidebar-header">
       <h2>Categories</h2>
-      <i class="glyphicon glyphicon-move drag-handle"></i>
     </div>
 
     <!-- Add new category form -->
@@ -27,8 +26,9 @@
           {{ category.name }}
         </option>
       </select>
-      <button type="submit">
+      <button type="submit" class="add-category-btn">
         <i class="glyphicon glyphicon-plus"></i>
+        <span>Add Category</span>
       </button>
     </form>
 

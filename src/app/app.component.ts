@@ -34,4 +34,16 @@ export class AppComponent {
   setActiveTab(tab: string) {
     this.activeTab = tab;
   }
+
+  getUserDisplayName(user: any): string {
+    const firstName = user?.signInDetails?.loginId || '';
+    const userAttributes = user?.signInDetails?.authFlowType === 'USER_SRP_AUTH' ? user : user?.attributes;
+    const givenName = userAttributes?.given_name || userAttributes?.['custom:given_name'];
+    const familyName = userAttributes?.family_name || userAttributes?.['custom:family_name'];
+    
+    if (givenName && familyName) {
+      return `${givenName} ${familyName}`;
+    }
+    return firstName;
+  }
 }

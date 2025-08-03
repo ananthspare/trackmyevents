@@ -69,22 +69,12 @@
 }
 
 .sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 10px;
-  cursor: move;
-  user-select: none;
 }
 
 .sidebar-header h2 {
   margin: 0;
   font-size: 18px;
-}
-
-.drag-handle {
-  color: #999;
-  cursor: move;
 }
 
 .add-category-form {
@@ -107,19 +97,29 @@
   cursor: pointer;
 }
 
-.add-category-form button {
-  align-self: flex-end;
+.add-category-btn {
+  align-self: stretch;
   background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 3px;
-  padding: 6px;
+  padding: 8px 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  height: 28px;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.add-category-btn:hover {
+  background-color: #45a049;
+}
+
+.add-category-btn i {
+  font-size: 12px;
 }
 
 .categories-list {

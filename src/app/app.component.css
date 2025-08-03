@@ -4,29 +4,80 @@
   flex-direction: column;
 }
 
-header {
-  background-color: #3f51b5;
+header.title-board {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 8px 15px;
+  padding: 15px 30px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.header-top {
+
+
+header.title-board::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  pointer-events: none;
+}
+
+.header-unified {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 2;
   margin-bottom: 10px;
 }
 
-header h1 {
+.main-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  flex: 1;
+  text-align: center;
 }
 
-.main-nav {
+.title-accent {
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #ffd700, #ff6b6b, #4ecdc4, transparent);
+  margin-top: 12px;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  header.title-board {
+    padding: 15px 20px;
+  }
+  
+  .header-unified {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .main-title {
+    font-size: 18px;
+  }
+  
+  .nav-buttons {
+    margin: 0;
+  }
+}
+
+.nav-buttons {
   display: flex;
   gap: 5px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  padding-top: 8px;
+  min-width: 200px;
 }
 
 .nav-btn {
@@ -83,4 +134,140 @@ footer {
   text-align: center;
   padding: 6px;
   font-size: 12px;
+}
+/* Authentication Header Styling */
+.auth-header {
+  text-align: center;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  pointer-events: none;
+}
+
+.auth-title {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-subtitle {
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.9;
+  font-weight: 300;
+  position: relative;
+  z-index: 1;
+}
+
+/* Override Amplify Authenticator Styles */
+amplify-authenticator {
+  --amplify-components-authenticator-router-background-color: #f8f9fa;
+  --amplify-components-authenticator-router-border-radius: 12px;
+  --amplify-components-authenticator-router-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --amplify-components-button-primary-background-color: #667eea;
+  --amplify-components-button-primary-hover-background-color: #5a6fd8;
+  --amplify-components-fieldcontrol-focus-box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+}
+
+@media (max-width: 768px) {
+  .auth-header {
+    padding: 20px 15px;
+  }
+  
+  .auth-title {
+    font-size: 24px;
+  }
+  
+  .auth-subtitle {
+    font-size: 14px;
+  }
+}
+/* Fix Authentication Error Styling */
+amplify-authenticator [data-amplify-authenticator-error] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 14px;
+  color: #c33;
+}
+
+amplify-authenticator [data-amplify-authenticator-error] amplify-icon {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  flex-shrink: 0;
+}
+
+amplify-authenticator [data-amplify-authenticator-error] [data-amplify-authenticator-error-text] {
+  font-size: 14px !important;
+  line-height: 1.4;
+  margin: 0;
+}
+/* Fix Authentication Error Styling */
+amplify-authenticator .amplify-alert--error {
+  font-size: 14px !important;
+}
+
+amplify-authenticator .amplify-alert--error amplify-icon {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+}
+
+amplify-authenticator .amplify-alert amplify-icon {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+}
+
+amplify-authenticator amplify-icon {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+}
+/* Fix Authentication Error Styling */
+amplify-error {
+  font-size: 14px !important;
+}
+
+amplify-error amplify-icon {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+}
+/* Fix Authentication Error Styling */
+amplify-error .amplify-alert--error {
+  font-size: 14px !important;
+}
+
+amplify-error .amplify-icon {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+amplify-error .amplify-alert--error > div > div {
+  font-size: 14px !important;
 }
