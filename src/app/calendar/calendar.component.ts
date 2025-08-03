@@ -147,7 +147,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
       case 'day':
         this.filteredEvents = this.events.filter(event => {
           const eventDate = new Date(event.targetDate);
-          return this.isSameDay(eventDate, today);
+          return this.isSameDay(eventDate, this.selectedDate);
         });
         break;
         
@@ -232,6 +232,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
         });
         break;
         
+      case 'allPassed':
+        this.filteredEvents = this.events.filter(event => {
+          const eventDate = new Date(event.targetDate);
+          return eventDate < today;
+        });
+        break;
+        
       case 'month':
       default:
         this.filteredEvents = this.events.filter(event => {
@@ -257,7 +264,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     
     switch (this.viewType) {
       case 'day':
-        return `Events for Today`;
+        return `Events for ${this.selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
       case 'week':
         return `Events for This Week`;
       case 'next2':
@@ -276,6 +283,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
       case 'pastMonth':
         const pastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         return `Events from ${this.monthNames[pastMonth.getMonth()]} ${pastMonth.getFullYear()}`;
+      case 'allPassed':
+        return `All Passed Events`;
       case 'month':
       default:
         return `Events for ${this.monthNames[this.currentMonth]} ${this.currentYear}`;
