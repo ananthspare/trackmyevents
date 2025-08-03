@@ -116,6 +116,11 @@
           <strong>Description:</strong>
           <span>{{ selectedEvent.description }}</span>
         </div>
+        
+        <div class="detail-row">
+          <strong>Category:</strong>
+          <span>{{ getCategoryName(selectedEvent.categoryID) }}</span>
+        </div>
       </div>
 
       <!-- Edit Mode -->
@@ -133,6 +138,14 @@
         <div class="form-group">
           <label>Description:</label>
           <textarea [(ngModel)]="editingEventData.description" class="form-textarea"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Category:</label>
+          <select [(ngModel)]="editingEventData.categoryID" class="form-input">
+            <option value="">No Category</option>
+            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+          </select>
         </div>
         
         <div class="edit-actions">

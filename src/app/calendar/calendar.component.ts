@@ -22,6 +22,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   calendarDays: any[] = [];
   events: any[] = [];
   filteredEvents: any[] = [];
+  categories: any[] = [];
   viewType = 'month';
   selectedEvent: any = null;
   selectedEventCountdown: any = null;
@@ -33,8 +34,18 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.generateCalendar();
+    this.loadCategories();
     this.loadEvents();
     this.filterEvents();
+  }
+
+  async loadCategories() {
+    try {
+      const result = await client.models.Category.list();
+      this.categories = result.data || [];
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
   }
 
   ngOnDestroy() {
@@ -298,7 +309,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.editingEventData = {
       title: this.selectedEvent.title,
       description: this.selectedEvent.description || '',
-      targetDate: this.formatDateForInput(this.selectedEvent.targetDate)
+      targetDate: this.formatDateForInput(this.selectedEvent.targetDate),
+      categoryID: this.selectedEvent.categoryID || ''
     };
   }
 
@@ -308,7 +320,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
         id: this.selectedEvent.id,
         title: this.editingEventData.title,
         description: this.editingEventData.description,
-        targetDate: this.editingEventData.targetDate
+        targetDate: this.editingEventData.targetDate,
+        categoryID: this.editingEventData.categoryID
       });
       
       // Update local data
@@ -365,5 +378,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
       
       this.selectedEventCountdown = { days, hours, minutes, seconds, expired: false };
     }
+  }
+
+  getCategoryName(categoryID: string): string {
+    const category = this.categories.find(cat => cat.id === categoryID);
+    return category ? category.name : 'No Category';
   }
 }
