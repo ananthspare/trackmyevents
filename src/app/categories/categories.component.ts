@@ -319,6 +319,37 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.hasAncestor(parentCategory, potentialAncestorId);
   }
   
+  async reorderCategories(draggedId: string, targetId: string) {
+    const draggedCategory = this.categories.find(c => c.id === draggedId);
+    const targetCategory = this.categories.find(c => c.id === targetId);
+    if (!draggedCategory || !targetCategory) return;
+    
+    try {
+      // Get the appropriate list for reordering
+      const isRoot = !draggedCategory.parentCategoryID;
+      const categoryList = isRoot ? this.rootCategories : this.subcategories[draggedCategory.parentCategoryID!];
+      
+      const draggedIndex = categoryList.findIndex(c => c.id === draggedId);
+      const targetIndex = categoryList.findIndex(c => c.id === targetId);
+      
+      if (draggedIndex === -1 || targetIndex === -1) return;
+      
+      // Reorder the array
+      const [removed] = categoryList.splice(draggedIndex, 1);
+      categoryList.splice(targetIndex, 0, removed);
+      
+      // Update order values in database
+      for (let i = 0; i < categoryList.length; i++) {
+        await client.models.Category.update({
+          id: categoryList[i].id,
+          order: i
+        });
+      }
+    } catch (error) {
+      console.error('Error reordering categories:', error);
+    }
+  }
+  
   async moveCategory(categoryId: string, newParentId: string | null) {
     const category = this.categories.find(c => c.id === categoryId);
     if (!category) return;
@@ -553,27 +584,39 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (isRootDrop) {
       this.moveCategory(this.draggedCategoryId, null);
     } else if (targetCategoryId && targetCategoryId !== this.draggedCategoryId) {
-      // Prevent invalid movements in single-level hierarchy
       const draggedCategory = this.categories.find(c => c.id === this.draggedCategoryId);
       const targetCategory = this.categories.find(c => c.id === targetCategoryId);
       
-      // Prevent subcategory to subcategory movement
-      if (draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
-        alert('Cannot move subcategory to another subcategory. Only root categories can have subcategories.');
+      // Allow reordering within same level and moving subcategories between root categories
+      const bothAreRoot = !draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
+      const bothAreSubcategoriesOfSameParent = draggedCategory?.parentCategoryID && 
+        targetCategory?.parentCategoryID && 
+        draggedCategory.parentCategoryID === targetCategory.parentCategoryID;
+      const subcategoryToRoot = draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID;
+      
+      if (bothAreRoot) {
+        // Reorder root categories
+        this.reorderCategories(this.draggedCategoryId, targetCategoryId);
+      } else if (bothAreSubcategoriesOfSameParent) {
+        // Reorder subcategories within same parent
+        this.reorderCategories(this.draggedCategoryId, targetCategoryId);
+      } else if (!draggedCategory?.parentCategoryID && !targetCategory?.parentCategoryID) {
+        // Root to root - make subcategory
+        this.moveCategory(this.draggedCategoryId, targetCategoryId);
+      } else if (subcategoryToRoot) {
+        // Move subcategory to different root category
+        this.moveCategory(this.draggedCategoryId, targetCategoryId);
+      } else {
+        // Invalid movements
+        if (!draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
+          alert('Cannot move root category to subcategory. Only root categories can have subcategories.');
+        } else {
+          alert('Invalid move operation.');
+        }
         this.isDragging = false;
         this.draggedCategoryId = null;
         return;
       }
-      
-      // Prevent root category to subcategory movement
-      if (!draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
-        alert('Cannot move root category to subcategory. Only root categories can have subcategories.');
-        this.isDragging = false;
-        this.draggedCategoryId = null;
-        return;
-      }
-      
-      this.moveCategory(this.draggedCategoryId, targetCategoryId);
     }
     
     // Reset drag state
