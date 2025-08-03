@@ -553,12 +553,21 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (isRootDrop) {
       this.moveCategory(this.draggedCategoryId, null);
     } else if (targetCategoryId && targetCategoryId !== this.draggedCategoryId) {
-      // Prevent subcategory to subcategory movement
+      // Prevent invalid movements in single-level hierarchy
       const draggedCategory = this.categories.find(c => c.id === this.draggedCategoryId);
       const targetCategory = this.categories.find(c => c.id === targetCategoryId);
       
+      // Prevent subcategory to subcategory movement
       if (draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
         alert('Cannot move subcategory to another subcategory. Only root categories can have subcategories.');
+        this.isDragging = false;
+        this.draggedCategoryId = null;
+        return;
+      }
+      
+      // Prevent root category to subcategory movement
+      if (!draggedCategory?.parentCategoryID && targetCategory?.parentCategoryID) {
+        alert('Cannot move root category to subcategory. Only root categories can have subcategories.');
         this.isDragging = false;
         this.draggedCategoryId = null;
         return;
