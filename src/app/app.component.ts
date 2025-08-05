@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Amplify } from 'aws-amplify';
@@ -6,6 +6,8 @@ import outputs from '../../amplify_outputs.json';
 import { AmplifyAuthenticatorModule, AuthenticatorService } from '@aws-amplify/ui-angular';
 import { CategoriesComponent } from './categories/categories.component';
 import { CalendarComponent } from './calendar/calendar.component';
+import { TourComponent } from './tour/tour.component';
+import { TourService } from './tour/tour.service';
 
 // Configure Amplify
 Amplify.configure(outputs);
@@ -19,19 +21,28 @@ Amplify.configure(outputs);
     RouterModule,
     AmplifyAuthenticatorModule,
     CategoriesComponent,
-    CalendarComponent
+    CalendarComponent,
+    TourComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'Event Countdown App';
   currentYear = new Date().getFullYear();
   activeTab = 'categories';
   
   @ViewChild('categoriesRef') categoriesComponent!: CategoriesComponent;
 
-  constructor(public authenticator: AuthenticatorService) {}
+  constructor(public authenticator: AuthenticatorService, private tourService: TourService) {}
+  
+  ngOnInit() {
+    this.tourService.setAppComponent(this);
+  }
+  
+  startTour() {
+    this.tourService.startTour();
+  }
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
