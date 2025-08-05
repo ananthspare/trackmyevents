@@ -35,9 +35,12 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   draggedCategoryId: string | null = null;
   draggedEventId: string | null = null;
   expandedCategories: Set<string> = new Set();
+  highlightedEventId: string | null = null;
   
   private categorySubscription: Subscription | null = null;
   private eventSubscription: Subscription | null = null;
+  
+
 
   constructor(private elementRef: ElementRef) {}
 
@@ -46,6 +49,8 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     
     // Update countdowns every second
     this.countdownInterval = setInterval(() => this.updateCountdowns(), 1000);
+    
+
   }
 
   ngAfterViewInit(): void {
@@ -726,5 +731,46 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     } catch (error) {
       console.error('Error moving event to category:', error);
     }
+  }
+  
+  highlightEvent(eventId: string) {
+    this.highlightedEventId = eventId;
+    
+    // Scroll to the highlighted event
+    setTimeout(() => {
+      const eventElement = document.querySelector(`[data-event-id="${eventId}"]`);
+      if (eventElement) {
+        eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+    
+    // Remove highlight after 2 seconds
+    setTimeout(() => {
+      this.highlightedEventId = null;
+    }, 2000);
+  }
+  
+  navigateToEvent(eventId: string, categoryId: string) {
+    const tryNavigate = () => {
+      const category = this.categories.find(cat => cat.id === categoryId);
+      if (!category) {
+        setTimeout(tryNavigate, 100);
+        return;
+      }
+      
+      if (category.parentCategoryID) {
+        this.expandedCategories.add(category.parentCategoryID);
+      }
+      
+      this.selectCategory(categoryId);
+      
+      setTimeout(() => {
+        if (this.events.some(event => event.id === eventId)) {
+          this.highlightEvent(eventId);
+        }
+      }, 500);
+    };
+    
+    tryNavigate();
   }
 }

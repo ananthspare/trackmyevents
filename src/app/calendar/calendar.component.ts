@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
@@ -31,6 +31,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
   editingEventData: any = {};
   monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
+    
+  @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
   ngOnInit() {
     this.generateCalendar();
@@ -392,5 +394,9 @@ export class CalendarComponent implements OnInit, OnDestroy {
   getCategoryName(categoryID: string): string {
     const category = this.categories.find(cat => cat.id === categoryID);
     return category ? category.name : 'No Category';
+  }
+  
+  navigateToEventInCategories(eventId: string, categoryId: string) {
+    this.navigateToCategories.emit({ eventId, categoryId });
   }
 }

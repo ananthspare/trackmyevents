@@ -34,6 +34,9 @@
             <div *ngIf="event.description" class="event-description">{{ event.description }}</div>
           </div>
           <div class="event-actions">
+            <button class="navigate-btn" (click)="navigateToEventInCategories(event.id, event.categoryID)" title="Go to Categories">
+              <i class="glyphicon glyphicon-folder-open"></i>
+            </button>
             <button class="delete-btn" (click)="deleteEvent(event.id)" title="Delete Event">
               <i class="glyphicon glyphicon-trash"></i>
             </button>

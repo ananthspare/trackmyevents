@@ -165,6 +165,8 @@
              class="event-item" 
              [class.even-row]="i % 2 === 0" 
              [class.odd-row]="i % 2 === 1"
+             [class.highlighted]="highlightedEventId === event.id"
+             [attr.data-event-id]="event.id"
              draggable="true"
              (dragstart)="onEventDragStart($event, event.id)"
              (dragend)="onEventDragEnd($event)">

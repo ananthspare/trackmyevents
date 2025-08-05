@@ -45,8 +45,8 @@
       </header>
 
       <main>
-        <app-categories *ngIf="activeTab === 'categories'"></app-categories>
-        <app-calendar *ngIf="activeTab === 'calendar'"></app-calendar>
+        <app-categories *ngIf="activeTab === 'categories'" #categoriesRef></app-categories>
+        <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-calendar>
       </main>
 
       <footer>

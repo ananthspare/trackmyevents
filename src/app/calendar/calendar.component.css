@@ -102,10 +102,26 @@
   gap: 5px;
   opacity: 0;
   transition: opacity 0.2s;
+  align-items: center;
 }
 
 .event-item:hover .event-actions {
   opacity: 1;
+}
+
+.navigate-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.navigate-btn:hover {
+  background-color: #e3f2fd;
+  color: #2196f3;
 }
 
 .delete-btn {

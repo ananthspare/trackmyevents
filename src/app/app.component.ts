@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Amplify } from 'aws-amplify';
@@ -28,11 +28,27 @@ export class AppComponent {
   title = 'Event Countdown App';
   currentYear = new Date().getFullYear();
   activeTab = 'categories';
+  
+  @ViewChild('categoriesRef') categoriesComponent!: CategoriesComponent;
 
   constructor(public authenticator: AuthenticatorService) {}
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
+  }
+  
+  navigateToEventInCategories(eventId: string, categoryId: string) {
+    this.activeTab = 'categories';
+    
+    const tryNavigate = () => {
+      if (this.categoriesComponent) {
+        this.categoriesComponent.navigateToEvent(eventId, categoryId);
+      } else {
+        setTimeout(tryNavigate, 100);
+      }
+    };
+    
+    setTimeout(tryNavigate, 100);
   }
 
   getUserDisplayName(user: any): string {
