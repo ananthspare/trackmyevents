@@ -5,6 +5,7 @@ import { generateClient } from 'aws-amplify/data';
 import { getCurrentUser, updateUserAttributes, fetchUserAttributes } from 'aws-amplify/auth';
 import type { Schema } from '../../../amplify/data/resource';
 import { EmailService } from '../email/email.service';
+import { UserService } from '../user/user.service';
 
 const client = generateClient<Schema>();
 
@@ -32,7 +33,7 @@ export class ProfileComponent implements OnInit {
   isLoading = false;
   message = '';
 
-  constructor(private emailService: EmailService) {}
+  constructor(private emailService: EmailService, private userService: UserService) {}
 
   async ngOnInit() {
     await this.loadUserProfile();
@@ -83,6 +84,7 @@ export class ProfileComponent implements OnInit {
         }
       });
       this.message = 'Profile updated successfully!';
+      this.userService.notifyUserUpdated();
       setTimeout(() => this.message = '', 3000);
     } catch (error) {
       console.error('Error updating profile:', error);

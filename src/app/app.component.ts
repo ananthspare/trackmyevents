@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, AfterViewInit } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Amplify } from 'aws-amplify';
@@ -10,6 +10,7 @@ import { CalendarComponent } from './calendar/calendar.component';
 import { TourComponent } from './tour/tour.component';
 import { ProfileComponent } from './profile/profile.component';
 import { TourService } from './tour/tour.service';
+import { UserService } from './user/user.service';
 
 // Configure Amplify
 Amplify.configure(outputs);
@@ -30,7 +31,7 @@ Amplify.configure(outputs);
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
   title = 'Event Countdown App';
   currentYear = new Date().getFullYear();
   activeTab = 'categories';
@@ -38,13 +39,29 @@ export class AppComponent implements OnInit {
   
   @ViewChild('categoriesRef') categoriesComponent!: CategoriesComponent;
 
-  constructor(public authenticator: AuthenticatorService, private tourService: TourService) {}
+  constructor(public authenticator: AuthenticatorService, private tourService: TourService, private userService: UserService) {
+    // Subscribe to user updates
+    this.userService.userUpdated$.subscribe(() => {
+      this.refreshUserDisplayName();
+    });
+  }
   
   async ngOnInit() {
     this.tourService.setAppComponent(this);
+    await this.refreshUserDisplayName();
+  }
+
+  async refreshUserDisplayName() {
     if (this.authenticator.user) {
       this.userDisplayName = await this.getUserDisplayName(this.authenticator.user);
     }
+  }
+
+  async ngAfterViewInit() {
+    // Refresh display name after view is initialized
+    setTimeout(async () => {
+      await this.refreshUserDisplayName();
+    }, 100);
   }
   
   startTour() {
@@ -75,12 +92,12 @@ export class AppComponent implements OnInit {
       const givenName = attributes.given_name;
       const familyName = attributes.family_name;
       
-      if (givenName && familyName) {
-        return `${givenName} ${familyName}`;
+      if (givenName || familyName) {
+        return `${givenName || ''} ${familyName || ''}`.trim();
       }
     } catch (error) {
       console.error('Error fetching user attributes:', error);
     }
-    return user?.signInDetails?.loginId || '';
+    return user?.signInDetails?.loginId || 'User';
   }
 }
