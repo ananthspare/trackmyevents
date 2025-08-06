@@ -1,0 +1,85 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <h2>Profile & Settings</h2>
+    <div *ngIf="message" class="message" [class.success]="message.includes('successfully')">
+      {{ message }}
+    </div>
+  </div>
+
+  <div class="profile-sections">
+    <!-- User Profile Section -->
+    <div class="profile-section">
+      <h3>Personal Information</h3>
+      <form (ngSubmit)="saveProfile()" class="profile-form">
+        <div class="form-group">
+          <label>Email:</label>
+          <input type="email" [(ngModel)]="userProfile.email" name="email" readonly class="form-input readonly">
+        </div>
+        
+        <div class="form-group">
+          <label>First Name:</label>
+          <input type="text" [(ngModel)]="userProfile.given_name" name="given_name" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Last Name:</label>
+          <input type="text" [(ngModel)]="userProfile.family_name" name="family_name" class="form-input">
+        </div>
+        
+        <button type="submit" class="save-btn" [disabled]="isLoading">
+          {{ isLoading ? 'Saving...' : 'Save Profile' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Notification Preferences Section -->
+    <div class="profile-section">
+      <h3>Notification Preferences</h3>
+      <form (ngSubmit)="savePreferences()" class="profile-form">
+        <div class="form-group">
+          <label>Notification Email:</label>
+          <input type="email" [(ngModel)]="userPreferences.email" name="notificationEmail" class="form-input">
+          <small class="form-help">Email address for event reminders</small>
+        </div>
+        
+        <div class="form-group">
+          <label>Daily Reminder Time:</label>
+          <input type="time" [(ngModel)]="userPreferences.dailyReminderTime" name="dailyTime" class="form-input">
+          <small class="form-help">Time to receive daily event reminders</small>
+        </div>
+        
+        <div class="form-group">
+          <label>Weekly Reminder Day:</label>
+          <select [(ngModel)]="userPreferences.weeklyReminderDay" name="weeklyDay" class="form-input">
+            <option value="monday">Monday</option>
+            <option value="tuesday">Tuesday</option>
+            <option value="wednesday">Wednesday</option>
+            <option value="thursday">Thursday</option>
+            <option value="friday">Friday</option>
+            <option value="saturday">Saturday</option>
+            <option value="sunday">Sunday</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Weekly Reminder Time:</label>
+          <input type="time" [(ngModel)]="userPreferences.weeklyReminderTime" name="weeklyTime" class="form-input">
+          <small class="form-help">Time to receive weekly event reminders</small>
+        </div>
+        
+        <button type="submit" class="save-btn" [disabled]="isLoading">
+          {{ isLoading ? 'Saving...' : 'Save Preferences' }}
+        </button>
+        
+        <div class="test-buttons">
+          <button type="button" class="test-btn" (click)="testDailyEmail()">
+            Test Daily Events
+          </button>
+          <button type="button" class="test-btn" (click)="testWeeklyEmail()">
+            Test Weekly Events
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

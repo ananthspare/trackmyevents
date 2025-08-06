@@ -2,11 +2,13 @@ import { Component, ViewChild, OnInit } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Amplify } from 'aws-amplify';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 import outputs from '../../amplify_outputs.json';
 import { AmplifyAuthenticatorModule, AuthenticatorService } from '@aws-amplify/ui-angular';
 import { CategoriesComponent } from './categories/categories.component';
 import { CalendarComponent } from './calendar/calendar.component';
 import { TourComponent } from './tour/tour.component';
+import { ProfileComponent } from './profile/profile.component';
 import { TourService } from './tour/tour.service';
 
 // Configure Amplify
@@ -22,7 +24,8 @@ Amplify.configure(outputs);
     AmplifyAuthenticatorModule,
     CategoriesComponent,
     CalendarComponent,
-    TourComponent
+    TourComponent,
+    ProfileComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -31,13 +34,17 @@ export class AppComponent implements OnInit {
   title = 'Event Countdown App';
   currentYear = new Date().getFullYear();
   activeTab = 'categories';
+  userDisplayName = '';
   
   @ViewChild('categoriesRef') categoriesComponent!: CategoriesComponent;
 
   constructor(public authenticator: AuthenticatorService, private tourService: TourService) {}
   
-  ngOnInit() {
+  async ngOnInit() {
     this.tourService.setAppComponent(this);
+    if (this.authenticator.user) {
+      this.userDisplayName = await this.getUserDisplayName(this.authenticator.user);
+    }
   }
   
   startTour() {
@@ -62,15 +69,18 @@ export class AppComponent implements OnInit {
     setTimeout(tryNavigate, 100);
   }
 
-  getUserDisplayName(user: any): string {
-    const firstName = user?.signInDetails?.loginId || '';
-    const userAttributes = user?.signInDetails?.authFlowType === 'USER_SRP_AUTH' ? user : user?.attributes;
-    const givenName = userAttributes?.given_name || userAttributes?.['custom:given_name'];
-    const familyName = userAttributes?.family_name || userAttributes?.['custom:family_name'];
-    
-    if (givenName && familyName) {
-      return `${givenName} ${familyName}`;
+  async getUserDisplayName(user: any): Promise<string> {
+    try {
+      const attributes = await fetchUserAttributes();
+      const givenName = attributes.given_name;
+      const familyName = attributes.family_name;
+      
+      if (givenName && familyName) {
+        return `${givenName} ${familyName}`;
+      }
+    } catch (error) {
+      console.error('Error fetching user attributes:', error);
     }
-    return firstName;
+    return user?.signInDetails?.loginId || '';
   }
 }

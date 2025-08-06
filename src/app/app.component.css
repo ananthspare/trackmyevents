@@ -77,7 +77,7 @@ header.title-board::before {
 .nav-buttons {
   display: flex;
   gap: 5px;
-  min-width: 200px;
+  min-width: 280px;
 }
 
 .nav-btn {

@@ -26,6 +26,15 @@ const schema = a.schema({
       eventID: a.string(),
     })
     .authorization(allow => [allow.owner()]),
+
+  UserPreferences: a
+    .model({
+      email: a.string(),
+      dailyReminderTime: a.string().default('09:00'),
+      weeklyReminderDay: a.string().default('monday'),
+      weeklyReminderTime: a.string().default('09:00'),
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
