@@ -27,9 +27,11 @@
         <div *ngFor="let event of filteredEvents; let i = index" 
              class="event-item" 
              [class.even-row]="i % 2 === 0" 
-             [class.odd-row]="i % 2 === 1">
+             [class.odd-row]="i % 2 === 1"
+             draggable="true"
+             (dragstart)="onDragStart(event, $event)">
           <div class="event-content" (click)="openEventPopup(event)">
-            <div class="event-title">{{ event.title }}</div>
+            <div class="event-title">📅 {{ event.title }}</div>
             <div class="event-date">{{ event.targetDate | date:'MMM d, y h:mm a' }}</div>
             <div *ngIf="event.description" class="event-description">{{ event.description }}</div>
           </div>
@@ -73,7 +75,9 @@
         [class.other-month]="!day.isCurrentMonth"
         [class.today]="day.isToday"
         [class.has-events]="day.events.length > 0"
-        (click)="selectDay(day.date)">
+        (click)="selectDay(day.date)"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop(day, $event)">
         
         <div class="day-number">{{ day.day }}</div>
         
@@ -191,6 +195,34 @@
         <div class="todos-container">
           <app-todo-list [eventId]="selectedEvent.id"></app-todo-list>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Date/Time Selection Modal -->
+<div *ngIf="showDateTimeModal" class="modal-overlay" (click)="closeDateTimeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Set New Date & Time</h3>
+      <button class="close-btn" (click)="closeDateTimeModal()">
+        <i class="glyphicon glyphicon-remove"></i>
+      </button>
+    </div>
+    
+    <div class="datetime-form">
+      <div class="form-group">
+        <label>Event: {{ draggedEvent?.title }}</label>
+      </div>
+      
+      <div class="form-group">
+        <label>New Date & Time:</label>
+        <input type="datetime-local" [(ngModel)]="newDateTime" class="form-input">
+      </div>
+      
+      <div class="modal-actions">
+        <button class="save-btn" (click)="confirmDateTimeChange()">Update Event</button>
+        <button class="cancel-btn" (click)="closeDateTimeModal()">Cancel</button>
       </div>
     </div>
   </div>

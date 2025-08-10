@@ -31,6 +31,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
   editingEventData: any = {};
   monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
+  draggedEvent: any = null;
+  showDateTimeModal = false;
+  dropTargetDate = '';
+  newDateTime = '';
     
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
@@ -398,5 +402,51 @@ export class CalendarComponent implements OnInit, OnDestroy {
   
   navigateToEventInCategories(eventId: string, categoryId: string) {
     this.navigateToCategories.emit({ eventId, categoryId });
+  }
+  
+  onDragStart(event: any, dragEvent: DragEvent) {
+    this.draggedEvent = event;
+    if (dragEvent.dataTransfer) {
+      dragEvent.dataTransfer.effectAllowed = 'move';
+    }
+  }
+  
+  onDragOver(dragEvent: DragEvent) {
+    dragEvent.preventDefault();
+    if (dragEvent.dataTransfer) {
+      dragEvent.dataTransfer.dropEffect = 'move';
+    }
+  }
+  
+  onDrop(day: any, dragEvent: DragEvent) {
+    dragEvent.preventDefault();
+    if (this.draggedEvent) {
+      this.dropTargetDate = day.date.toISOString().split('T')[0];
+      this.newDateTime = this.dropTargetDate + 'T09:00';
+      this.showDateTimeModal = true;
+    }
+  }
+  
+  async confirmDateTimeChange() {
+    if (this.draggedEvent && this.newDateTime) {
+      try {
+        await client.models.Event.update({
+          id: this.draggedEvent.id,
+          targetDate: this.newDateTime
+        });
+        
+        await this.loadEvents();
+        this.closeDateTimeModal();
+      } catch (error) {
+        console.error('Error updating event date:', error);
+      }
+    }
+  }
+  
+  closeDateTimeModal() {
+    this.showDateTimeModal = false;
+    this.draggedEvent = null;
+    this.dropTargetDate = '';
+    this.newDateTime = '';
   }
 }
