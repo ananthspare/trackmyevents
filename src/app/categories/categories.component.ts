@@ -5,6 +5,7 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { RouterModule } from '@angular/router';
 import { TodoListComponent } from '../todo-list/todo-list.component';
+import { TimezoneService } from '../shared/timezone.service';
 
 import { Subscription } from 'rxjs';
 
@@ -42,15 +43,14 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   
 
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(private elementRef: ElementRef, private timezoneService: TimezoneService) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.timezoneService.loadUserTimezone();
     this.listCategories();
     
     // Update countdowns every second
     this.countdownInterval = setInterval(() => this.updateCountdowns(), 1000);
-    
-
   }
 
   ngAfterViewInit(): void {
@@ -475,10 +475,11 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.newEvent.title.trim() || !this.newEvent.targetDate || !this.selectedCategoryId) return;
     
     try {
+      const utcDateTime = this.timezoneService.convertToUTC(this.newEvent.targetDate);
       client.models.Event.create({
         title: this.newEvent.title,
         description: this.newEvent.description || '',
-        targetDate: new Date(this.newEvent.targetDate).toISOString(),
+        targetDate: utcDateTime,
         categoryID: this.selectedCategoryId
       });
       this.newEvent = { title: '', description: '', targetDate: '' };
@@ -491,14 +492,12 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!event) return;
     
     try {
-      const date = new Date(event.targetDate);
-      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      const formattedDate = localDate.toISOString().slice(0, 16);
+      const localDateTime = this.timezoneService.convertFromUTC(event.targetDate);
       
       this.editingEvent = { 
         ...event, 
         description: event.description || '',
-        targetDate: formattedDate,
+        targetDate: localDateTime,
         categoryID: event.categoryID
       };
     } catch (error) {
@@ -520,11 +519,13 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.editingEvent || !this.editingEvent.title.trim() || !this.editingEvent.targetDate) return;
     
     try {
+      const utcDateTime = this.timezoneService.convertToUTC(this.editingEvent.targetDate);
+      
       await client.models.Event.update({
         id: this.editingEvent.id,
         title: this.editingEvent.title,
         description: this.editingEvent.description || '',
-        targetDate: new Date(this.editingEvent.targetDate).toISOString(),
+        targetDate: utcDateTime,
         categoryID: this.editingEvent.categoryID
       });
       

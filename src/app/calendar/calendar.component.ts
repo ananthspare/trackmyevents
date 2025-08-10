@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { TodoListComponent } from '../todo-list/todo-list.component';
+import { TimezoneService } from '../shared/timezone.service';
 
 const client = generateClient<Schema>();
 
@@ -38,7 +39,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
     
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
-  ngOnInit() {
+  constructor(private timezoneService: TimezoneService) {}
+
+  async ngOnInit() {
+    await this.timezoneService.loadUserTimezone();
     this.generateCalendar();
     this.loadCategories();
     this.loadEvents();
@@ -331,18 +335,20 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   async saveEventEdit() {
     try {
+      const utcDateTime = this.timezoneService.convertToUTC(this.editingEventData.targetDate);
+      
       await client.models.Event.update({
         id: this.selectedEvent.id,
         title: this.editingEventData.title,
         description: this.editingEventData.description,
-        targetDate: this.editingEventData.targetDate,
+        targetDate: utcDateTime,
         categoryID: this.editingEventData.categoryID
       });
       
       // Update local data
       this.selectedEvent.title = this.editingEventData.title;
       this.selectedEvent.description = this.editingEventData.description;
-      this.selectedEvent.targetDate = this.editingEventData.targetDate;
+      this.selectedEvent.targetDate = utcDateTime;
       
       // Refresh events and calendar
       await this.loadEvents();
@@ -430,9 +436,11 @@ export class CalendarComponent implements OnInit, OnDestroy {
   async confirmDateTimeChange() {
     if (this.draggedEvent && this.newDateTime) {
       try {
+        const utcDateTime = this.timezoneService.convertToUTC(this.newDateTime);
+        
         await client.models.Event.update({
           id: this.draggedEvent.id,
-          targetDate: this.newDateTime
+          targetDate: utcDateTime
         });
         
         await this.loadEvents();
