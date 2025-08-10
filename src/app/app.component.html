@@ -36,15 +36,16 @@
             </button>
             <button
               class="nav-btn"
-              [class.active]="activeTab === 'profile'"
-              (click)="setActiveTab('profile')">
-              Profile
+              [class.active]="activeTab === 'planner'"
+              (click)="setActiveTab('planner')">
+              Planner
             </button>
           </div>
           <h1 class="main-title">Track your events with categories and real-time countdowns</h1>
           <div class="user-info">
             <button (click)="startTour()" class="tour-btn">Tour</button>
             <span>Hello, {{userDisplayName || 'User'}}</span>
+            <button (click)="setActiveTab('profile')" class="profile-btn">Profile</button>
             <button (click)="signOut()" class="sign-out-btn">Sign Out</button>
           </div>
         </div>
@@ -55,6 +56,7 @@
         <app-categories *ngIf="activeTab === 'categories'" #categoriesRef></app-categories>
         <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-calendar>
         <app-profile *ngIf="activeTab === 'profile'"></app-profile>
+        <app-day-planner *ngIf="activeTab === 'planner'"></app-day-planner>
       </main>
 
       <footer>

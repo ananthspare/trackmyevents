@@ -9,6 +9,7 @@ import { CategoriesComponent } from './categories/categories.component';
 import { CalendarComponent } from './calendar/calendar.component';
 import { TourComponent } from './tour/tour.component';
 import { ProfileComponent } from './profile/profile.component';
+import { DayPlannerComponent } from './day-planner/day-planner.component';
 import { TourService } from './tour/tour.service';
 import { UserService } from './user/user.service';
 
@@ -26,7 +27,8 @@ Amplify.configure(outputs);
     CategoriesComponent,
     CalendarComponent,
     TourComponent,
-    ProfileComponent
+    ProfileComponent,
+    DayPlannerComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',

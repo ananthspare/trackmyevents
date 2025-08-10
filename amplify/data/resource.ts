@@ -30,9 +30,16 @@ const schema = a.schema({
   UserPreferences: a
     .model({
       email: a.string(),
-      dailyReminderTime: a.string().default('09:00'),
-      weeklyReminderDay: a.string().default('monday'),
-      weeklyReminderTime: a.string().default('09:00'),
+      enableDailyReminders: a.boolean().default(false),
+      enableWeeklyReminders: a.boolean().default(false),
+      timezone: a.string().default('UTC'),
+    })
+    .authorization(allow => [allow.owner()]),
+
+  DayPlan: a
+    .model({
+      date: a.string(),
+      tasks: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 });

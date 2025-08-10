@@ -25,9 +25,9 @@ export class ProfileComponent implements OnInit {
   
   userPreferences = {
     email: '',
-    dailyReminderTime: '09:00',
-    weeklyReminderDay: 'monday',
-    weeklyReminderTime: '09:00'
+    enableDailyReminders: false,
+    enableWeeklyReminders: false,
+    timezone: 'UTC'
   };
   
   isLoading = false;
@@ -61,16 +61,26 @@ export class ProfileComponent implements OnInit {
         const prefs = result.data[0];
         this.userPreferences = {
           email: prefs.email || this.userProfile.email,
-          dailyReminderTime: prefs.dailyReminderTime || '09:00',
-          weeklyReminderDay: prefs.weeklyReminderDay || 'monday',
-          weeklyReminderTime: prefs.weeklyReminderTime || '09:00'
+          enableDailyReminders: prefs.enableDailyReminders || false,
+          enableWeeklyReminders: prefs.enableWeeklyReminders || false,
+          timezone: prefs.timezone || 'UTC'
         };
       } else {
-        this.userPreferences.email = this.userProfile.email;
+        this.userPreferences = {
+          email: this.userProfile.email,
+          enableDailyReminders: false,
+          enableWeeklyReminders: false,
+          timezone: 'UTC'
+        };
       }
     } catch (error) {
       console.error('Error loading preferences from DDB:', error);
-      this.userPreferences.email = this.userProfile.email;
+      this.userPreferences = {
+        email: this.userProfile.email,
+        enableDailyReminders: false,
+        enableWeeklyReminders: false,
+        timezone: 'UTC'
+      };
     }
   }
 
