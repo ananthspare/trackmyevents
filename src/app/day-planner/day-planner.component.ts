@@ -391,6 +391,16 @@ export class DayPlannerComponent implements OnInit {
   }
   
   async copyToNextDay() {
+    const taskCount = this.timeSlots.filter(slot => slot.task.trim()).length;
+    if (taskCount === 0) {
+      alert('No tasks to copy!');
+      return;
+    }
+    
+    if (!confirm(`Copy ${taskCount} tasks to next day?`)) {
+      return;
+    }
+    
     this.copying = true;
     
     try {
@@ -405,31 +415,42 @@ export class DayPlannerComponent implements OnInit {
         }
       });
       
-      if (Object.keys(tasks).length > 0) {
-        const existing = await client.models.DayPlan.list({
-          filter: { date: { eq: nextDateStr } }
+      const existing = await client.models.DayPlan.list({
+        filter: { date: { eq: nextDateStr } }
+      });
+      
+      if (existing.data && existing.data.length > 0) {
+        await client.models.DayPlan.update({
+          id: existing.data[0].id,
+          tasks: JSON.stringify(tasks)
         });
-        
-        if (existing.data && existing.data.length > 0) {
-          await client.models.DayPlan.update({
-            id: existing.data[0].id,
-            tasks: JSON.stringify(tasks)
-          });
-        } else {
-          await client.models.DayPlan.create({
-            date: nextDateStr,
-            tasks: JSON.stringify(tasks)
-          });
-        }
+      } else {
+        await client.models.DayPlan.create({
+          date: nextDateStr,
+          tasks: JSON.stringify(tasks)
+        });
       }
+      
+      alert('Tasks copied to next day!');
     } catch (error) {
       console.error('Error copying to next day:', error);
+      alert('Error copying tasks. Please try again.');
     } finally {
       this.copying = false;
     }
   }
   
   async copyToWeek() {
+    const taskCount = this.timeSlots.filter(slot => slot.task.trim()).length;
+    if (taskCount === 0) {
+      alert('No tasks to copy!');
+      return;
+    }
+    
+    if (!confirm(`Copy ${taskCount} tasks to the next 7 days?`)) {
+      return;
+    }
+    
     this.copying = true;
     
     try {
@@ -440,39 +461,39 @@ export class DayPlannerComponent implements OnInit {
         }
       });
       
-      if (Object.keys(tasks).length > 0) {
-        const promises = [];
+      const promises = [];
+      
+      for (let i = 1; i <= 7; i++) {
+        const targetDate = new Date(this.selectedDate);
+        targetDate.setDate(targetDate.getDate() + i);
+        const targetDateStr = targetDate.toISOString().split('T')[0];
         
-        for (let i = 1; i <= 7; i++) {
-          const targetDate = new Date(this.selectedDate);
-          targetDate.setDate(targetDate.getDate() + i);
-          const targetDateStr = targetDate.toISOString().split('T')[0];
-          
-          const existing = await client.models.DayPlan.list({
-            filter: { date: { eq: targetDateStr } }
-          });
-          
-          if (existing.data && existing.data.length > 0) {
-            promises.push(
-              client.models.DayPlan.update({
-                id: existing.data[0].id,
-                tasks: JSON.stringify(tasks)
-              })
-            );
-          } else {
-            promises.push(
-              client.models.DayPlan.create({
-                date: targetDateStr,
-                tasks: JSON.stringify(tasks)
-              })
-            );
-          }
+        const existing = await client.models.DayPlan.list({
+          filter: { date: { eq: targetDateStr } }
+        });
+        
+        if (existing.data && existing.data.length > 0) {
+          promises.push(
+            client.models.DayPlan.update({
+              id: existing.data[0].id,
+              tasks: JSON.stringify(tasks)
+            })
+          );
+        } else {
+          promises.push(
+            client.models.DayPlan.create({
+              date: targetDateStr,
+              tasks: JSON.stringify(tasks)
+            })
+          );
         }
-        
-        await Promise.all(promises);
       }
+      
+      await Promise.all(promises);
+      alert('Tasks copied to next 7 days!');
     } catch (error) {
       console.error('Error copying to week:', error);
+      alert('Error copying tasks. Please try again.');
     } finally {
       this.copying = false;
     }
