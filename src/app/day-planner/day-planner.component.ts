@@ -44,23 +44,23 @@ interface TimeSlot {
           </button>
         </div>
       </div>
-      
+
       <div class="planner-table">
         <div class="time-slot" *ngFor="let slot of timeSlots; trackBy: trackByTime">
           <div class="time-label">{{ slot.timeRange }}</div>
           <div class="slot-content">
-            <input 
-              type="text" 
-              [(ngModel)]="slot.task" 
+            <textarea
+              [(ngModel)]="slot.task"
               placeholder="Add task..."
-              class="task-input">
+              class="task-input"
+              rows="1"></textarea>
             <div *ngFor="let event of slot.events" class="event-item">
               📅 {{ event.title }}
             </div>
           </div>
         </div>
       </div>
-      
+
       <div class="planner-footer">
         <button (click)="saveAllTasks()" [disabled]="saving" class="save-all-btn">
           {{ saving ? 'Saving...' : 'Save All Tasks' }}
@@ -70,144 +70,204 @@ interface TimeSlot {
   `,
   styles: [`
     .planner-container {
-      max-width: 600px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 30px;
+      min-height: 100vh;
     }
-    
+
     .planner-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    
+
     .header-actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
-    
+
     .planner-header h2 {
       margin: 0;
       color: #333;
+      font-size: 28px;
+      font-weight: 600;
     }
-    
+
     .date-input {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    
-    .planner-table {
-      border: 1px solid #ddd;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
       border-radius: 8px;
-      overflow: hidden;
+      font-size: 16px;
+      min-width: 160px;
     }
-    
+
+    .date-input:focus {
+      border-color: #2196f3;
+      outline: none;
+    }
+
+    .planner-table {
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
     .time-slot {
       display: flex;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #f0f0f0;
+      min-height: 50px;
     }
-    
+
     .time-slot:last-child {
       border-bottom: none;
     }
-    
+
+    .time-slot:hover {
+      background: #fafafa;
+    }
+
     .time-label {
       width: 120px;
-      padding: 12px;
+      padding: 10px;
       background: #f8f9fa;
-      border-right: 1px solid #eee;
-      font-weight: 500;
-      font-size: 11px;
+      border-right: 2px solid #e0e0e0;
+      font-weight: 600;
+      font-size: 12px;
       display: flex;
       align-items: center;
+      justify-content: center;
+      color: #555;
     }
-    
+
     .task-input {
       flex: 1;
-      padding: 12px;
+      padding: 10px 15px;
       border: none;
       outline: none;
       font-size: 14px;
+      line-height: 1.4;
+      resize: none;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      min-height: 20px;
+      max-height: 80px;
+      overflow-y: auto;
+      font-family: inherit;
     }
-    
+
     .task-input:focus {
       background: #f0f4f8;
     }
-    
+
+    .task-input::placeholder {
+      color: #999;
+      font-style: italic;
+    }
+
     .slot-content {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4px;
+      padding: 4px 0;
     }
-    
+
     .event-item {
       background: #e3f2fd;
-      padding: 4px 8px;
-      border-radius: 3px;
+      padding: 6px 12px;
+      margin: 0 12px;
+      border-radius: 4px;
       font-size: 12px;
       color: #1976d2;
       border-left: 3px solid #2196f3;
+      font-weight: 500;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.3;
     }
-    
+
     .save-all-btn {
       background: #4CAF50;
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
+      padding: 8px 16px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
+      transition: all 0.2s;
     }
-    
+
     .save-all-btn:hover:not(:disabled) {
       background: #45a049;
+      transform: translateY(-1px);
     }
-    
+
     .save-all-btn:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
-    
+
     .planner-footer {
       text-align: center;
       margin-top: 20px;
+      padding: 10px;
     }
-    
+
     .copy-btn {
       background: #2196F3;
       color: white;
       border: none;
-      padding: 8px 16px;
+      padding: 8px 12px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
     }
-    
+
     .copy-btn:hover:not(:disabled) {
       background: #1976D2;
+      transform: translateY(-1px);
     }
-    
+
     .copy-btn:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
-    
+
     .time-range {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 12px;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
     }
-    
+
     .time-range select {
-      padding: 4px;
-      border: 1px solid #ddd;
-      border-radius: 3px;
-      font-size: 12px;
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 80px;
+    }
+
+    .time-range select:focus {
+      border-color: #2196f3;
+      outline: none;
+    }
+
+    .time-range label {
+      color: #555;
+      font-weight: 600;
     }
   `]
 })
@@ -216,12 +276,12 @@ export class DayPlannerComponent implements OnInit {
   timeSlots: TimeSlot[] = [];
   saving = false;
   copying = false;
-  startHour = 9;
-  endHour = 17;
+  startHour = 6;
+  endHour = 21;
   userTimezone = 'UTC';
 
   hours = Array.from({length: 24}, (_, i) => i);
-  
+
   ngOnInit() {
     this.generateTimeSlots();
     this.loadPlan();
@@ -229,28 +289,28 @@ export class DayPlannerComponent implements OnInit {
 
   generateTimeSlots() {
     this.timeSlots = [];
-    
+
     const start = Math.min(this.startHour, this.endHour);
     const end = Math.max(this.startHour, this.endHour);
-    
+
     for (let hour = start; hour <= end; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         // Skip the last 30-minute slot if we're at the end hour
         if (hour === end && minute === 30) {
           break;
         }
-        
+
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         const nextMinute = minute + 30;
         const nextHour = nextMinute >= 60 ? hour + 1 : hour;
         const adjustedMinute = nextMinute >= 60 ? 0 : nextMinute;
         const endTime = `${nextHour.toString().padStart(2, '0')}:${adjustedMinute.toString().padStart(2, '0')}`;
         const timeRange = `${time} - ${endTime}`;
-        
+
         this.timeSlots.push({ time, timeRange, task: '', events: [] });
       }
     }
-    
+
     if (this.timeSlots.length > 0) {
       this.loadPlan();
     }
@@ -260,16 +320,16 @@ export class DayPlannerComponent implements OnInit {
     try {
       // Load user timezone
       await this.loadUserTimezone();
-      
+
       const result = await client.models.DayPlan.list({
         filter: { date: { eq: this.selectedDate } }
       });
-      
+
       this.timeSlots.forEach(slot => {
         slot.task = '';
         slot.events = [];
       });
-      
+
       if (result.data && result.data.length > 0) {
         const dayPlan = result.data[0];
         if (dayPlan.tasks) {
@@ -279,7 +339,7 @@ export class DayPlannerComponent implements OnInit {
           });
         }
       }
-      
+
       // Load events for this date
       await this.loadEvents();
     } catch (error) {
@@ -289,7 +349,7 @@ export class DayPlannerComponent implements OnInit {
 
   async saveAllTasks() {
     this.saving = true;
-    
+
     try {
       // Create tasks object from time slots
       const tasks: { [key: string]: string } = {};
@@ -298,12 +358,12 @@ export class DayPlannerComponent implements OnInit {
           tasks[slot.time] = slot.task;
         }
       });
-      
+
       // Get existing plan for this date
       const existing = await client.models.DayPlan.list({
         filter: { date: { eq: this.selectedDate } }
       });
-      
+
       if (existing.data && existing.data.length > 0) {
         // Update existing plan
         await client.models.DayPlan.update({
@@ -327,7 +387,26 @@ export class DayPlannerComponent implements OnInit {
   trackByTime(index: number, slot: TimeSlot): string {
     return slot.time;
   }
-  
+
+  async testConnection() {
+    try {
+      console.log('Testing Amplify connection...');
+      
+      // Test categories
+      const categoriesResult = await client.models.Category.list();
+      console.log('Categories result:', categoriesResult);
+      
+      // Test events
+      const eventsResult = await client.models.Event.list();
+      console.log('Events result:', eventsResult);
+      
+      alert(`Connection OK!\nCategories: ${categoriesResult.data?.length || 0}\nEvents: ${eventsResult.data?.length || 0}`);
+    } catch (error: any) {
+      console.error('Connection test failed:', error);
+      alert('Connection failed: ' + (error?.message || 'Unknown error'));
+    }
+  }
+
   async loadUserTimezone() {
     try {
       const prefs = await client.models.UserPreferences.list();
@@ -338,11 +417,11 @@ export class DayPlannerComponent implements OnInit {
       console.error('Error loading timezone:', error);
     }
   }
-  
+
   async loadEvents() {
     try {
       const events = await client.models.Event.list();
-      
+
       if (events.data) {
         events.data.forEach(event => {
           if (event.targetDate) {
@@ -354,7 +433,7 @@ export class DayPlannerComponent implements OnInit {
               month: '2-digit',
               day: '2-digit'
             }).format(eventDate);
-            
+
             if (eventInUserTz === this.selectedDate) {
               const eventTimeInUserTz = new Intl.DateTimeFormat('en-GB', {
                 timeZone: this.userTimezone,
@@ -362,9 +441,9 @@ export class DayPlannerComponent implements OnInit {
                 minute: '2-digit',
                 hour12: false
               }).format(eventDate);
-              
+
               const slot = this.timeSlots.find(s => s.time === eventTimeInUserTz);
-              
+
               if (slot) {
                 slot.events.push(event);
               } else {
@@ -375,7 +454,7 @@ export class DayPlannerComponent implements OnInit {
                 const slotHour = Math.floor(slotMinutes / 60);
                 const slotMin = slotMinutes % 60;
                 const slotTime = `${slotHour.toString().padStart(2, '0')}:${slotMin.toString().padStart(2, '0')}`;
-                
+
                 const closestSlot = this.timeSlots.find(s => s.time === slotTime);
                 if (closestSlot) {
                   closestSlot.events.push(event);
@@ -389,36 +468,36 @@ export class DayPlannerComponent implements OnInit {
       console.error('Error loading events:', error);
     }
   }
-  
+
   async copyToNextDay() {
     const taskCount = this.timeSlots.filter(slot => slot.task.trim()).length;
     if (taskCount === 0) {
       alert('No tasks to copy!');
       return;
     }
-    
+
     if (!confirm(`Copy ${taskCount} tasks to next day?`)) {
       return;
     }
-    
+
     this.copying = true;
-    
+
     try {
       const nextDate = new Date(this.selectedDate);
       nextDate.setDate(nextDate.getDate() + 1);
       const nextDateStr = nextDate.toISOString().split('T')[0];
-      
+
       const tasks: { [key: string]: string } = {};
       this.timeSlots.forEach(slot => {
         if (slot.task.trim()) {
           tasks[slot.time] = slot.task;
         }
       });
-      
+
       const existing = await client.models.DayPlan.list({
         filter: { date: { eq: nextDateStr } }
       });
-      
+
       if (existing.data && existing.data.length > 0) {
         await client.models.DayPlan.update({
           id: existing.data[0].id,
@@ -430,7 +509,7 @@ export class DayPlannerComponent implements OnInit {
           tasks: JSON.stringify(tasks)
         });
       }
-      
+
       alert('Tasks copied to next day!');
     } catch (error) {
       console.error('Error copying to next day:', error);
@@ -439,20 +518,20 @@ export class DayPlannerComponent implements OnInit {
       this.copying = false;
     }
   }
-  
+
   async copyToWeek() {
     const taskCount = this.timeSlots.filter(slot => slot.task.trim()).length;
     if (taskCount === 0) {
       alert('No tasks to copy!');
       return;
     }
-    
+
     if (!confirm(`Copy ${taskCount} tasks to the next 7 days?`)) {
       return;
     }
-    
+
     this.copying = true;
-    
+
     try {
       const tasks: { [key: string]: string } = {};
       this.timeSlots.forEach(slot => {
@@ -460,18 +539,18 @@ export class DayPlannerComponent implements OnInit {
           tasks[slot.time] = slot.task;
         }
       });
-      
+
       const promises = [];
-      
+
       for (let i = 1; i <= 7; i++) {
         const targetDate = new Date(this.selectedDate);
         targetDate.setDate(targetDate.getDate() + i);
         const targetDateStr = targetDate.toISOString().split('T')[0];
-        
+
         const existing = await client.models.DayPlan.list({
           filter: { date: { eq: targetDateStr } }
         });
-        
+
         if (existing.data && existing.data.length > 0) {
           promises.push(
             client.models.DayPlan.update({
@@ -488,7 +567,7 @@ export class DayPlannerComponent implements OnInit {
           );
         }
       }
-      
+
       await Promise.all(promises);
       alert('Tasks copied to next 7 days!');
     } catch (error) {

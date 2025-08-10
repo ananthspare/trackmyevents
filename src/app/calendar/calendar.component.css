@@ -109,6 +109,21 @@
   opacity: 1;
 }
 
+.edit-btn {
+  background: #e3f2fd;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.edit-btn:hover {
+  background-color: #2196f3;
+  color: white;
+}
+
 .navigate-btn {
   background: none;
   border: none;
@@ -229,6 +244,35 @@
   margin-bottom: 4px;
 }
 
+.add-event-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 10;
+}
+
+.calendar-day:hover .add-event-btn {
+  opacity: 1;
+}
+
+.add-event-btn:hover {
+  background-color: #45a049;
+  transform: scale(1.1);
+}
+
 .events-preview {
   display: flex;
   flex-direction: column;
@@ -257,27 +301,27 @@
     flex-direction: column;
     height: auto;
   }
-  
+
   .events-sidebar {
     width: 100%;
     max-height: 40vh;
     margin-bottom: 10px;
   }
-  
+
   .calendar-container {
     padding: 10px;
   }
-  
+
   .calendar-day {
     min-height: 60px;
     padding: 4px;
   }
-  
+
   .day-header {
     padding: 6px 2px;
     font-size: 11px;
   }
-  
+
   .event-dot {
     font-size: 8px;
   }

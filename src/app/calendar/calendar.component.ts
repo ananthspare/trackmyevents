@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
 import { TodoListComponent } from '../todo-list/todo-list.component';
+import { TimezoneService } from '../shared/timezone.service';
 
 const client = generateClient<Schema>();
 
@@ -35,10 +36,24 @@ export class CalendarComponent implements OnInit, OnDestroy {
   showDateTimeModal = false;
   dropTargetDate = '';
   newDateTime = '';
+  showCreateEventModal = false;
+  selectedDateForEvent = '';
+  newEventData = {
+    title: '',
+    description: '',
+    targetDate: '',
+    categoryID: '',
+    subcategoryID: ''
+  };
+  subcategories: any[] = [];
+  editingSubcategories: any[] = [];
     
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
-  ngOnInit() {
+  constructor(private timezoneService: TimezoneService) {}
+
+  async ngOnInit() {
+    await this.timezoneService.loadUserTimezone();
     this.generateCalendar();
     this.loadCategories();
     this.loadEvents();
@@ -49,6 +64,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     try {
       const result = await client.models.Category.list();
       this.categories = result.data || [];
+      console.log('Loaded categories:', this.categories.length, this.categories);
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -85,6 +101,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     try {
       const result = await client.models.Event.list();
       this.events = result.data || [];
+      console.log('Loaded events:', this.events.length, this.events);
       this.mapEventsToCalendar();
       this.filterEvents();
     } catch (error) {
@@ -139,6 +156,12 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.selectedDate = new Date(date);
     this.viewType = 'day';
     this.filterEvents();
+  }
+
+  openCreateEventModal(date: Date) {
+    this.selectedDateForEvent = date.toISOString().split('T')[0];
+    this.newEventData.targetDate = this.selectedDateForEvent + 'T09:00';
+    this.showCreateEventModal = true;
   }
 
   onViewChange() {
@@ -319,30 +342,56 @@ export class CalendarComponent implements OnInit, OnDestroy {
     }
   }
 
-  startEditEvent() {
+  async startEditEvent(event?: any) {
+    if (event) {
+      this.selectedEvent = event;
+    }
     this.isEditingEvent = true;
+    
+    // Find if current category is a subcategory
+    const currentCategory = this.categories.find(c => c.id === this.selectedEvent.categoryID);
+    let rootCategoryID = '';
+    let subcategoryID = '';
+    
+    if (currentCategory) {
+      if (currentCategory.parentCategoryID) {
+        // It's a subcategory
+        rootCategoryID = currentCategory.parentCategoryID;
+        subcategoryID = currentCategory.id;
+        await this.loadEditingSubcategories(rootCategoryID);
+      } else {
+        // It's a root category
+        rootCategoryID = currentCategory.id;
+      }
+    }
+    
     this.editingEventData = {
       title: this.selectedEvent.title,
       description: this.selectedEvent.description || '',
       targetDate: this.formatDateForInput(this.selectedEvent.targetDate),
-      categoryID: this.selectedEvent.categoryID || ''
+      categoryID: this.selectedEvent.categoryID || '',
+      rootCategoryID: rootCategoryID,
+      subcategoryID: subcategoryID
     };
+    this.openEventPopup(this.selectedEvent);
   }
 
   async saveEventEdit() {
     try {
+      const utcDateTime = this.timezoneService.convertToUTC(this.editingEventData.targetDate);
+      
       await client.models.Event.update({
         id: this.selectedEvent.id,
         title: this.editingEventData.title,
         description: this.editingEventData.description,
-        targetDate: this.editingEventData.targetDate,
+        targetDate: utcDateTime,
         categoryID: this.editingEventData.categoryID
       });
       
       // Update local data
       this.selectedEvent.title = this.editingEventData.title;
       this.selectedEvent.description = this.editingEventData.description;
-      this.selectedEvent.targetDate = this.editingEventData.targetDate;
+      this.selectedEvent.targetDate = utcDateTime;
       
       // Refresh events and calendar
       await this.loadEvents();
@@ -399,6 +448,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
     const category = this.categories.find(cat => cat.id === categoryID);
     return category ? category.name : 'No Category';
   }
+
+  get rootCategories() {
+    return this.categories.filter(c => !c.parentCategoryID);
+  }
   
   navigateToEventInCategories(eventId: string, categoryId: string) {
     this.navigateToCategories.emit({ eventId, categoryId });
@@ -430,9 +483,11 @@ export class CalendarComponent implements OnInit, OnDestroy {
   async confirmDateTimeChange() {
     if (this.draggedEvent && this.newDateTime) {
       try {
+        const utcDateTime = this.timezoneService.convertToUTC(this.newDateTime);
+        
         await client.models.Event.update({
           id: this.draggedEvent.id,
-          targetDate: this.newDateTime
+          targetDate: utcDateTime
         });
         
         await this.loadEvents();
@@ -448,5 +503,96 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.draggedEvent = null;
     this.dropTargetDate = '';
     this.newDateTime = '';
+  }
+
+  closeCreateEventModal() {
+    this.showCreateEventModal = false;
+    this.newEventData = {
+      title: '',
+      description: '',
+      targetDate: '',
+      categoryID: '',
+      subcategoryID: ''
+    };
+    this.subcategories = [];
+  }
+
+  async onCategoryChange() {
+    if (this.newEventData.categoryID) {
+      await this.loadSubcategories(this.newEventData.categoryID);
+    } else {
+      this.subcategories = [];
+    }
+    this.newEventData.subcategoryID = '';
+  }
+
+  async loadSubcategories(parentId: string) {
+    try {
+      const result = await client.models.Category.list({
+        filter: { parentCategoryID: { eq: parentId } }
+      });
+      this.subcategories = result.data || [];
+    } catch (error) {
+      console.error('Error loading subcategories:', error);
+    }
+  }
+
+  async onEditingRootCategoryChange() {
+    if (this.editingEventData.rootCategoryID) {
+      await this.loadEditingSubcategories(this.editingEventData.rootCategoryID);
+    } else {
+      this.editingSubcategories = [];
+    }
+    this.editingEventData.subcategoryID = '';
+    this.updateEditingCategoryID();
+  }
+
+  async loadEditingSubcategories(parentId: string) {
+    try {
+      const result = await client.models.Category.list({
+        filter: { parentCategoryID: { eq: parentId } }
+      });
+      this.editingSubcategories = result.data || [];
+    } catch (error) {
+      console.error('Error loading editing subcategories:', error);
+    }
+  }
+
+  updateEditingCategoryID() {
+    if (this.editingEventData.subcategoryID) {
+      this.editingEventData.categoryID = this.editingEventData.subcategoryID;
+    } else if (this.editingEventData.rootCategoryID) {
+      this.editingEventData.categoryID = this.editingEventData.rootCategoryID;
+    } else {
+      this.editingEventData.categoryID = '';
+    }
+  }
+
+  async createEvent() {
+    if (!this.newEventData.title.trim()) {
+      alert('Please enter an event title');
+      return;
+    }
+
+    try {
+      console.log('Creating event with data:', this.newEventData);
+      const utcDateTime = this.timezoneService.convertToUTC(this.newEventData.targetDate);
+      console.log('UTC DateTime:', utcDateTime);
+      
+      const result = await client.models.Event.create({
+        title: this.newEventData.title,
+        description: this.newEventData.description || undefined,
+        targetDate: utcDateTime,
+        categoryID: this.newEventData.categoryID || undefined
+      });
+      
+      console.log('Event created:', result);
+      await this.loadEvents();
+      this.closeCreateEventModal();
+      alert('Event created successfully!');
+    } catch (error: any) {
+      console.error('Error creating event:', error);
+      alert('Error creating event: ' + (error?.message || 'Unknown error'));
+    }
   }
 }
