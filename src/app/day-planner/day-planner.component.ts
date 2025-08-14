@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
@@ -54,8 +54,10 @@ interface TimeSlot {
               placeholder="Add task..."
               class="task-input"
               rows="1"></textarea>
-            <div *ngFor="let event of slot.events" class="event-item">
+            <div *ngFor="let event of slot.events" class="event-item" (mouseenter)="showNavigateIcon = event.id" (mouseleave)="showNavigateIcon = null">
               📅 {{ event.title }}
+              <div class="event-description" *ngIf="event.description">{{ event.description }}</div>
+              <span *ngIf="showNavigateIcon === event.id" class="navigate-icon" (click)="navigateToEvent(event.id, event.categoryID)" title="Go to category">📁</span>
             </div>
           </div>
         </div>
@@ -192,6 +194,26 @@ interface TimeSlot {
       word-wrap: break-word;
       overflow-wrap: break-word;
       line-height: 1.3;
+      position: relative;
+    }
+    
+    .event-description {
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+    }
+    
+    .navigate-icon {
+      position: absolute;
+      right: 4px;
+      top: 2px;
+      cursor: pointer;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    
+    .navigate-icon:hover {
+      opacity: 1;
     }
 
     .save-all-btn {
@@ -279,8 +301,11 @@ export class DayPlannerComponent implements OnInit {
   startHour = 6;
   endHour = 21;
   userTimezone = 'UTC';
+  showNavigateIcon: string | null = null;
 
   hours = Array.from({length: 24}, (_, i) => i);
+  
+  @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
   ngOnInit() {
     this.generateTimeSlots();
@@ -576,5 +601,9 @@ export class DayPlannerComponent implements OnInit {
     } finally {
       this.copying = false;
     }
+  }
+  
+  navigateToEvent(eventId: string, categoryId: string) {
+    this.navigateToCategories.emit({ eventId, categoryId });
   }
 }
