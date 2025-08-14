@@ -110,9 +110,9 @@
 }
 
 .edit-btn {
-  background: #e3f2fd;
+  background: none;
   border: none;
-  color: #1976d2;
+  color: #666;
   cursor: pointer;
   padding: 4px;
   border-radius: 3px;
@@ -120,8 +120,8 @@
 }
 
 .edit-btn:hover {
-  background-color: #2196f3;
-  color: white;
+  background-color: #000000;
+  color: #167ee6;
 }
 
 .navigate-btn {

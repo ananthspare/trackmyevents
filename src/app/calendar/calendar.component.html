@@ -24,9 +24,9 @@
         <div *ngIf="filteredEvents.length === 0" class="empty-state">
           No events for this {{ viewType }}
         </div>
-        <div *ngFor="let event of filteredEvents; let i = index" 
-             class="event-item" 
-             [class.even-row]="i % 2 === 0" 
+        <div *ngFor="let event of filteredEvents; let i = index"
+             class="event-item"
+             [class.even-row]="i % 2 === 0"
              [class.odd-row]="i % 2 === 1"
              draggable="true"
              (dragstart)="onDragStart(event, $event)">
@@ -36,7 +36,7 @@
             <div *ngIf="event.description" class="event-description">{{ event.description }}</div>
           </div>
           <div class="event-actions">
-            <button class="edit-btn" (click)="startEditEvent(event)" title="Edit Event">
+            <button class="navigate-btn" (click)="startEditEvent(event)" title="Edit Event">
               <i class="glyphicon glyphicon-pencil"></i>
             </button>
             <button class="navigate-btn" (click)="navigateToEventInCategories(event.id, event.categoryID)" title="Go to Categories">
@@ -72,8 +72,8 @@
       <div class="day-header">Fri</div>
       <div class="day-header">Sat</div>
 
-      <div 
-        *ngFor="let day of calendarDays" 
+      <div
+        *ngFor="let day of calendarDays"
         class="calendar-day"
         [class.other-month]="!day.isCurrentMonth"
         [class.today]="day.isToday"
@@ -82,13 +82,13 @@
         (dblclick)="openCreateEventModal(day.date)"
         (dragover)="onDragOver($event)"
         (drop)="onDrop(day, $event)">
-        
+
         <div class="day-number">{{ day.day }}</div>
         <div class="add-event-btn" (click)="openCreateEventModal(day.date); $event.stopPropagation()" title="Add Event">+</div>
-        
+
         <div class="events-preview" *ngIf="day.events.length > 0">
-          <div 
-            *ngFor="let event of day.events.slice(0, 2)" 
+          <div
+            *ngFor="let event of day.events.slice(0, 2)"
             class="event-dot"
             [title]="event.title">
             {{ event.title.substring(0, 8) }}{{ event.title.length > 8 ? '...' : '' }}
@@ -116,7 +116,7 @@
         </button>
       </div>
     </div>
-    
+
     <div class="event-details">
       <!-- View Mode -->
       <div *ngIf="!isEditingEvent">
@@ -124,12 +124,12 @@
           <strong>Date & Time:</strong>
           <span>{{ selectedEvent.targetDate | date:'MMM d, y h:mm a' }}</span>
         </div>
-        
+
         <div *ngIf="selectedEvent.description" class="detail-row">
           <strong>Description:</strong>
           <span>{{ selectedEvent.description }}</span>
         </div>
-        
+
         <div class="detail-row">
           <strong>Category:</strong>
           <span>{{ getCategoryName(selectedEvent.categoryID) }}</span>
@@ -142,17 +142,17 @@
           <label>Title:</label>
           <input type="text" [(ngModel)]="editingEventData.title" class="form-input">
         </div>
-        
+
         <div class="form-group">
           <label>Date & Time:</label>
           <input type="datetime-local" [(ngModel)]="editingEventData.targetDate" class="form-input">
         </div>
-        
+
         <div class="form-group">
           <label>Description:</label>
           <textarea [(ngModel)]="editingEventData.description" class="form-textarea"></textarea>
         </div>
-        
+
         <div class="form-group">
           <label>Root Category:</label>
           <select [(ngModel)]="editingEventData.rootCategoryID" (change)="onEditingRootCategoryChange()" class="form-input">
@@ -160,7 +160,7 @@
             <option *ngFor="let category of rootCategories" [value]="category.id">{{ category.name }}</option>
           </select>
         </div>
-        
+
         <div class="form-group" *ngIf="editingSubcategories.length > 0">
           <label>Subcategory:</label>
           <select [(ngModel)]="editingEventData.subcategoryID" (change)="updateEditingCategoryID()" class="form-input">
@@ -168,13 +168,13 @@
             <option *ngFor="let subcategory of editingSubcategories" [value]="subcategory.id">{{ subcategory.name }}</option>
           </select>
         </div>
-        
+
         <div class="edit-actions">
           <button class="save-btn" (click)="saveEventEdit()">Save</button>
           <button class="cancel-btn" (click)="cancelEventEdit()">Cancel</button>
         </div>
       </div>
-      
+
       <div class="detail-row">
         <strong>Time Remaining:</strong>
         <div class="countdown-display" [ngClass]="{
@@ -202,7 +202,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="detail-row">
         <strong>Todo Items:</strong>
         <div class="todos-container">
@@ -222,17 +222,17 @@
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>
-    
+
     <div class="datetime-form">
       <div class="form-group">
         <label>Event: {{ draggedEvent?.title }}</label>
       </div>
-      
+
       <div class="form-group">
         <label>New Date & Time:</label>
         <input type="datetime-local" [(ngModel)]="newDateTime" class="form-input">
       </div>
-      
+
       <div class="modal-actions">
         <button class="save-btn" (click)="confirmDateTimeChange()">Update Event</button>
         <button class="cancel-btn" (click)="closeDateTimeModal()">Cancel</button>
@@ -250,23 +250,23 @@
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>
-    
+
     <div class="create-event-form">
       <div class="form-group">
         <label>Title *:</label>
         <input type="text" [(ngModel)]="newEventData.title" class="form-input" placeholder="Enter event title">
       </div>
-      
+
       <div class="form-group">
         <label>Date & Time:</label>
         <input type="datetime-local" [(ngModel)]="newEventData.targetDate" class="form-input">
       </div>
-      
+
       <div class="form-group">
         <label>Description:</label>
         <textarea [(ngModel)]="newEventData.description" class="form-textarea" placeholder="Enter event description (optional)"></textarea>
       </div>
-      
+
       <div class="form-group">
         <label>Category (Root):</label>
         <select [(ngModel)]="newEventData.categoryID" (change)="onCategoryChange()" class="form-input">
@@ -276,7 +276,7 @@
           </option>
         </select>
       </div>
-      
+
       <div class="form-group" *ngIf="subcategories.length > 0">
         <label>Subcategory:</label>
         <select [(ngModel)]="newEventData.subcategoryID" class="form-input">
@@ -286,7 +286,7 @@
           </option>
         </select>
       </div>
-      
+
       <div class="modal-actions">
         <button class="save-btn" (click)="createEvent()">Create Event</button>
         <button class="cancel-btn" (click)="closeCreateEventModal()">Cancel</button>
