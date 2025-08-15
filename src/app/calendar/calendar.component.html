@@ -28,16 +28,24 @@
              class="event-item"
              [class.even-row]="i % 2 === 0"
              [class.odd-row]="i % 2 === 1"
+             [class.snooze-occurrence]="event.isSnoozeOccurrence"
              draggable="true"
              (dragstart)="onDragStart(event, $event)">
           <div class="event-content">
-            <div class="event-title">📅 {{ event.title }}</div>
+            <div class="event-title">
+              <span *ngIf="event.isSnoozeOccurrence">🔔</span>
+              <span *ngIf="!event.isSnoozeOccurrence">📅</span>
+              {{ event.title }}
+            </div>
             <div class="event-date">{{ event.targetDate | date:'MMM d, y h:mm a' }}</div>
             <div *ngIf="event.description" class="event-description">{{ event.description }}</div>
           </div>
           <div class="event-actions">
             <button class="navigate-btn" (click)="startEditEvent(event)" title="Edit Event">
               <i class="glyphicon glyphicon-pencil"></i>
+            </button>
+            <button class="navigate-btn" (click)="showSnoozeModal(event)" title="Snooze Event">
+              <i class="glyphicon glyphicon-time"></i>
             </button>
             <button class="navigate-btn" (click)="navigateToEventInCategories(event.id, event.categoryID)" title="Go to Categories">
               <i class="glyphicon glyphicon-folder-open"></i>
@@ -90,7 +98,8 @@
           <div
             *ngFor="let event of day.events.slice(0, 2)"
             class="event-dot"
-            [title]="event.title">
+            [class.snooze-dot]="event.isSnoozeOccurrence"
+            [title]="(event.isSnoozeOccurrence ? '🔔 ' : '') + event.title">
             {{ event.title.substring(0, 8) }}{{ event.title.length > 8 ? '...' : '' }}
           </div>
           <div *ngIf="day.events.length > 2" class="more-events">
@@ -291,6 +300,95 @@
         <button class="save-btn" (click)="createEvent()">Create Event</button>
         <button class="cancel-btn" (click)="closeCreateEventModal()">Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Snooze modal -->
+<div *ngIf="snoozeEvent" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Snooze Event: {{ snoozeEvent.title }}</h3>
+    <div class="snooze-options">
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="once" name="snoozeType">
+        Snooze once
+      </label>
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="daily" name="snoozeType">
+        Daily recurrence
+      </label>
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="weekly" name="snoozeType">
+        Weekly recurrence
+      </label>
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="custom" name="snoozeType">
+        Custom interval
+      </label>
+    </div>
+    
+    <div *ngIf="snoozeType === 'weekly'" class="weekly-options">
+      <label>Select days:</label>
+      <div class="weekdays">
+        <label *ngFor="let day of weekdays; let i = index">
+          <input type="checkbox" [(ngModel)]="selectedWeekdays[i]">
+          {{ day }}
+        </label>
+      </div>
+    </div>
+    
+    <div *ngIf="snoozeType === 'custom'" class="custom-interval">
+      <input type="number" [(ngModel)]="customInterval" min="1" placeholder="Interval">
+      <select [(ngModel)]="customUnit">
+        <option value="days">Days</option>
+        <option value="weeks">Weeks</option>
+        <option value="months">Months</option>
+      </select>
+    </div>
+    
+    <div class="snooze-datetime">
+      <div class="date-section">
+        <label>Start Date:</label>
+        <input type="date" [(ngModel)]="snoozeDate" required>
+      </div>
+    </div>
+    
+    <style>
+      .snooze-datetime {
+        display: flex;
+        gap: 20px;
+        margin: 15px 0;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background: #f9f9f9;
+      }
+      .date-section, .time-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .date-section label, .time-section label {
+        font-weight: 600;
+        color: #333;
+      }
+      .date-section input, .time-section input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+    </style>
+    
+    <div *ngIf="snoozeType !== 'once'" class="end-date">
+      <label>End recurrence (optional):</label>
+      <input type="date" [(ngModel)]="recurrenceEndDate">
+    </div>
+    
+    <div class="modal-actions">
+      <button (click)="confirmSnooze()" class="save-btn">Snooze</button>
+      <button (click)="clearSnooze()" class="clear-btn" *ngIf="snoozeEvent?.snoozeDates">Clear Snooze</button>
+      <button (click)="cancelSnooze()" class="cancel-btn">Cancel</button>
     </div>
   </div>
 </div>

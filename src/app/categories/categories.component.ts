@@ -37,6 +37,15 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   draggedEventId: string | null = null;
   expandedCategories: Set<string> = new Set();
   highlightedEventId: string | null = null;
+  snoozeEvent: any = null;
+  snoozeType = 'once';
+  newSnoozeDate = '';
+  customInterval = 1;
+  customUnit = 'days';
+  recurrenceEndDate = '';
+  weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  selectedWeekdays = [false, false, false, false, false, false, false];
+  weeklyTime = '09:00';
   
   private categorySubscription: Subscription | null = null;
   private eventSubscription: Subscription | null = null;
@@ -196,19 +205,25 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       if (!event || !event.targetDate) return;
       
       try {
-        const targetTime = new Date(event.targetDate).getTime();
-        const timeLeft = targetTime - now;
+        // Find the next upcoming occurrence
+        const occurrences = this.getEventOccurrences(event);
+        const upcomingOccurrence = occurrences
+          .map(occ => new Date(occ.date))
+          .filter(date => date.getTime() > now)
+          .sort((a, b) => a.getTime() - b.getTime())[0];
         
-        if (timeLeft <= 0) {
+        if (!upcomingOccurrence) {
           this.countdowns[event.id] = { expired: true };
-        } else {
-          const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-          const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-          
-          this.countdowns[event.id] = { days, hours, minutes, seconds, expired: false };
+          return;
         }
+        
+        const timeLeft = upcomingOccurrence.getTime() - now;
+        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        
+        this.countdowns[event.id] = { days, hours, minutes, seconds, expired: false };
       } catch (error) {
         console.error('Error calculating countdown for event', event.id, error);
       }
@@ -773,5 +788,201 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     };
     
     tryNavigate();
+  }
+  
+  showSnoozeModal(event: any) {
+    this.snoozeEvent = event;
+    
+    // Parse existing snooze data if available
+    let existingSnoozeData: any = null;
+    if (event.snoozeDates) {
+      try {
+        const parsed = JSON.parse(event.snoozeDates);
+        if (parsed.dates && parsed.dates.length > 0) {
+          existingSnoozeData = parsed;
+        }
+      } catch (error) {
+        console.error('Error parsing existing snooze data:', error);
+      }
+    }
+    
+    if (existingSnoozeData) {
+      // Load existing snooze configuration
+      this.snoozeType = existingSnoozeData.type || 'once';
+      this.newSnoozeDate = this.timezoneService.convertFromUTC(existingSnoozeData.dates[0]);
+      this.customInterval = existingSnoozeData.customInterval || 1;
+      this.customUnit = existingSnoozeData.customUnit || 'days';
+      this.recurrenceEndDate = existingSnoozeData.endDate || '';
+      this.selectedWeekdays = existingSnoozeData.weekdays || [false, false, false, false, false, false, false];
+      this.weeklyTime = existingSnoozeData.weeklyTime || '09:00';
+    } else {
+      // Set default values for new snooze
+      const now = new Date();
+      const eventDate = new Date(event.targetDate);
+      let defaultDate: Date;
+      
+      if (eventDate > now) {
+        defaultDate = new Date(eventDate);
+        defaultDate.setDate(defaultDate.getDate() + 1);
+      } else {
+        defaultDate = new Date(now.getTime() + (60 * 60 * 1000));
+      }
+      
+      this.newSnoozeDate = this.timezoneService.convertFromUTC(defaultDate.toISOString());
+      this.snoozeType = 'once';
+      this.customInterval = 1;
+      this.customUnit = 'days';
+      this.recurrenceEndDate = '';
+      this.selectedWeekdays = [false, false, false, false, false, false, false];
+      this.weeklyTime = '09:00';
+    }
+  }
+  
+  cancelSnooze() {
+    this.snoozeEvent = null;
+  }
+  
+  async clearSnooze() {
+    if (!this.snoozeEvent) return;
+    
+    try {
+      await client.models.Event.update({
+        id: this.snoozeEvent.id,
+        snoozeDates: null
+      });
+      
+      this.snoozeEvent = null;
+    } catch (error) {
+      console.error('Error clearing snooze:', error);
+      alert('Error clearing snooze. Please try again.');
+    }
+  }
+  
+  async confirmSnooze() {
+    if (!this.snoozeEvent || !this.newSnoozeDate) return;
+    
+    // Validate weekly recurrence
+    if (this.snoozeType === 'weekly' && !this.selectedWeekdays.some(day => day)) {
+      alert('Please select at least one day for weekly recurrence.');
+      return;
+    }
+    
+    try {
+      const utcDateTime = this.timezoneService.convertToUTC(this.newSnoozeDate);
+      
+      if (this.snoozeType === 'once') {
+        // Store single snooze date
+        const snoozeData = {
+          type: 'once',
+          dates: [utcDateTime]
+        };
+        
+        await client.models.Event.update({
+          id: this.snoozeEvent.id,
+          snoozeDates: JSON.stringify(snoozeData)
+        });
+      } else {
+        // Generate all snooze dates and store with configuration
+        const additionalDates = this.generateSnoozeDates(utcDateTime);
+        const allDates = [utcDateTime, ...additionalDates];
+        
+        const snoozeData = {
+          type: this.snoozeType,
+          dates: allDates,
+          customInterval: this.customInterval,
+          customUnit: this.customUnit,
+          endDate: this.recurrenceEndDate,
+          weekdays: this.selectedWeekdays,
+          weeklyTime: this.weeklyTime
+        };
+        
+        await client.models.Event.update({
+          id: this.snoozeEvent.id,
+          snoozeDates: JSON.stringify(snoozeData)
+        });
+      }
+      
+      this.snoozeEvent = null;
+    } catch (error) {
+      console.error('Error snoozing event:', error);
+      alert('Error snoozing event. Please try again.');
+    }
+  }
+  
+  generateSnoozeDates(startDate: string): string[] {
+    const start = new Date(startDate);
+    const endDate = this.recurrenceEndDate ? 
+      new Date(this.recurrenceEndDate + 'T23:59:59') : 
+      new Date(start.getTime() + (90 * 24 * 60 * 60 * 1000));
+    
+    const dates: string[] = [];
+    let currentDate = new Date(start);
+    
+    // Generate additional occurrences (not including the start date)
+    while (dates.length < 50) {
+      if (this.snoozeType === 'daily') {
+        currentDate = new Date(currentDate.getTime() + (24 * 60 * 60 * 1000));
+      } else if (this.snoozeType === 'weekly') {
+        const nextWeekDate = this.getNextWeeklyOccurrence(currentDate);
+        if (!nextWeekDate || nextWeekDate > endDate) break;
+        currentDate = nextWeekDate;
+      } else if (this.snoozeType === 'custom') {
+        if (this.customUnit === 'days') {
+          currentDate = new Date(currentDate.getTime() + (this.customInterval * 24 * 60 * 60 * 1000));
+        } else if (this.customUnit === 'weeks') {
+          currentDate = new Date(currentDate.getTime() + (this.customInterval * 7 * 24 * 60 * 60 * 1000));
+        } else if (this.customUnit === 'months') {
+          const newDate = new Date(currentDate);
+          newDate.setMonth(newDate.getMonth() + this.customInterval);
+          currentDate = newDate;
+        }
+      }
+      
+      if (currentDate > endDate) break;
+      dates.push(currentDate.toISOString());
+    }
+    
+    return dates;
+  }
+  
+  getNextWeeklyOccurrence(fromDate: Date): Date | null {
+    const selectedDays = this.selectedWeekdays.map((selected, index) => selected ? index : -1).filter(day => day !== -1);
+    if (selectedDays.length === 0) return null;
+    
+    const [hours, minutes] = this.weeklyTime.split(':').map(Number);
+    let nextDate = new Date(fromDate);
+    nextDate.setDate(nextDate.getDate() + 1); // Start from next day
+    
+    // Look for the next occurrence within the next 7 days
+    for (let i = 0; i < 7; i++) {
+      const dayOfWeek = (nextDate.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
+      if (selectedDays.includes(dayOfWeek)) {
+        const resultDate = new Date(nextDate);
+        resultDate.setHours(hours, minutes, 0, 0);
+        return resultDate;
+      }
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
+    
+    return null;
+  }
+  
+  getEventOccurrences(event: any): { date: string, isOriginal: boolean }[] {
+    const occurrences = [{ date: event.targetDate, isOriginal: true }];
+    
+    if (event.snoozeDates) {
+      try {
+        const snoozeData = JSON.parse(event.snoozeDates);
+        if (snoozeData.dates) {
+          snoozeData.dates.forEach((date: string) => {
+            occurrences.push({ date, isOriginal: false });
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing snooze dates:', error);
+      }
+    }
+    
+    return occurrences;
   }
 }

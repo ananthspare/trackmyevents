@@ -33,7 +33,7 @@
     </form>
 
     <!-- Categories list -->
-    <div class="categories-list" 
+    <div class="categories-list"
          (dragover)="onDragOver($event)"
          (drop)="onDrop($event)">
       <div *ngIf="categories.length === 0" class="empty-state">
@@ -53,11 +53,11 @@
              (dragend)="onDragEnd($event)">
           <div class="category-header">
             <div class="category-title-section">
-              <button *ngIf="hasSubcategories(category.id)" 
-                      (click)="toggleCategoryExpansion(category.id, $event)" 
+              <button *ngIf="hasSubcategories(category.id)"
+                      (click)="toggleCategoryExpansion(category.id, $event)"
                       class="expand-btn">
-                <i class="glyphicon" 
-                   [class.glyphicon-chevron-down]="expandedCategories.has(category.id)" 
+                <i class="glyphicon"
+                   [class.glyphicon-chevron-down]="expandedCategories.has(category.id)"
                    [class.glyphicon-chevron-right]="!expandedCategories.has(category.id)"></i>
               </button>
               <h3 [title]="category.name">{{ category.name }}</h3>
@@ -80,7 +80,7 @@
             {{ category.description }}
           </p>
         </div>
-        
+
         <!-- Subcategories (one level only) -->
         <div *ngIf="expandedCategories.has(category.id) && subcategories[category.id]" class="subcategories-container">
           <div *ngFor="let subcategory of subcategories[category.id]"
@@ -161,9 +161,9 @@
           No events yet. Create one to get started!
         </div>
 
-        <div *ngFor="let event of events; let i = index" 
-             class="event-item" 
-             [class.even-row]="i % 2 === 0" 
+        <div *ngFor="let event of events; let i = index"
+             class="event-item"
+             [class.even-row]="i % 2 === 0"
              [class.odd-row]="i % 2 === 1"
              [class.highlighted]="highlightedEventId === event.id"
              [attr.data-event-id]="event.id"
@@ -178,7 +178,7 @@
                   <h3>{{ event.title }}</h3>
                   <p *ngIf="event.description" class="event-description">{{ event.description }}</p>
                 </div>
-                
+
                 <div class="countdown-section">
                   <div class="countdown-inline" [ngClass]="{
                     'expired': countdowns[event.id]?.expired,
@@ -204,7 +204,7 @@
                       Event passed!
                     </div>
                   </div>
-                  
+
                   <div *ngIf="event.targetDate" class="target-date" [ngClass]="{
                     'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
                     'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
@@ -213,10 +213,13 @@
                     {{ event.targetDate | date:'MMM d, y h:mm a' }}
                   </div>
                 </div>
-                
+
                 <div class="event-actions">
                   <button (click)="startEditEvent(event)" class="icon-btn">
                     <i class="glyphicon glyphicon-pencil"></i>
+                  </button>
+                  <button (click)="showSnoozeModal(event)" class="icon-btn snooze-btn">
+                    <i class="glyphicon glyphicon-time"></i>
                   </button>
                   <button (click)="deleteEvent(event.id)" class="icon-btn">
                     <i class="glyphicon glyphicon-trash"></i>
@@ -296,7 +299,7 @@
       <label for="parentCategory">Parent Category:</label>
       <select [(ngModel)]="editingCategory.parentCategoryID" name="parentCategory" id="parentCategory">
         <option [ngValue]="null">None (Root Category)</option>
-        <option *ngFor="let category of rootCategories" 
+        <option *ngFor="let category of rootCategories"
                 [ngValue]="category.id"
                 [disabled]="category.id === editingCategory.id">
           {{ category.name }}
@@ -306,6 +309,68 @@
     <div class="edit-actions">
       <button (click)="saveEdit()" class="save-btn">Save</button>
       <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Snooze modal -->
+<div *ngIf="snoozeEvent" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Snooze Event: {{ snoozeEvent.title }}</h3>
+    <div class="snooze-options">
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="once" name="snoozeType">
+        Snooze once
+      </label>
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="daily" name="snoozeType">
+        Daily recurrence
+      </label>
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="weekly" name="snoozeType">
+        Weekly recurrence
+      </label>
+      <label>
+        <input type="radio" [(ngModel)]="snoozeType" value="custom" name="snoozeType">
+        Custom interval
+      </label>
+    </div>
+
+    <div *ngIf="snoozeType === 'weekly'" class="weekly-options">
+      <label>Select days:</label>
+      <div class="weekdays">
+        <label *ngFor="let day of weekdays; let i = index">
+          <input type="checkbox" [(ngModel)]="selectedWeekdays[i]">
+          {{ day }}
+        </label>
+      </div>
+      <label>Time:</label>
+      <input type="time" [(ngModel)]="weeklyTime">
+    </div>
+
+    <div *ngIf="snoozeType === 'custom'" class="custom-interval">
+      <input type="number" [(ngModel)]="customInterval" min="1" placeholder="Interval">
+      <select [(ngModel)]="customUnit">
+        <option value="days">Days</option>
+        <option value="weeks">Weeks</option>
+        <option value="months">Months</option>
+      </select>
+    </div>
+
+    <div class="snooze-date">
+      <label>New date:</label>
+      <input type="date" [(ngModel)]="newSnoozeDate" required>
+    </div>
+
+    <div *ngIf="snoozeType !== 'once'" class="end-date">
+      <label>End recurrence (optional):</label>
+      <input type="date" [(ngModel)]="recurrenceEndDate">
+    </div>
+
+    <div class="modal-actions">
+      <button (click)="confirmSnooze()" class="save-btn">Snooze</button>
+      <button (click)="clearSnooze()" class="clear-btn" *ngIf="snoozeEvent?.snoozeDates">Clear Snooze</button>
+      <button (click)="cancelSnooze()" class="cancel-btn">Cancel</button>
     </div>
   </div>
 </div>

@@ -92,6 +92,14 @@
   background-color: #f0f4f8;
 }
 
+.event-item.snooze-occurrence {
+  border-left: 4px solid #ff9800;
+}
+
+.event-item.snooze-occurrence .event-title {
+  color: #e65100;
+}
+
 .event-content {
   flex: 1;
   cursor: pointer;
@@ -288,6 +296,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.event-dot.snooze-dot {
+  background-color: #ff9800;
+  border: 1px solid #f57c00;
 }
 
 .more-events {

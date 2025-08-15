@@ -22,13 +22,22 @@ interface TimeSlot {
       <div class="planner-header">
         <h2>Day Planner</h2>
         <input type="date" [(ngModel)]="selectedDate" (change)="loadPlan()" class="date-input">
+        <div class="view-selector">
+          <label>View:</label>
+          <select [(ngModel)]="plannerView" (change)="onPlannerViewChange()">
+            <option value="today">Today</option>
+            <option value="week">Whole Week</option>
+            <option value="workweek">Work Week</option>
+            <option value="month">Monthly</option>
+          </select>
+        </div>
         <div class="time-range">
           <label>From:</label>
-          <select [(ngModel)]="startHour" (change)="generateTimeSlots()">
+          <select [(ngModel)]="startHour" (change)="onTimeRangeChange()">
             <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
           </select>
           <label>To:</label>
-          <select [(ngModel)]="endHour" (change)="generateTimeSlots()">
+          <select [(ngModel)]="endHour" (change)="onTimeRangeChange()">
             <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
           </select>
         </div>
@@ -45,7 +54,8 @@ interface TimeSlot {
         </div>
       </div>
 
-      <div class="planner-table">
+      <!-- Day View -->
+      <div class="planner-table" *ngIf="plannerView === 'today'">
         <div class="time-slot" *ngFor="let slot of timeSlots; trackBy: trackByTime">
           <div class="time-label">{{ slot.timeRange }}</div>
           <div class="slot-content">
@@ -54,11 +64,46 @@ interface TimeSlot {
               placeholder="Add task..."
               class="task-input"
               rows="1"></textarea>
-            <div *ngFor="let event of slot.events" class="event-item" (mouseenter)="showNavigateIcon = event.id" (mouseleave)="showNavigateIcon = null">
-              📅 {{ event.title }}
+            <div *ngFor="let event of slot.events" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence" (mouseenter)="showNavigateIcon = event.id" (mouseleave)="showNavigateIcon = null">
+              <span *ngIf="event.isSnoozeOccurrence">🔔</span>
+              <span *ngIf="!event.isSnoozeOccurrence">📅</span>
+              {{ event.title }}
               <div class="event-description" *ngIf="event.description">{{ event.description }}</div>
               <span *ngIf="showNavigateIcon === event.id" class="navigate-icon" (click)="navigateToEvent(event.id, event.categoryID)" title="Go to category">📁</span>
             </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Week Views -->
+      <div class="week-grid" *ngIf="plannerView === 'week' || plannerView === 'workweek'">
+        <div class="week-header">
+          <div class="time-column-header">Time</div>
+          <div class="day-header" *ngFor="let day of weekDays">{{ day | date:'EEE MMM d' }}</div>
+        </div>
+        <div class="week-row" *ngFor="let slot of filteredTimeSlots">
+          <div class="time-label">{{ slot.timeRange }}</div>
+          <div class="day-cell" *ngFor="let day of weekDays">
+            <textarea class="day-task-input" [(ngModel)]="dayTasks[day][slot.time]" placeholder="Tasks..."></textarea>
+            <div *ngFor="let event of getDayEvents(day, slot.time)" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence">
+              <span *ngIf="event.isSnoozeOccurrence">🔔</span>
+              <span *ngIf="!event.isSnoozeOccurrence">📅</span>
+              {{ event.title }}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Month View -->
+      <div class="month-grid" *ngIf="plannerView === 'month'">
+        <div class="month-header">
+          <div class="day-name" *ngFor="let dayName of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">{{ dayName }}</div>
+        </div>
+        <div class="month-row" *ngFor="let week of monthWeeks">
+          <div class="month-day" *ngFor="let day of week" (click)="selectDayInMonth(day.date)" [class.other-month]="!day.isCurrentMonth" [class.today]="isToday(day.date)">
+            <div class="day-number">{{ day.day }}</div>
+            <div class="day-tasks-preview">{{ getDayTasksCount(day.date) }} tasks</div>
+            <div class="day-events-preview">{{ getDayEventsCount(day.date) }} events</div>
           </div>
         </div>
       </div>
@@ -197,6 +242,12 @@ interface TimeSlot {
       position: relative;
     }
     
+    .event-item.snooze-event {
+      background: #fff3e0;
+      color: #e65100;
+      border-left: 3px solid #ff9800;
+    }
+    
     .event-description {
       font-size: 10px;
       color: #666;
@@ -291,6 +342,174 @@ interface TimeSlot {
       color: #555;
       font-weight: 600;
     }
+    
+    .view-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .view-selector select {
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    
+    .week-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+    
+    .day-column {
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .day-header {
+      background: #f8f9fa;
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .day-content {
+      padding: 12px;
+    }
+    
+    .day-task-input {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .week-grid {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+      overflow-x: auto;
+    }
+    
+    .week-header {
+      display: grid;
+      grid-template-columns: 120px repeat(7, 1fr);
+      background: #f8f9fa;
+      border-bottom: 2px solid #e0e0e0;
+      min-width: 900px;
+    }
+    
+    .time-column-header {
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid #e0e0e0;
+    }
+    
+    .week-row {
+      display: grid;
+      grid-template-columns: 120px repeat(7, 1fr);
+      border-bottom: 1px solid #f0f0f0;
+      min-height: 60px;
+      min-width: 900px;
+    }
+    
+    .day-cell {
+      padding: 4px;
+      border-right: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .day-cell .day-task-input {
+      width: 100%;
+      min-height: 30px;
+      padding: 4px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      font-size: 11px;
+      resize: none;
+    }
+    
+    .day-tasks {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 2px;
+    }
+    
+    .month-grid {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+    }
+    
+    .month-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #f8f9fa;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .day-name {
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid #e0e0e0;
+    }
+    
+    .month-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .month-day {
+      padding: 8px;
+      border-right: 1px solid #e0e0e0;
+      min-height: 80px;
+      cursor: pointer;
+    }
+    
+    .month-day:hover {
+      background: #f5f5f5;
+    }
+    
+    .month-day.other-month {
+      color: #ccc;
+      background: #fafafa;
+    }
+    
+    .month-day.today {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+    }
+    
+    .day-number {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .day-tasks-preview {
+      font-size: 10px;
+      color: #666;
+    }
+    
+    .day-events-preview {
+      font-size: 10px;
+      color: #2196f3;
+      margin-top: 2px;
+    }
   `]
 })
 export class DayPlannerComponent implements OnInit {
@@ -302,14 +521,190 @@ export class DayPlannerComponent implements OnInit {
   endHour = 21;
   userTimezone = 'UTC';
   showNavigateIcon: string | null = null;
+  plannerView = 'today';
+  weekDays: string[] = [];
+  monthWeeks: any[][] = [];
+  dayTasks: { [key: string]: { [key: string]: string } } = {};
+  filteredTimeSlots: any[] = [];
 
   hours = Array.from({length: 24}, (_, i) => i);
   
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
   ngOnInit() {
-    this.generateTimeSlots();
+    this.onPlannerViewChange();
+  }
+  
+  onPlannerViewChange() {
+    if (this.plannerView === 'today') {
+      this.generateTimeSlots();
+    } else if (this.plannerView === 'month') {
+      this.generateMonthView();
+    } else {
+      this.generateWeekView();
+    }
     this.loadPlan();
+  }
+  
+  onTimeRangeChange() {
+    if (this.plannerView === 'today') {
+      this.generateTimeSlots();
+    } else {
+      this.generateWeekView();
+    }
+    this.applyTimeFilter();
+    this.loadPlan();
+  }
+  
+  applyTimeFilter() {
+    const start = Math.min(this.startHour, this.endHour);
+    const end = Math.max(this.startHour, this.endHour);
+    
+    this.filteredTimeSlots = this.timeSlots.filter(slot => {
+      const [hour] = slot.time.split(':').map(Number);
+      return hour >= start && hour <= end;
+    });
+  }
+  
+  generateWeekView() {
+    const today = new Date(this.selectedDate);
+    this.weekDays = [];
+    
+    if (this.plannerView === 'week') {
+      // Full week (Sunday to Saturday)
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        this.weekDays.push(day.toISOString().split('T')[0]);
+      }
+    } else if (this.plannerView === 'workweek') {
+      // Work week (Monday to Friday)
+      const startOfWeek = new Date(today);
+      const dayOfWeek = today.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      startOfWeek.setDate(today.getDate() + mondayOffset);
+      
+      for (let i = 0; i < 5; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        this.weekDays.push(day.toISOString().split('T')[0]);
+      }
+    } else if (this.plannerView === 'month') {
+      // Monthly view - all days in current month
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      for (let i = 1; i <= daysInMonth; i++) {
+        const day = new Date(year, month, i);
+        this.weekDays.push(day.toISOString().split('T')[0]);
+      }
+    }
+    
+    this.generateTimeSlots();
+    this.initializeDayTasks();
+  }
+  
+  initializeDayTasks() {
+    this.weekDays.forEach(day => {
+      if (!this.dayTasks[day]) {
+        this.dayTasks[day] = {};
+      }
+      this.timeSlots.forEach(slot => {
+        if (!this.dayTasks[day][slot.time]) {
+          this.dayTasks[day][slot.time] = '';
+        }
+      });
+    });
+  }
+  
+  generateMonthView() {
+    const today = new Date(this.selectedDate);
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    this.monthWeeks = [];
+    for (let week = 0; week < 6; week++) {
+      const weekDays = [];
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + (week * 7) + day);
+        weekDays.push({
+          date: date.toISOString().split('T')[0],
+          day: date.getDate(),
+          isCurrentMonth: date.getMonth() === month
+        });
+      }
+      this.monthWeeks.push(weekDays);
+    }
+  }
+  
+  getDayTasks(day: string, time: string): string {
+    return this.dayTasks[day]?.[time] || '';
+  }
+  
+  getDayEvents(day: string, time: string): any[] {
+    return this.timeSlots.find(slot => slot.time === time)?.events?.filter((event: any) => {
+      const eventDate = new Date(event.targetDate).toISOString().split('T')[0];
+      return eventDate === day;
+    }) || [];
+  }
+  
+  getDayEventsCount(day: string): number {
+    return this.timeSlots.reduce((count, slot) => {
+      return count + (slot.events?.filter((event: any) => {
+        const eventDate = new Date(event.targetDate).toISOString().split('T')[0];
+        return eventDate === day;
+      }).length || 0);
+    }, 0);
+  }
+  
+  isToday(dateStr: string): boolean {
+    const today = new Date().toISOString().split('T')[0];
+    return dateStr === today;
+  }
+  
+  generateSnoozeOccurrences(snoozeData: any): string[] {
+    if (snoozeData.type === 'once') {
+      return [snoozeData.startDate];
+    }
+    
+    const dates: string[] = [];
+    const start = new Date(snoozeData.startDate + 'T00:00:00');
+    const end = new Date(snoozeData.endDate + 'T23:59:59');
+    let current = new Date(start);
+    
+    if (snoozeData.type === 'daily') {
+      while (current <= end) {
+        dates.push(current.toISOString().split('T')[0]);
+        current.setDate(current.getDate() + 1);
+      }
+    }
+    
+    return dates;
+  }
+  
+  isValidWeekday(date: Date, weekdays: boolean[]): boolean {
+    const dayOfWeek = (date.getDay() + 6) % 7;
+    return weekdays[dayOfWeek];
+  }
+  
+  getDayTasksCount(day: string): number {
+    return Object.keys(this.dayTasks[day] || {}).length;
+  }
+  
+  selectDayInMonth(date: string) {
+    this.selectedDate = date;
+    this.plannerView = 'today';
+    this.onPlannerViewChange();
   }
 
   generateTimeSlots() {
@@ -335,7 +730,8 @@ export class DayPlannerComponent implements OnInit {
         this.timeSlots.push({ time, timeRange, task: '', events: [] });
       }
     }
-
+    
+    this.applyTimeFilter();
     if (this.timeSlots.length > 0) {
       this.loadPlan();
     }
@@ -449,48 +845,72 @@ export class DayPlannerComponent implements OnInit {
 
       if (events.data) {
         events.data.forEach(event => {
-          if (event.targetDate) {
-            // Convert event date to user timezone
-            const eventDate = new Date(event.targetDate);
-            const eventInUserTz = new Intl.DateTimeFormat('en-CA', {
-              timeZone: this.userTimezone,
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            }).format(eventDate);
-
-            if (eventInUserTz === this.selectedDate) {
-              const eventTimeInUserTz = new Intl.DateTimeFormat('en-GB', {
-                timeZone: this.userTimezone,
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              }).format(eventDate);
-
-              const slot = this.timeSlots.find(s => s.time === eventTimeInUserTz);
-
-              if (slot) {
-                slot.events.push(event);
-              } else {
-                // Find closest 30-minute slot
-                const [hours, minutes] = eventTimeInUserTz.split(':').map(Number);
-                const eventMinutes = hours * 60 + minutes;
-                const slotMinutes = Math.floor(eventMinutes / 30) * 30;
-                const slotHour = Math.floor(slotMinutes / 60);
-                const slotMin = slotMinutes % 60;
-                const slotTime = `${slotHour.toString().padStart(2, '0')}:${slotMin.toString().padStart(2, '0')}`;
-
-                const closestSlot = this.timeSlots.find(s => s.time === slotTime);
-                if (closestSlot) {
-                  closestSlot.events.push(event);
-                }
+          // Process original event
+          this.addEventToSlot(event, event.targetDate, false);
+          
+          // Process snooze events
+          if (event.snoozeDates) {
+            try {
+              const snoozeData = JSON.parse(event.snoozeDates);
+              if (snoozeData.startDate) {
+                const generatedDates = this.generateSnoozeOccurrences(snoozeData);
+                generatedDates.forEach((snoozeDate: string) => {
+                  this.addEventToSlot(event, snoozeDate, true);
+                });
+              } else if (snoozeData.dates) {
+                // Handle old format with dates array
+                snoozeData.dates.forEach((snoozeDate: string) => {
+                  this.addEventToSlot(event, snoozeDate, true);
+                });
               }
+            } catch (error) {
+              console.error('Error parsing snooze dates:', error);
             }
           }
         });
       }
     } catch (error) {
       console.error('Error loading events:', error);
+    }
+  }
+  
+  private addEventToSlot(event: any, eventDateStr: string | null, isSnooze: boolean) {
+    if (!eventDateStr) return;
+    
+    let eventDate: Date;
+    let eventTimeInUserTz: string;
+    
+    eventDate = new Date(eventDateStr);
+    
+    if (isSnooze) {
+      // All snooze events appear at 8 AM
+      eventTimeInUserTz = '08:00';
+    } else {
+      // For regular events, use the time from the date without timezone conversion
+      eventTimeInUserTz = eventDate.toTimeString().slice(0, 5);
+    }
+    
+    const eventInUserTz = eventDate.toISOString().split('T')[0];
+
+    if (eventInUserTz === this.selectedDate) {
+      const slot = this.timeSlots.find(s => s.time === eventTimeInUserTz);
+
+      if (slot) {
+        slot.events.push({ ...event, isSnoozeOccurrence: isSnooze });
+      } else {
+        // Find closest 30-minute slot
+        const [hours, minutes] = eventTimeInUserTz.split(':').map(Number);
+        const eventMinutes = hours * 60 + minutes;
+        const slotMinutes = Math.floor(eventMinutes / 30) * 30;
+        const slotHour = Math.floor(slotMinutes / 60);
+        const slotMin = slotMinutes % 60;
+        const slotTime = `${slotHour.toString().padStart(2, '0')}:${slotMin.toString().padStart(2, '0')}`;
+
+        const closestSlot = this.timeSlots.find(s => s.time === slotTime);
+        if (closestSlot) {
+          closestSlot.events.push({ ...event, isSnoozeOccurrence: isSnooze });
+        }
+      }
     }
   }
 

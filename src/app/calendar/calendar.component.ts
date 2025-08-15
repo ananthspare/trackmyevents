@@ -47,10 +47,182 @@ export class CalendarComponent implements OnInit, OnDestroy {
   };
   subcategories: any[] = [];
   editingSubcategories: any[] = [];
+  
+  // Snooze functionality
+  snoozeEvent: any = null;
+  snoozeType = 'once';
+  snoozeDate = '';
+  snoozeTime = '09:00';
+  customInterval = 1;
+  customUnit = 'days';
+  recurrenceEndDate = '';
+  weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  selectedWeekdays = [false, false, false, false, false, false, false];
+  weeklyTime = '09:00';
     
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
   constructor(private timezoneService: TimezoneService) {}
+  
+  showSnoozeModal(event: any) {
+    this.snoozeEvent = event;
+    
+    // Parse existing snooze data if available
+    let existingSnoozeData: any = null;
+    if (event.snoozeDates) {
+      try {
+        const parsed = JSON.parse(event.snoozeDates);
+        if (parsed.startDate || (parsed.dates && parsed.dates.length > 0)) {
+          existingSnoozeData = parsed;
+        }
+      } catch (error) {
+        console.error('Error parsing existing snooze data:', error);
+      }
+    }
+    
+    if (existingSnoozeData) {
+      // Load existing snooze configuration
+      this.snoozeType = existingSnoozeData.type || 'once';
+      this.snoozeDate = existingSnoozeData.startDate || new Date().toISOString().split('T')[0];
+      this.customInterval = existingSnoozeData.customInterval || 1;
+      this.customUnit = existingSnoozeData.customUnit || 'days';
+      this.recurrenceEndDate = existingSnoozeData.endDate || '';
+      this.selectedWeekdays = existingSnoozeData.weekdays || [false, false, false, false, false, false, false];
+      this.weeklyTime = existingSnoozeData.weeklyTime || '09:00';
+    } else {
+      // Set default values for new snooze
+      const now = new Date();
+      const eventDate = new Date(event.targetDate);
+      let defaultDate: Date;
+      
+      if (eventDate > now) {
+        defaultDate = new Date(eventDate);
+        defaultDate.setDate(defaultDate.getDate() + 1);
+      } else {
+        defaultDate = new Date(now.getTime() + (60 * 60 * 1000));
+      }
+      
+      this.snoozeDate = new Date().toISOString().split('T')[0];
+      this.snoozeType = 'once';
+      this.customInterval = 1;
+      this.customUnit = 'days';
+      this.recurrenceEndDate = '';
+      this.selectedWeekdays = [false, false, false, false, false, false, false];
+    }
+  }
+  
+  cancelSnooze() {
+    this.snoozeEvent = null;
+  }
+  
+  async confirmSnooze() {
+    if (!this.snoozeEvent || !this.snoozeDate) return;
+    
+    if (this.snoozeType === 'weekly' && !this.selectedWeekdays.some(day => day)) {
+      alert('Please select at least one day for weekly recurrence.');
+      return;
+    }
+    
+    try {
+      if (this.snoozeType === 'once') {
+        const snoozeData = {
+          type: 'once',
+          startDate: this.snoozeDate
+        };
+        
+        await client.models.Event.update({
+          id: this.snoozeEvent.id,
+          snoozeDates: JSON.stringify(snoozeData)
+        });
+      } else {
+        const snoozeData = {
+          type: this.snoozeType,
+          startDate: this.snoozeDate,
+          endDate: this.recurrenceEndDate || this.getDefaultEndDate(),
+          customInterval: this.customInterval,
+          customUnit: this.customUnit,
+          weekdays: this.selectedWeekdays
+        };
+        
+        await client.models.Event.update({
+          id: this.snoozeEvent.id,
+          snoozeDates: JSON.stringify(snoozeData)
+        });
+      }
+      
+      await this.loadEvents();
+      this.snoozeEvent = null;
+    } catch (error) {
+      console.error('Error snoozing event:', error);
+      alert('Error snoozing event. Please try again.');
+    }
+  }
+  
+
+  
+  getNextWeeklyOccurrence(fromDate: Date): Date | null {
+    const selectedDays = this.selectedWeekdays.map((selected, index) => selected ? index : -1).filter(day => day !== -1);
+    if (selectedDays.length === 0) return null;
+    
+    let nextDate = new Date(fromDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    
+    for (let i = 0; i < 7; i++) {
+      const dayOfWeek = (nextDate.getDay() + 6) % 7;
+      if (selectedDays.includes(dayOfWeek)) {
+        return new Date(nextDate);
+      }
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
+    
+    return null;
+  }
+  
+  async clearSnooze() {
+    if (!this.snoozeEvent) return;
+    
+    try {
+      await client.models.Event.update({
+        id: this.snoozeEvent.id,
+        snoozeDates: null
+      });
+      
+      await this.loadEvents();
+      this.snoozeEvent = null;
+    } catch (error) {
+      console.error('Error clearing snooze:', error);
+      alert('Error clearing snooze. Please try again.');
+    }
+  }
+  
+  getDefaultEndDate(): string {
+    const endDate = new Date(this.snoozeDate);
+    endDate.setDate(endDate.getDate() + 90);
+    return endDate.toISOString().split('T')[0];
+  }
+  
+  generateSnoozeOccurrences(snoozeData: any): string[] {
+    if (snoozeData.type === 'once') {
+      return [snoozeData.startDate];
+    }
+    
+    const dates: string[] = [];
+    const start = new Date(snoozeData.startDate);
+    const end = new Date(snoozeData.endDate);
+    let current = new Date(start);
+    
+    while (current <= end) {
+      const dateStr = current.toISOString().split('T')[0];
+      dates.push(dateStr);
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  }
+  
+  isValidWeekday(date: Date, weekdays: boolean[]): boolean {
+    const dayOfWeek = (date.getDay() + 6) % 7; // Convert to Mon=0, Sun=6
+    return weekdays[dayOfWeek];
+  }
 
   async ngOnInit() {
     await this.timezoneService.loadUserTimezone();
@@ -111,9 +283,40 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   mapEventsToCalendar() {
     this.calendarDays.forEach(day => {
-      day.events = this.events.filter(event => {
+      day.events = [];
+      
+      this.events.forEach(event => {
+        // Check original target date
         const eventDate = new Date(event.targetDate);
-        return this.isSameDay(day.date, eventDate);
+        if (this.isSameDay(day.date, eventDate)) {
+          day.events.push({ ...event, isSnoozeOccurrence: false });
+        }
+        
+        // Check snooze dates
+        if (event.snoozeDates) {
+          try {
+            const snoozeData = JSON.parse(event.snoozeDates);
+            if (snoozeData.startDate) {
+              const generatedDates = this.generateSnoozeOccurrences(snoozeData);
+              generatedDates.forEach((snoozeDate: string) => {
+                const snoozeEventDate = new Date(snoozeDate);
+                if (this.isSameDay(day.date, snoozeEventDate)) {
+                  day.events.push({ ...event, isSnoozeOccurrence: true, targetDate: snoozeDate });
+                }
+              });
+            } else if (snoozeData.dates) {
+              // Handle old format with dates array
+              snoozeData.dates.forEach((snoozeDate: string) => {
+                const snoozeEventDate = new Date(snoozeDate);
+                if (this.isSameDay(day.date, snoozeEventDate)) {
+                  day.events.push({ ...event, isSnoozeOccurrence: true, targetDate: snoozeDate });
+                }
+              });
+            }
+          } catch (error) {
+            console.error('Error parsing snooze dates:', error);
+          }
+        }
       });
     });
   }
@@ -172,9 +375,12 @@ export class CalendarComponent implements OnInit, OnDestroy {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
+    // Only show original events in sidebar, not snooze occurrences
+    const allOccurrences = this.events.map(event => ({ ...event, isSnoozeOccurrence: false }));
+    
     switch (this.viewType) {
       case 'day':
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return this.isSameDay(eventDate, this.selectedDate);
         });
@@ -185,7 +391,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= weekStart && eventDate <= weekEnd;
         });
@@ -195,7 +401,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const next2End = new Date(today);
         next2End.setDate(today.getDate() + 2);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= today && eventDate <= next2End;
         });
@@ -205,7 +411,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const next7End = new Date(today);
         next7End.setDate(today.getDate() + 7);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= today && eventDate <= next7End;
         });
@@ -215,7 +421,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const next30End = new Date(today);
         next30End.setDate(today.getDate() + 30);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= today && eventDate <= next30End;
         });
@@ -225,7 +431,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= nextMonth && eventDate <= nextMonthEnd;
         });
@@ -235,7 +441,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const past2Start = new Date(today);
         past2Start.setDate(today.getDate() - 2);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= past2Start && eventDate < today;
         });
@@ -245,7 +451,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const pastWeekStart = new Date(today);
         pastWeekStart.setDate(today.getDate() - 7);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= pastWeekStart && eventDate < today;
         });
@@ -255,14 +461,14 @@ export class CalendarComponent implements OnInit, OnDestroy {
         const pastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const pastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
         
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate >= pastMonth && eventDate <= pastMonthEnd;
         });
         break;
         
       case 'allPassed':
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate < today;
         });
@@ -270,7 +476,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
         
       case 'month':
       default:
-        this.filteredEvents = this.events.filter(event => {
+        this.filteredEvents = allOccurrences.filter(event => {
           const eventDate = new Date(event.targetDate);
           return eventDate.getMonth() === this.currentMonth && 
                  eventDate.getFullYear() === this.currentYear;

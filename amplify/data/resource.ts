@@ -16,6 +16,7 @@ const schema = a.schema({
       description: a.string(),
       targetDate: a.string(),
       categoryID: a.string(),
+      snoozeDates: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 
