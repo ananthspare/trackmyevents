@@ -205,19 +205,8 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       if (!event || !event.targetDate) return;
       
       try {
-        // Find the next upcoming occurrence
-        const occurrences = this.getEventOccurrences(event);
-        const upcomingOccurrence = occurrences
-          .map(occ => new Date(occ.date))
-          .filter(date => date.getTime() > now)
-          .sort((a, b) => a.getTime() - b.getTime())[0];
-        
-        if (!upcomingOccurrence) {
-          this.countdowns[event.id] = { expired: true };
-          return;
-        }
-        
-        const timeLeft = upcomingOccurrence.getTime() - now;
+        const targetTime = new Date(event.targetDate).getTime();
+        const timeLeft = targetTime - now;
         const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
         const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
