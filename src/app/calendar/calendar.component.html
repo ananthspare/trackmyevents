@@ -92,7 +92,10 @@
         (drop)="onDrop(day, $event)">
 
         <div class="day-number">{{ day.day }}</div>
-        <div class="add-event-btn" (click)="openCreateEventModal(day.date); $event.stopPropagation()" title="Add Event">+</div>
+        <div class="day-actions">
+          <div class="add-event-btn" (click)="openCreateEventModal(day.date); $event.stopPropagation()" title="Add Event">+</div>
+          <div class="planner-btn" (click)="goToPlanner(day.date); $event.stopPropagation()" title="View Day Plan">📅</div>
+        </div>
 
         <div class="events-preview" *ngIf="day.events.length > 0">
           <div

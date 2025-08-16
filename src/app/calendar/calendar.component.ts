@@ -61,6 +61,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   weeklyTime = '09:00';
     
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
+  @Output() navigateToPlanner = new EventEmitter<string>();
 
   constructor(private timezoneService: TimezoneService) {}
   
@@ -661,6 +662,11 @@ export class CalendarComponent implements OnInit, OnDestroy {
   
   navigateToEventInCategories(eventId: string, categoryId: string) {
     this.navigateToCategories.emit({ eventId, categoryId });
+  }
+  
+  goToPlanner(date: Date) {
+    const dateStr = date.toISOString().split('T')[0];
+    this.navigateToPlanner.emit(dateStr);
   }
   
   onDragStart(event: any, dragEvent: DragEvent) {

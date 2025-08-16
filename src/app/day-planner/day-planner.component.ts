@@ -888,35 +888,15 @@ export class DayPlannerComponent implements OnInit {
     let eventTimeInUserTz: string;
 
     eventDate = new Date(eventDateStr);
-
-    if (isSnooze) {
-      // All snooze events appear at 8 AM
-      eventTimeInUserTz = '08:00';
-    } else {
-      // For regular events, use the time from the date without timezone conversion
-      eventTimeInUserTz = eventDate.toTimeString().slice(0, 5);
-    }
-
     const eventInUserTz = eventDate.toISOString().split('T')[0];
 
     if (eventInUserTz === this.selectedDate) {
+      // All events for the selected day appear in the snooze items list at 8:00 AM
+      eventTimeInUserTz = '08:00';
+      
       const slot = this.timeSlots.find(s => s.time === eventTimeInUserTz);
-
       if (slot) {
         slot.events.push({ ...event, isSnoozeOccurrence: isSnooze });
-      } else {
-        // Find closest 30-minute slot
-        const [hours, minutes] = eventTimeInUserTz.split(':').map(Number);
-        const eventMinutes = hours * 60 + minutes;
-        const slotMinutes = Math.floor(eventMinutes / 30) * 30;
-        const slotHour = Math.floor(slotMinutes / 60);
-        const slotMin = slotMinutes % 60;
-        const slotTime = `${slotHour.toString().padStart(2, '0')}:${slotMin.toString().padStart(2, '0')}`;
-
-        const closestSlot = this.timeSlots.find(s => s.time === slotTime);
-        if (closestSlot) {
-          closestSlot.events.push({ ...event, isSnoozeOccurrence: isSnooze });
-        }
       }
     }
   }
@@ -1037,5 +1017,11 @@ export class DayPlannerComponent implements OnInit {
   getOriginalDate(targetDate: string): string {
     const date = new Date(targetDate);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' , year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true,timeZoneName: 'short' });
+  }
+  
+  setSelectedDate(dateStr: string) {
+    this.selectedDate = dateStr;
+    this.plannerView = 'today';
+    this.onPlannerViewChange();
   }
 }

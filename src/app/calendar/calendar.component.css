@@ -252,32 +252,51 @@
   margin-bottom: 4px;
 }
 
-.add-event-btn {
+.day-actions {
   position: absolute;
   top: 4px;
   right: 4px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.calendar-day:hover .day-actions {
+  opacity: 1;
+}
+
+.add-event-btn, .planner-btn {
   width: 18px;
   height: 18px;
-  background-color: #4CAF50;
-  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: bold;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
-  z-index: 10;
+  transition: transform 0.2s;
 }
 
-.calendar-day:hover .add-event-btn {
-  opacity: 1;
+.add-event-btn {
+  background-color: #4CAF50;
+  color: white;
 }
 
 .add-event-btn:hover {
   background-color: #45a049;
+  transform: scale(1.1);
+}
+
+.planner-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.planner-btn:hover {
+  background-color: #1976D2;
   transform: scale(1.1);
 }
 

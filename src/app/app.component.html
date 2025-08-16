@@ -54,9 +54,9 @@
 
       <main>
         <app-categories *ngIf="activeTab === 'categories'" #categoriesRef></app-categories>
-        <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-calendar>
+        <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)" (navigateToPlanner)="navigateToPlanner($event)"></app-calendar>
         <app-profile *ngIf="activeTab === 'profile'"></app-profile>
-        <app-day-planner *ngIf="activeTab === 'planner'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-day-planner>
+        <app-day-planner *ngIf="activeTab === 'planner'" #plannerRef (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-day-planner>
       </main>
 
       <footer>

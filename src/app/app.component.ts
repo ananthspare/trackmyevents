@@ -40,6 +40,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   userDisplayName = '';
   
   @ViewChild('categoriesRef') categoriesComponent!: CategoriesComponent;
+  @ViewChild('plannerRef') plannerComponent!: DayPlannerComponent;
 
   constructor(public authenticator: AuthenticatorService, private tourService: TourService, private userService: UserService) {
     // Subscribe to user updates
@@ -86,6 +87,20 @@ export class AppComponent implements OnInit, AfterViewInit {
     };
     
     setTimeout(tryNavigate, 100);
+  }
+  
+  navigateToPlanner(selectedDate: string) {
+    this.activeTab = 'planner';
+    
+    const trySetDate = () => {
+      if (this.plannerComponent) {
+        this.plannerComponent.setSelectedDate(selectedDate);
+      } else {
+        setTimeout(trySetDate, 100);
+      }
+    };
+    
+    setTimeout(trySetDate, 100);
   }
 
   async getUserDisplayName(user: any): Promise<string> {
