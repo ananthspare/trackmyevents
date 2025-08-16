@@ -207,12 +207,12 @@
                     'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
                     'caution': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 7 && (countdowns[event.id]?.days || 0) < 14
                   }">
-                    {{ event.targetDate | date:'MMM d, y h:mm a' }}
+                    {{ event.targetDate | date:'MMM d, y H:mm' }}
                   </div>
                 </div>
 
                 <div class="event-actions">
-                  <button class="drag-handle" 
+                  <button class="drag-handle"
                           draggable="true"
                           (dragstart)="onEventDragStart($event, event.id)"
                           (dragend)="onEventDragEnd($event)"
