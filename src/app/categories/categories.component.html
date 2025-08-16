@@ -166,10 +166,7 @@
              [class.even-row]="i % 2 === 0"
              [class.odd-row]="i % 2 === 1"
              [class.highlighted]="highlightedEventId === event.id"
-             [attr.data-event-id]="event.id"
-             draggable="true"
-             (dragstart)="onEventDragStart($event, event.id)"
-             (dragend)="onEventDragEnd($event)">
+             [attr.data-event-id]="event.id">
           <!-- View mode -->
           <div *ngIf="editingEvent?.id !== event.id" class="event-view">
             <div class="event-header-section">
@@ -215,6 +212,13 @@
                 </div>
 
                 <div class="event-actions">
+                  <button class="drag-handle" 
+                          draggable="true"
+                          (dragstart)="onEventDragStart($event, event.id)"
+                          (dragend)="onEventDragEnd($event)"
+                          title="Drag to move event">
+                    <i class="glyphicon glyphicon-move"></i>
+                  </button>
                   <button (click)="startEditEvent(event)" class="icon-btn">
                     <i class="glyphicon glyphicon-pencil"></i>
                   </button>

@@ -18,7 +18,7 @@ import { Subscription } from 'rxjs';
         <p>{{ currentStepData?.content }}</p>
         <div class="tour-actions">
           <button (click)="skipTour()" class="tour-btn tour-skip">Skip Tour</button>
-          <button (click)="skipStep()" class="tour-btn tour-skip-step">Skip Step</button>
+          <button (click)="previousStep()" class="tour-btn tour-prev" [disabled]="currentStep === 0">Previous</button>
           <button (click)="nextStep()" class="tour-btn tour-next">
             {{ currentStep === totalSteps - 1 ? 'Finish' : 'Next' }}
           </button>
@@ -90,9 +90,15 @@ import { Subscription } from 'rxjs';
       font-size: 12px;
     }
     
-    .tour-skip, .tour-skip-step {
+    .tour-skip, .tour-prev {
       background: #9e9e9e;
       color: white;
+    }
+    
+    .tour-prev:disabled {
+      background: #e0e0e0;
+      color: #999;
+      cursor: not-allowed;
     }
     
     .tour-next {
@@ -175,8 +181,8 @@ export class TourComponent implements OnInit, OnDestroy {
     this.tourService.nextStep();
   }
   
-  skipStep() {
-    this.tourService.skipStep();
+  previousStep() {
+    this.tourService.previousStep();
   }
   
   skipTour() {

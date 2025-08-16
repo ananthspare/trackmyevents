@@ -23,51 +23,101 @@ export class TourService {
     {
       target: '.nav-buttons',
       title: 'Navigation Tabs',
-      content: 'Switch between Categories and Calendar views using these tabs.',
+      content: 'Switch between Categories, Calendar, and Planner views. Categories for organizing events, Calendar for monthly view, and Planner for daily time management.',
       position: 'bottom'
     },
     {
       target: '.categories-sidebar',
       title: 'Categories Panel',
-      content: 'Create and manage categories to organize your events. You can create subcategories too.',
+      content: 'Create hierarchical categories to organize your events. Drag and drop to reorder or move categories. Root categories can have unlimited subcategories.',
       position: 'right'
     },
     {
       target: '.add-category-form',
       title: 'Add Category',
-      content: 'Use this form to create new categories. Select a parent to create subcategories.',
+      content: 'Create new categories with name and description. Select a parent category to create subcategories for better organization.',
       position: 'right'
     },
     {
       target: '.events-content',
       title: 'Events Panel',
-      content: 'View and manage events for the selected category. Each event shows a real-time countdown.',
+      content: 'View events for selected category with real-time countdowns. Events show urgency colors: red (urgent), orange (warning), yellow (caution). Use drag handle (⋮⋮) to move events between categories.',
       position: 'left'
     },
     {
       target: '.add-event-form',
       title: 'Add Event',
-      content: 'Create new events with title, description, and target date.',
+      content: 'Create events with title, description, and target date/time. All times are stored in UTC and displayed in your timezone.',
       position: 'left'
     },
     {
-      target: '[class*="nav-btn"]:last-child',
+      target: '.drag-handle',
+      title: 'Drag Handle',
+      content: 'Use the drag handle (⋮⋮) to move events between categories. This prevents accidental dragging when selecting todo text or clicking other buttons.',
+      position: 'top'
+    },
+    {
+      target: '.snooze-btn',
+      title: 'Event Snoozing',
+      content: 'Snooze events with flexible options: once, daily, weekly (select specific days), or custom intervals. Set end dates for recurring snoozes.',
+      position: 'top'
+    },
+    {
+      target: '[class*="nav-btn"]:nth-child(2)',
       title: 'Calendar View',
-      content: 'Switch to calendar view to see events in a monthly layout.',
+      content: 'Switch to calendar view to see events in monthly layout with drag-and-drop support.',
       position: 'bottom',
       action: () => this.switchToCalendar()
     },
     {
       target: '.calendar-container',
       title: 'Calendar Grid',
-      content: 'View events in a traditional calendar format. Click on dates to filter events.',
+      content: 'Monthly calendar showing events on their dates. Snooze occurrences appear on multiple dates. Drag events to reschedule with date/time picker.',
       position: 'left'
     },
     {
       target: '.events-sidebar',
-      title: 'Event List',
-      content: 'Filter and view events by different time periods. Use the folder icon to navigate back to categories.',
+      title: 'Event Filters',
+      content: 'Filter events by time periods: today, next 2/7/30 days, past events, etc. Use folder icon to navigate to event in categories view.',
       position: 'right'
+    },
+    {
+      target: '[class*="nav-btn"]:nth-child(3)',
+      title: 'Day Planner',
+      content: 'Switch to day planner for detailed time management.',
+      position: 'bottom',
+      action: () => this.switchToPlanner()
+    },
+    {
+      target: '.planner-header',
+      title: 'Planner Controls',
+      content: 'Select date, adjust time range (6 AM - 9 PM default), and choose view: Today, Week, Work Week, or Monthly overview.',
+      position: 'bottom'
+    },
+    {
+      target: '.time-slot',
+      title: 'Time Slots',
+      content: '30-minute time slots for detailed planning. Add tasks and see scheduled events. Snooze events show with bell icon and original date.',
+      position: 'right'
+    },
+    {
+      target: '.copy-btn',
+      title: 'Task Management',
+      content: 'Copy tasks to next day or entire week. Save all tasks to persist your daily plans.',
+      position: 'top'
+    },
+    {
+      target: '.profile-btn',
+      title: 'User Profile',
+      content: 'Access profile settings to configure timezone, notification preferences (daily/weekly reminders), and personal information.',
+      position: 'bottom',
+      action: () => this.switchToProfile()
+    },
+    {
+      target: '.tour-btn',
+      title: 'Tour Complete!',
+      content: 'You can restart this tour anytime. The app supports timezone conversion, drag-and-drop, snooze scheduling, and comprehensive event management.',
+      position: 'bottom'
     }
   ];
   
@@ -94,8 +144,11 @@ export class TourService {
     }
   }
   
-  skipStep() {
-    this.nextStep();
+  previousStep() {
+    const current = this.currentStepSubject.value;
+    if (current > 0) {
+      this.currentStepSubject.next(current - 1);
+    }
   }
   
   endTour() {
@@ -106,6 +159,18 @@ export class TourService {
   private switchToCalendar() {
     if (this.appComponent) {
       this.appComponent.setActiveTab('calendar');
+    }
+  }
+  
+  private switchToPlanner() {
+    if (this.appComponent) {
+      this.appComponent.setActiveTab('planner');
+    }
+  }
+  
+  private switchToProfile() {
+    if (this.appComponent) {
+      this.appComponent.setActiveTab('profile');
     }
   }
 }
