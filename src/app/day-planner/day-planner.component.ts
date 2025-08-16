@@ -64,17 +64,18 @@ interface TimeSlot {
               placeholder="Add task..."
               class="task-input"
               rows="1"></textarea>
-            <div *ngFor="let event of slot.events" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence" (mouseenter)="showNavigateIcon = event.id" (mouseleave)="showNavigateIcon = null">
+            <div *ngFor="let event of slot.events" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence">
               <span *ngIf="event.isSnoozeOccurrence">🔔</span>
               <span *ngIf="!event.isSnoozeOccurrence">📅</span>
               {{ event.title }}
               <div class="event-description" *ngIf="event.description">{{ event.description }}</div>
-              <span *ngIf="showNavigateIcon === event.id" class="navigate-icon" (click)="navigateToEvent(event.id, event.categoryID)" title="Go to category">📁</span>
+              <span *ngIf="event.isSnoozeOccurrence" class="original-date">Original: {{ getOriginalDate(event.targetDate) }}</span>
+              <span class="navigate-icon" (click)="navigateToEvent(event.id, event.categoryID)" title="Go to event and category">📁</span>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- Week Views -->
       <div class="week-grid" *ngIf="plannerView === 'week' || plannerView === 'workweek'">
         <div class="week-header">
@@ -93,7 +94,7 @@ interface TimeSlot {
           </div>
         </div>
       </div>
-      
+
       <!-- Month View -->
       <div class="month-grid" *ngIf="plannerView === 'month'">
         <div class="month-header">
@@ -241,19 +242,19 @@ interface TimeSlot {
       line-height: 1.3;
       position: relative;
     }
-    
+
     .event-item.snooze-event {
       background: #fff3e0;
       color: #e65100;
       border-left: 3px solid #ff9800;
     }
-    
+
     .event-description {
       font-size: 10px;
       color: #666;
       margin-top: 2px;
     }
-    
+
     .navigate-icon {
       position: absolute;
       right: 4px;
@@ -262,9 +263,15 @@ interface TimeSlot {
       font-size: 10px;
       opacity: 0.7;
     }
-    
+
     .navigate-icon:hover {
       opacity: 1;
+    }
+
+    .original-date {
+      font-size: 9px;
+      color: #888;
+      margin-top: 1px;
     }
 
     .save-all-btn {
@@ -342,7 +349,7 @@ interface TimeSlot {
       color: #555;
       font-weight: 600;
     }
-    
+
     .view-selector {
       display: flex;
       align-items: center;
@@ -350,7 +357,7 @@ interface TimeSlot {
       font-size: 14px;
       font-weight: 500;
     }
-    
+
     .view-selector select {
       padding: 8px 12px;
       border: 2px solid #e0e0e0;
@@ -358,20 +365,20 @@ interface TimeSlot {
       font-size: 14px;
       min-width: 120px;
     }
-    
+
     .week-view {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 15px;
       padding: 20px;
     }
-    
+
     .day-column {
       border: 2px solid #e0e0e0;
       border-radius: 8px;
       overflow: hidden;
     }
-    
+
     .day-header {
       background: #f8f9fa;
       padding: 12px;
@@ -379,11 +386,11 @@ interface TimeSlot {
       text-align: center;
       border-bottom: 1px solid #e0e0e0;
     }
-    
+
     .day-content {
       padding: 12px;
     }
-    
+
     .day-task-input {
       width: 100%;
       min-height: 100px;
@@ -393,14 +400,14 @@ interface TimeSlot {
       resize: vertical;
       font-family: inherit;
     }
-    
+
     .week-grid {
       display: grid;
       grid-template-rows: auto 1fr;
       height: 100%;
       overflow-x: auto;
     }
-    
+
     .week-header {
       display: grid;
       grid-template-columns: 120px repeat(7, 1fr);
@@ -408,14 +415,14 @@ interface TimeSlot {
       border-bottom: 2px solid #e0e0e0;
       min-width: 900px;
     }
-    
+
     .time-column-header {
       padding: 12px;
       font-weight: 600;
       text-align: center;
       border-right: 1px solid #e0e0e0;
     }
-    
+
     .week-row {
       display: grid;
       grid-template-columns: 120px repeat(7, 1fr);
@@ -423,7 +430,7 @@ interface TimeSlot {
       min-height: 60px;
       min-width: 900px;
     }
-    
+
     .day-cell {
       padding: 4px;
       border-right: 1px solid #f0f0f0;
@@ -431,7 +438,7 @@ interface TimeSlot {
       flex-direction: column;
       gap: 2px;
     }
-    
+
     .day-cell .day-task-input {
       width: 100%;
       min-height: 30px;
@@ -441,70 +448,70 @@ interface TimeSlot {
       font-size: 11px;
       resize: none;
     }
-    
+
     .day-tasks {
       font-size: 11px;
       color: #666;
       margin-bottom: 2px;
     }
-    
+
     .month-grid {
       display: grid;
       grid-template-rows: auto 1fr;
       height: 100%;
     }
-    
+
     .month-header {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       background: #f8f9fa;
       border-bottom: 2px solid #e0e0e0;
     }
-    
+
     .day-name {
       padding: 12px;
       font-weight: 600;
       text-align: center;
       border-right: 1px solid #e0e0e0;
     }
-    
+
     .month-row {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       border-bottom: 1px solid #e0e0e0;
     }
-    
+
     .month-day {
       padding: 8px;
       border-right: 1px solid #e0e0e0;
       min-height: 80px;
       cursor: pointer;
     }
-    
+
     .month-day:hover {
       background: #f5f5f5;
     }
-    
+
     .month-day.other-month {
       color: #ccc;
       background: #fafafa;
     }
-    
+
     .month-day.today {
       background: #e3f2fd;
       border: 2px solid #2196f3;
     }
-    
+
     .day-number {
       font-weight: 600;
       margin-bottom: 4px;
     }
-    
+
     .day-tasks-preview {
       font-size: 10px;
       color: #666;
     }
-    
+
     .day-events-preview {
       font-size: 10px;
       color: #2196f3;
@@ -528,13 +535,13 @@ export class DayPlannerComponent implements OnInit {
   filteredTimeSlots: any[] = [];
 
   hours = Array.from({length: 24}, (_, i) => i);
-  
+
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
 
   ngOnInit() {
     this.onPlannerViewChange();
   }
-  
+
   onPlannerViewChange() {
     if (this.plannerView === 'today') {
       this.generateTimeSlots();
@@ -545,7 +552,7 @@ export class DayPlannerComponent implements OnInit {
     }
     this.loadPlan();
   }
-  
+
   onTimeRangeChange() {
     if (this.plannerView === 'today') {
       this.generateTimeSlots();
@@ -555,26 +562,26 @@ export class DayPlannerComponent implements OnInit {
     this.applyTimeFilter();
     this.loadPlan();
   }
-  
+
   applyTimeFilter() {
     const start = Math.min(this.startHour, this.endHour);
     const end = Math.max(this.startHour, this.endHour);
-    
+
     this.filteredTimeSlots = this.timeSlots.filter(slot => {
       const [hour] = slot.time.split(':').map(Number);
       return hour >= start && hour <= end;
     });
   }
-  
+
   generateWeekView() {
     const today = new Date(this.selectedDate);
     this.weekDays = [];
-    
+
     if (this.plannerView === 'week') {
       // Full week (Sunday to Saturday)
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay());
-      
+
       for (let i = 0; i < 7; i++) {
         const day = new Date(startOfWeek);
         day.setDate(startOfWeek.getDate() + i);
@@ -586,7 +593,7 @@ export class DayPlannerComponent implements OnInit {
       const dayOfWeek = today.getDay();
       const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
       startOfWeek.setDate(today.getDate() + mondayOffset);
-      
+
       for (let i = 0; i < 5; i++) {
         const day = new Date(startOfWeek);
         day.setDate(startOfWeek.getDate() + i);
@@ -597,17 +604,17 @@ export class DayPlannerComponent implements OnInit {
       const year = today.getFullYear();
       const month = today.getMonth();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
+
       for (let i = 1; i <= daysInMonth; i++) {
         const day = new Date(year, month, i);
         this.weekDays.push(day.toISOString().split('T')[0]);
       }
     }
-    
+
     this.generateTimeSlots();
     this.initializeDayTasks();
   }
-  
+
   initializeDayTasks() {
     this.weekDays.forEach(day => {
       if (!this.dayTasks[day]) {
@@ -620,17 +627,17 @@ export class DayPlannerComponent implements OnInit {
       });
     });
   }
-  
+
   generateMonthView() {
     const today = new Date(this.selectedDate);
     const year = today.getFullYear();
     const month = today.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
+
     this.monthWeeks = [];
     for (let week = 0; week < 6; week++) {
       const weekDays = [];
@@ -646,18 +653,18 @@ export class DayPlannerComponent implements OnInit {
       this.monthWeeks.push(weekDays);
     }
   }
-  
+
   getDayTasks(day: string, time: string): string {
     return this.dayTasks[day]?.[time] || '';
   }
-  
+
   getDayEvents(day: string, time: string): any[] {
     return this.timeSlots.find(slot => slot.time === time)?.events?.filter((event: any) => {
       const eventDate = new Date(event.targetDate).toISOString().split('T')[0];
       return eventDate === day;
     }) || [];
   }
-  
+
   getDayEventsCount(day: string): number {
     return this.timeSlots.reduce((count, slot) => {
       return count + (slot.events?.filter((event: any) => {
@@ -666,41 +673,41 @@ export class DayPlannerComponent implements OnInit {
       }).length || 0);
     }, 0);
   }
-  
+
   isToday(dateStr: string): boolean {
     const today = new Date().toISOString().split('T')[0];
     return dateStr === today;
   }
-  
+
   generateSnoozeOccurrences(snoozeData: any): string[] {
     if (snoozeData.type === 'once') {
       return [snoozeData.startDate];
     }
-    
+
     const dates: string[] = [];
     const start = new Date(snoozeData.startDate + 'T00:00:00');
     const end = new Date(snoozeData.endDate + 'T23:59:59');
     let current = new Date(start);
-    
+
     if (snoozeData.type === 'daily') {
       while (current <= end) {
         dates.push(current.toISOString().split('T')[0]);
         current.setDate(current.getDate() + 1);
       }
     }
-    
+
     return dates;
   }
-  
+
   isValidWeekday(date: Date, weekdays: boolean[]): boolean {
     const dayOfWeek = (date.getDay() + 6) % 7;
     return weekdays[dayOfWeek];
   }
-  
+
   getDayTasksCount(day: string): number {
     return Object.keys(this.dayTasks[day] || {}).length;
   }
-  
+
   selectDayInMonth(date: string) {
     this.selectedDate = date;
     this.plannerView = 'today';
@@ -730,7 +737,7 @@ export class DayPlannerComponent implements OnInit {
         this.timeSlots.push({ time, timeRange, task: '', events: [] });
       }
     }
-    
+
     this.applyTimeFilter();
     if (this.timeSlots.length > 0) {
       this.loadPlan();
@@ -812,15 +819,15 @@ export class DayPlannerComponent implements OnInit {
   async testConnection() {
     try {
       console.log('Testing Amplify connection...');
-      
+
       // Test categories
       const categoriesResult = await client.models.Category.list();
       console.log('Categories result:', categoriesResult);
-      
+
       // Test events
       const eventsResult = await client.models.Event.list();
       console.log('Events result:', eventsResult);
-      
+
       alert(`Connection OK!\nCategories: ${categoriesResult.data?.length || 0}\nEvents: ${eventsResult.data?.length || 0}`);
     } catch (error: any) {
       console.error('Connection test failed:', error);
@@ -847,7 +854,7 @@ export class DayPlannerComponent implements OnInit {
         events.data.forEach(event => {
           // Process original event
           this.addEventToSlot(event, event.targetDate, false);
-          
+
           // Process snooze events
           if (event.snoozeDates) {
             try {
@@ -873,15 +880,15 @@ export class DayPlannerComponent implements OnInit {
       console.error('Error loading events:', error);
     }
   }
-  
+
   private addEventToSlot(event: any, eventDateStr: string | null, isSnooze: boolean) {
     if (!eventDateStr) return;
-    
+
     let eventDate: Date;
     let eventTimeInUserTz: string;
-    
+
     eventDate = new Date(eventDateStr);
-    
+
     if (isSnooze) {
       // All snooze events appear at 8 AM
       eventTimeInUserTz = '08:00';
@@ -889,7 +896,7 @@ export class DayPlannerComponent implements OnInit {
       // For regular events, use the time from the date without timezone conversion
       eventTimeInUserTz = eventDate.toTimeString().slice(0, 5);
     }
-    
+
     const eventInUserTz = eventDate.toISOString().split('T')[0];
 
     if (eventInUserTz === this.selectedDate) {
@@ -1022,8 +1029,13 @@ export class DayPlannerComponent implements OnInit {
       this.copying = false;
     }
   }
-  
+
   navigateToEvent(eventId: string, categoryId: string) {
     this.navigateToCategories.emit({ eventId, categoryId });
+  }
+
+  getOriginalDate(targetDate: string): string {
+    const date = new Date(targetDate);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' , year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true,timeZoneName: 'short' });
   }
 }
