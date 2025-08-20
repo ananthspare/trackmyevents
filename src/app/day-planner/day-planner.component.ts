@@ -61,9 +61,9 @@ interface TimeSlot {
           <div class="slot-content">
             <textarea
               [(ngModel)]="slot.task"
-              placeholder="Add task..."
               class="task-input"
-              rows="1"></textarea>
+              placeholder="Add task..."
+              rows="3"></textarea>
             <div *ngFor="let event of slot.events" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence">
               <span *ngIf="event.isSnoozeOccurrence">🔔</span>
               <span *ngIf="!event.isSnoozeOccurrence">📅</span>
@@ -85,7 +85,13 @@ interface TimeSlot {
         <div class="week-row" *ngFor="let slot of filteredTimeSlots">
           <div class="time-label">{{ slot.timeRange }}</div>
           <div class="day-cell" *ngFor="let day of weekDays">
-            <textarea class="day-task-input" [(ngModel)]="dayTasks[day][slot.time]" placeholder="Tasks..."></textarea>
+            <div class="task-editor-mini">
+              <textarea
+                [(ngModel)]="dayTasks[day][slot.time]"
+                class="day-task-input-rich"
+                placeholder="Tasks..."
+                rows="2"></textarea>
+            </div>
             <div *ngFor="let event of getDayEvents(day, slot.time)" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence">
               <span *ngIf="event.isSnoozeOccurrence">🔔</span>
               <span *ngIf="!event.isSnoozeOccurrence">📅</span>
@@ -120,14 +126,14 @@ interface TimeSlot {
     .planner-container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 30px;
+      padding: 15px;
       min-height: 100vh;
     }
 
     .planner-header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 15px;
       margin-bottom: 20px;
       padding: 15px;
       background: #f8f9fa;
@@ -137,22 +143,56 @@ interface TimeSlot {
 
     .header-actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
+      justify-content: center;
+    }
+
+    @media (min-width: 768px) {
+      .planner-container {
+        padding: 30px;
+      }
+      
+      .planner-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .header-actions {
+        justify-content: flex-end;
+      }
     }
 
     .planner-header h2 {
       margin: 0;
       color: #333;
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 600;
+      text-align: center;
     }
 
     .date-input {
-      padding: 12px 16px;
+      padding: 8px 12px;
       border: 2px solid #e0e0e0;
       border-radius: 8px;
-      font-size: 16px;
-      min-width: 160px;
+      font-size: 14px;
+      width: 100%;
+      max-width: 200px;
+    }
+
+    @media (min-width: 768px) {
+      .planner-header h2 {
+        font-size: 28px;
+        text-align: left;
+      }
+      
+      .date-input {
+        padding: 12px 16px;
+        font-size: 16px;
+        min-width: 160px;
+        width: auto;
+      }
     }
 
     .date-input:focus {
@@ -182,42 +222,115 @@ interface TimeSlot {
     }
 
     .time-label {
-      width: 120px;
-      padding: 10px;
+      width: 80px;
+      padding: 8px;
       background: #f8f9fa;
       border-right: 2px solid #e0e0e0;
       font-weight: 600;
-      font-size: 12px;
+      font-size: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #555;
     }
 
-    .task-input {
+    @media (min-width: 768px) {
+      .time-label {
+        width: 120px;
+        padding: 10px;
+        font-size: 12px;
+      }
+    }
+
+    .task-editor {
       flex: 1;
-      padding: 10px 15px;
-      border: none;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin: 4px 8px;
+    }
+
+    .editor-toolbar {
+      display: flex;
+      gap: 2px;
+      padding: 6px;
+      background: #ffffff;
+      border-bottom: 1px solid #e0e0e0;
+      border-radius: 4px 4px 0 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .format-btn {
+      background: #ffffff;
+      border: 1px solid #007bff;
+      border-radius: 4px;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      min-width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #007bff;
+      font-weight: 600;
+    }
+
+    .format-btn:hover {
+      background: #007bff;
+      color: white;
+    }
+
+    .format-btn:active {
+      background: #0056b3;
+      color: white;
+    }
+
+    .task-input {
+      width: calc(100% - 8px);
+      padding: 6px 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
       outline: none;
-      font-size: 14px;
+      font-size: 12px;
       line-height: 1.4;
-      resize: none;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      white-space: pre-wrap;
-      min-height: 20px;
-      max-height: 80px;
-      overflow-y: auto;
+      resize: vertical;
       font-family: inherit;
+      margin: 2px 4px;
+      min-height: 50px;
+      background: white;
+    }
+
+    @media (min-width: 768px) {
+      .task-input {
+        width: calc(100% - 16px);
+        padding: 8px 12px;
+        font-size: 14px;
+        margin: 4px 8px;
+        min-height: 60px;
+        resize: both;
+      }
     }
 
     .task-input:focus {
       background: #f0f4f8;
+      border-color: #2196f3;
     }
 
-    .task-input::placeholder {
-      color: #999;
-      font-style: italic;
+    .day-task-input-rich {
+      width: 100%;
+      min-height: 30px;
+      padding: 4px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      outline: none;
+      font-size: 11px;
+      resize: both;
+      font-family: inherit;
+    }
+
+    .task-editor-mini {
+      width: 100%;
+      margin: 2px 0;
     }
 
     .slot-content {
@@ -366,17 +479,42 @@ interface TimeSlot {
       min-width: 120px;
     }
 
-    .week-view {
+    .week-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      padding: 20px;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+      overflow-x: auto;
     }
 
-    .day-column {
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      overflow: hidden;
+    .week-header {
+      display: grid;
+      grid-template-columns: 120px repeat(7, 1fr);
+      background: #f8f9fa;
+      border-bottom: 2px solid #e0e0e0;
+      min-width: 900px;
+    }
+
+    .time-column-header {
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .week-row {
+      display: grid;
+      grid-template-columns: 120px repeat(7, 1fr);
+      border-bottom: 1px solid #f0f0f0;
+      min-height: 60px;
+      min-width: 900px;
+    }
+
+    .day-cell {
+      padding: 4px;
+      border-right: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .day-header {
@@ -387,18 +525,216 @@ interface TimeSlot {
       border-bottom: 1px solid #e0e0e0;
     }
 
-    .day-content {
-      padding: 12px;
+    .month-grid {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100%;
     }
 
-    .day-task-input {
-      width: 100%;
-      min-height: 100px;
-      padding: 10px;
+    .month-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #f8f9fa;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .day-name {
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .month-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .month-day {
+      padding: 8px;
+      border-right: 1px solid #e0e0e0;
+      min-height: 80px;
+      cursor: pointer;
+    }
+
+    .month-day:hover {
+      background: #f5f5f5;
+    }
+
+    .month-day.other-month {
+      color: #ccc;
+      background: #fafafa;
+    }
+
+    .month-day.today {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+    }
+
+    .day-number {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .day-tasks-preview {
+      font-size: 10px;
+      color: #666;
+    }
+
+    .day-events-preview {
+      font-size: 10px;
+      color: #2196f3;
+      margin-top: 2px;
+    } 100%;
       border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+
+    .slot-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 4px 0;
+    }
+
+    .event-item {
+      background: #e3f2fd;
+      padding: 6px 12px;
+      margin: 0 12px;
       border-radius: 4px;
-      resize: vertical;
-      font-family: inherit;
+      font-size: 12px;
+      color: #1976d2;
+      border-left: 3px solid #2196f3;
+      font-weight: 500;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.3;
+      position: relative;
+    }
+
+    .event-item.snooze-event {
+      background: #fff3e0;
+      color: #e65100;
+      border-left: 3px solid #ff9800;
+    }
+
+    .event-description {
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .navigate-icon {
+      position: absolute;
+      right: 4px;
+      top: 2px;
+      cursor: pointer;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .navigate-icon:hover {
+      opacity: 1;
+    }
+
+    .original-date {
+      font-size: 9px;
+      color: #888;
+      margin-top: 1px;
+    }
+
+    .save-all-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .save-all-btn:hover:not(:disabled) {
+      background: #45a049;
+      transform: translateY(-1px);
+    }
+
+    .save-all-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .planner-footer {
+      text-align: center;
+      margin-top: 20px;
+      padding: 10px;
+    }
+
+    .copy-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover:not(:disabled) {
+      background: #1976D2;
+      transform: translateY(-1px);
+    }
+
+    .copy-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .time-range {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .time-range select {
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 80px;
+    }
+
+    .time-range select:focus {
+      border-color: #2196f3;
+      outline: none;
+    }
+
+    .time-range label {
+      color: #555;
+      font-weight: 600;
+    }
+
+    .view-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .view-selector select {
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 120px;
     }
 
     .week-grid {
@@ -439,20 +775,358 @@ interface TimeSlot {
       gap: 2px;
     }
 
-    .day-cell .day-task-input {
+    .day-header {
+      background: #f8f9fa;
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .month-grid {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+    }
+
+    .month-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #f8f9fa;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .day-name {
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .month-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .month-day {
+      padding: 8px;
+      border-right: 1px solid #e0e0e0;
+      min-height: 80px;
+      cursor: pointer;
+    }
+
+    .month-day:hover {
+      background: #f5f5f5;
+    }
+
+    .month-day.other-month {
+      color: #ccc;
+      background: #fafafa;
+    }
+
+    .month-day.today {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+    }
+
+    .day-number {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .day-tasks-preview {
+      font-size: 10px;
+      color: #666;
+    }
+
+    .day-events-preview {
+      font-size: 10px;
+      color: #2196f3;
+      margin-top: 2px;
+    }ine: none;
+      font-size: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      min-height: 40px;
+      max-height: 120px;
+      overflow-y: auto;
+      font-family: inherit;
+      resize: vertical;
+      background: white;
+    }
+
+    .task-input-rich:focus {
+      background: #f0f4f8;
+    }
+
+    .task-input-rich:empty:before {
+      content: attr(placeholder);
+      color: #999;
+      font-style: italic;
+    }
+
+    .task-input-rich .todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 4px 0;
+      padding: 2px 0;
+    }
+
+    .task-input-rich .todo-checkbox {
+      cursor: pointer;
+      user-select: none;
+      font-size: 16px;
+      margin-top: 1px;
+      min-width: 16px;
+    }
+
+    .task-input-rich .todo-text {
+      flex: 1;
+      outline: none;
+    }
+
+    .task-input-rich ul {
+      margin: 4px 0;
+      padding-left: 20px;
+    }
+
+    .task-input-rich li {
+      margin: 2px 0;
+    }
+
+    .day-task-input-rich {
+      direction: ltr;
+      text-align: left;
       width: 100%;
       min-height: 30px;
       padding: 4px;
-      border: 1px solid #ddd;
-      border-radius: 3px;
+      border: none;
+      outline: none;
       font-size: 11px;
-      resize: none;
+      resize: vertical;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
-    .day-tasks {
-      font-size: 11px;
+    .day-task-input-rich:empty:before {
+      content: attr(placeholder);
+      color: #999;
+      font-style: italic;
+    }
+
+    .day-task-input-rich .todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      margin: 1px 0;
+      font-size: 10px;
+    }
+
+    .day-task-input-rich .todo-checkbox {
+      cursor: pointer;
+      user-select: none;
+      font-size: 10px;
+    }
+
+    .task-editor-mini {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+
+    .slot-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 4px 0;
+    }
+
+    .event-item {
+      background: #e3f2fd;
+      padding: 6px 12px;
+      margin: 0 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #1976d2;
+      border-left: 3px solid #2196f3;
+      font-weight: 500;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.3;
+      position: relative;
+    }
+
+    .event-item.snooze-event {
+      background: #fff3e0;
+      color: #e65100;
+      border-left: 3px solid #ff9800;
+    }
+
+    .event-description {
+      font-size: 10px;
       color: #666;
-      margin-bottom: 2px;
+      margin-top: 2px;
+    }
+
+    .navigate-icon {
+      position: absolute;
+      right: 4px;
+      top: 2px;
+      cursor: pointer;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .navigate-icon:hover {
+      opacity: 1;
+    }
+
+    .original-date {
+      font-size: 9px;
+      color: #888;
+      margin-top: 1px;
+    }
+
+    .save-all-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .save-all-btn:hover:not(:disabled) {
+      background: #45a049;
+      transform: translateY(-1px);
+    }
+
+    .save-all-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .planner-footer {
+      text-align: center;
+      margin-top: 20px;
+      padding: 10px;
+    }
+
+    .copy-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover:not(:disabled) {
+      background: #1976D2;
+      transform: translateY(-1px);
+    }
+
+    .copy-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .time-range {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .time-range select {
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 80px;
+    }
+
+    .time-range select:focus {
+      border-color: #2196f3;
+      outline: none;
+    }
+
+    .time-range label {
+      color: #555;
+      font-weight: 600;
+    }
+
+    .view-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .view-selector select {
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 120px;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+      overflow-x: auto;
+    }
+
+    .week-header {
+      display: grid;
+      grid-template-columns: 120px repeat(7, 1fr);
+      background: #f8f9fa;
+      border-bottom: 2px solid #e0e0e0;
+      min-width: 900px;
+    }
+
+    .time-column-header {
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .week-row {
+      display: grid;
+      grid-template-columns: 120px repeat(7, 1fr);
+      border-bottom: 1px solid #f0f0f0;
+      min-height: 60px;
+      min-width: 900px;
+    }
+
+    .day-cell {
+      padding: 4px;
+      border-right: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .day-header {
+      background: #f8f9fa;
+      padding: 12px;
+      font-weight: 600;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
     }
 
     .month-grid {
@@ -578,7 +1252,6 @@ export class DayPlannerComponent implements OnInit {
     this.weekDays = [];
 
     if (this.plannerView === 'week') {
-      // Full week (Sunday to Saturday)
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay());
 
@@ -588,7 +1261,6 @@ export class DayPlannerComponent implements OnInit {
         this.weekDays.push(day.toISOString().split('T')[0]);
       }
     } else if (this.plannerView === 'workweek') {
-      // Work week (Monday to Friday)
       const startOfWeek = new Date(today);
       const dayOfWeek = today.getDay();
       const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -597,16 +1269,6 @@ export class DayPlannerComponent implements OnInit {
       for (let i = 0; i < 5; i++) {
         const day = new Date(startOfWeek);
         day.setDate(startOfWeek.getDate() + i);
-        this.weekDays.push(day.toISOString().split('T')[0]);
-      }
-    } else if (this.plannerView === 'month') {
-      // Monthly view - all days in current month
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      for (let i = 1; i <= daysInMonth; i++) {
-        const day = new Date(year, month, i);
         this.weekDays.push(day.toISOString().split('T')[0]);
       }
     }
@@ -634,7 +1296,6 @@ export class DayPlannerComponent implements OnInit {
     const month = today.getMonth();
 
     const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
 
@@ -679,31 +1340,6 @@ export class DayPlannerComponent implements OnInit {
     return dateStr === today;
   }
 
-  generateSnoozeOccurrences(snoozeData: any): string[] {
-    if (snoozeData.type === 'once') {
-      return [snoozeData.startDate];
-    }
-
-    const dates: string[] = [];
-    const start = new Date(snoozeData.startDate + 'T00:00:00');
-    const end = new Date(snoozeData.endDate + 'T23:59:59');
-    let current = new Date(start);
-
-    if (snoozeData.type === 'daily') {
-      while (current <= end) {
-        dates.push(current.toISOString().split('T')[0]);
-        current.setDate(current.getDate() + 1);
-      }
-    }
-
-    return dates;
-  }
-
-  isValidWeekday(date: Date, weekdays: boolean[]): boolean {
-    const dayOfWeek = (date.getDay() + 6) % 7;
-    return weekdays[dayOfWeek];
-  }
-
   getDayTasksCount(day: string): number {
     return Object.keys(this.dayTasks[day] || {}).length;
   }
@@ -722,7 +1358,6 @@ export class DayPlannerComponent implements OnInit {
 
     for (let hour = start; hour <= end; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        // Skip the last 30-minute slot if we're at the end hour
         if (hour === end && minute === 30) {
           break;
         }
@@ -746,7 +1381,6 @@ export class DayPlannerComponent implements OnInit {
 
   async loadPlan() {
     try {
-      // Load user timezone
       await this.loadUserTimezone();
 
       const result = await client.models.DayPlan.list({
@@ -768,7 +1402,10 @@ export class DayPlannerComponent implements OnInit {
         }
       }
 
-      // Load events for this date
+      if (this.plannerView !== 'today') {
+        await this.loadWeekTasks();
+      }
+
       await this.loadEvents();
     } catch (error) {
       console.error('Error loading plan:', error);
@@ -779,31 +1416,67 @@ export class DayPlannerComponent implements OnInit {
     this.saving = true;
 
     try {
-      // Create tasks object from time slots
-      const tasks: { [key: string]: string } = {};
-      this.timeSlots.forEach(slot => {
-        if (slot.task.trim()) {
-          tasks[slot.time] = slot.task;
+      if (this.plannerView === 'today') {
+        const tasks: { [key: string]: string } = {};
+        this.timeSlots.forEach(slot => {
+          if (slot.task && slot.task.trim() && slot.task !== '<br>') {
+            tasks[slot.time] = slot.task;
+          }
+        });
+
+        const existing = await client.models.DayPlan.list({
+          filter: { date: { eq: this.selectedDate } }
+        });
+
+        if (existing.data && existing.data.length > 0) {
+          await client.models.DayPlan.update({
+            id: existing.data[0].id,
+            tasks: JSON.stringify(tasks)
+          });
+        } else {
+          await client.models.DayPlan.create({
+            date: this.selectedDate,
+            tasks: JSON.stringify(tasks)
+          });
         }
-      });
-
-      // Get existing plan for this date
-      const existing = await client.models.DayPlan.list({
-        filter: { date: { eq: this.selectedDate } }
-      });
-
-      if (existing.data && existing.data.length > 0) {
-        // Update existing plan
-        await client.models.DayPlan.update({
-          id: existing.data[0].id,
-          tasks: JSON.stringify(tasks)
-        });
       } else {
-        // Create new plan
-        await client.models.DayPlan.create({
-          date: this.selectedDate,
-          tasks: JSON.stringify(tasks)
-        });
+        const savePromises = [];
+        
+        for (const day of this.weekDays) {
+          const dayTasksData = this.dayTasks[day] || {};
+          const tasks: { [key: string]: string } = {};
+          
+          Object.keys(dayTasksData).forEach(time => {
+            const task = dayTasksData[time];
+            if (task && task.trim() && task !== '<br>') {
+              tasks[time] = task;
+            }
+          });
+
+          if (Object.keys(tasks).length > 0) {
+            const existing = await client.models.DayPlan.list({
+              filter: { date: { eq: day } }
+            });
+
+            if (existing.data && existing.data.length > 0) {
+              savePromises.push(
+                client.models.DayPlan.update({
+                  id: existing.data[0].id,
+                  tasks: JSON.stringify(tasks)
+                })
+              );
+            } else {
+              savePromises.push(
+                client.models.DayPlan.create({
+                  date: day,
+                  tasks: JSON.stringify(tasks)
+                })
+              );
+            }
+          }
+        }
+        
+        await Promise.all(savePromises);
       }
     } catch (error) {
       console.error('Error saving tasks:', error);
@@ -814,25 +1487,6 @@ export class DayPlannerComponent implements OnInit {
 
   trackByTime(index: number, slot: TimeSlot): string {
     return slot.time;
-  }
-
-  async testConnection() {
-    try {
-      console.log('Testing Amplify connection...');
-
-      // Test categories
-      const categoriesResult = await client.models.Category.list();
-      console.log('Categories result:', categoriesResult);
-
-      // Test events
-      const eventsResult = await client.models.Event.list();
-      console.log('Events result:', eventsResult);
-
-      alert(`Connection OK!\nCategories: ${categoriesResult.data?.length || 0}\nEvents: ${eventsResult.data?.length || 0}`);
-    } catch (error: any) {
-      console.error('Connection test failed:', error);
-      alert('Connection failed: ' + (error?.message || 'Unknown error'));
-    }
   }
 
   async loadUserTimezone() {
@@ -852,21 +1506,14 @@ export class DayPlannerComponent implements OnInit {
 
       if (events.data) {
         events.data.forEach(event => {
-          // Process original event
           this.addEventToSlot(event, event.targetDate, false);
 
-          // Process snooze events
           if (event.snoozeDates) {
             try {
               const snoozeData = JSON.parse(event.snoozeDates);
               if (snoozeData.startDate) {
                 const generatedDates = this.generateSnoozeOccurrences(snoozeData);
                 generatedDates.forEach((snoozeDate: string) => {
-                  this.addEventToSlot(event, snoozeDate, true);
-                });
-              } else if (snoozeData.dates) {
-                // Handle old format with dates array
-                snoozeData.dates.forEach((snoozeDate: string) => {
                   this.addEventToSlot(event, snoozeDate, true);
                 });
               }
@@ -881,19 +1528,34 @@ export class DayPlannerComponent implements OnInit {
     }
   }
 
+  generateSnoozeOccurrences(snoozeData: any): string[] {
+    if (snoozeData.type === 'once') {
+      return [snoozeData.startDate];
+    }
+
+    const dates: string[] = [];
+    const start = new Date(snoozeData.startDate + 'T00:00:00');
+    const end = new Date(snoozeData.endDate + 'T23:59:59');
+    let current = new Date(start);
+
+    if (snoozeData.type === 'daily') {
+      while (current <= end) {
+        dates.push(current.toISOString().split('T')[0]);
+        current.setDate(current.getDate() + 1);
+      }
+    }
+
+    return dates;
+  }
+
   private addEventToSlot(event: any, eventDateStr: string | null, isSnooze: boolean) {
     if (!eventDateStr) return;
 
-    let eventDate: Date;
-    let eventTimeInUserTz: string;
-
-    eventDate = new Date(eventDateStr);
+    const eventDate = new Date(eventDateStr);
     const eventInUserTz = eventDate.toISOString().split('T')[0];
 
     if (eventInUserTz === this.selectedDate) {
-      // All events for the selected day appear in the snooze items list at 8:00 AM
-      eventTimeInUserTz = '08:00';
-      
+      const eventTimeInUserTz = '08:00';
       const slot = this.timeSlots.find(s => s.time === eventTimeInUserTz);
       if (slot) {
         slot.events.push({ ...event, isSnoozeOccurrence: isSnooze });
@@ -1018,10 +1680,57 @@ export class DayPlannerComponent implements OnInit {
     const date = new Date(targetDate);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' , year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true,timeZoneName: 'short' });
   }
-  
+
   setSelectedDate(dateStr: string) {
     this.selectedDate = dateStr;
     this.plannerView = 'today';
     this.onPlannerViewChange();
+  }
+
+
+
+
+
+  async loadWeekTasks() {
+    try {
+      for (const day of this.weekDays) {
+        const result = await client.models.DayPlan.list({
+          filter: { date: { eq: day } }
+        });
+
+        if (!this.dayTasks[day]) {
+          this.dayTasks[day] = {};
+        }
+
+        if (result.data && result.data.length > 0) {
+          const dayPlan = result.data[0];
+          if (dayPlan.tasks) {
+            const tasks = JSON.parse(dayPlan.tasks);
+            Object.keys(tasks).forEach(time => {
+              this.dayTasks[day][time] = tasks[time];
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading week tasks:', error);
+    }
+  }
+
+  formatText(command: string) {
+    document.execCommand(command, false, undefined);
+  }
+
+  insertBullet() {
+    document.execCommand('insertUnorderedList', false, undefined);
+  }
+
+
+
+
+
+  onTaskInput(event: Event, slot: TimeSlot) {
+    const target = event.target as HTMLElement;
+    slot.task = target.innerHTML;
   }
 }
