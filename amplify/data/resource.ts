@@ -43,6 +43,14 @@ const schema = a.schema({
       tasks: a.string(),
     })
     .authorization(allow => [allow.owner()]),
+
+  PinnedTask: a
+    .model({
+      date: a.string(),
+      content: a.string(),
+      completed: a.boolean().default(false),
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

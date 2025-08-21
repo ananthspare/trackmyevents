@@ -42,10 +42,16 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   
   private refreshInterval: any;
   currentTimeSlotId: string | null = null;
+  pinnedTasks: {content: string, completed: boolean}[] = [];
+  newPinnedTask = '';
+  showDatePicker = false;
+  selectedMoveDate = '';
+  taskToMoveIndex = -1;
 
   ngOnInit() {
     this.onPlannerViewChange();
     this.startAutoRefresh();
+    this.loadPinnedTasks();
   }
 
   ngOnDestroy() {
@@ -103,6 +109,7 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
       this.generateWeekView();
     }
     this.loadPlan();
+    this.loadPinnedTasks();
   }
 
   onTimeRangeChange() {
@@ -289,6 +296,11 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
       }
 
       await this.loadEvents();
+      
+      // Reload pinned tasks when date changes
+      if (this.plannerView === 'today') {
+        await this.loadPinnedTasks();
+      }
     } catch (error) {
       console.error('Error loading plan:', error);
     }
@@ -618,5 +630,112 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   onTaskInput(event: Event, slot: TimeSlot) {
     const target = event.target as HTMLElement;
     slot.task = target.innerHTML;
+  }
+
+  addPinnedTask() {
+    if (this.newPinnedTask.trim()) {
+      this.pinnedTasks.push({ content: this.newPinnedTask.trim(), completed: false });
+      this.newPinnedTask = '';
+      this.savePinnedTasks();
+    }
+  }
+
+  togglePinnedComplete(index: number) {
+    this.pinnedTasks[index].completed = !this.pinnedTasks[index].completed;
+    this.savePinnedTasks();
+  }
+
+  removePinnedTask(index: number) {
+    this.pinnedTasks.splice(index, 1);
+    this.savePinnedTasks();
+  }
+
+  pinTask(slot: TimeSlot) {
+    if (slot.task && slot.task.trim()) {
+      this.pinnedTasks.push({ content: slot.task.trim(), completed: false });
+      this.savePinnedTasks();
+    }
+  }
+
+  movePinnedTask(index: number) {
+    this.taskToMoveIndex = index;
+    this.selectedMoveDate = new Date().toISOString().split('T')[0];
+    this.showDatePicker = true;
+  }
+
+  closeDatePicker() {
+    this.showDatePicker = false;
+    this.taskToMoveIndex = -1;
+    this.selectedMoveDate = '';
+  }
+
+  confirmMoveTask() {
+    if (this.selectedMoveDate && this.taskToMoveIndex >= 0) {
+      const task = this.pinnedTasks[this.taskToMoveIndex];
+      this.movePinnedTaskToDate(task, this.selectedMoveDate, this.taskToMoveIndex);
+      this.closeDatePicker();
+    }
+  }
+
+  private isValidDate(dateString: string): boolean {
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date.getTime());
+  }
+
+  private async movePinnedTaskToDate(task: any, targetDate: string, index: number) {
+    try {
+      // Remove from current date
+      this.pinnedTasks.splice(index, 1);
+      await this.savePinnedTasks();
+
+      // Add to target date
+      await client.models.PinnedTask.create({
+        date: targetDate,
+        content: task.content,
+        completed: task.completed
+      })
+
+      alert(`Task moved to ${targetDate}`);
+    } catch (error) {
+      console.error('Error moving pinned task:', error);
+    }
+  }
+
+  async loadPinnedTasks() {
+    try {
+      const result = await client.models.PinnedTask.list({
+        filter: { date: { eq: this.selectedDate } }
+      });
+      
+      this.pinnedTasks = (result.data || []).map(task => ({
+        content: task.content || '',
+        completed: task.completed || false
+      }));
+    } catch (error) {
+      console.error('Error loading pinned tasks:', error);
+      this.pinnedTasks = [];
+    }
+  }
+
+  async savePinnedTasks() {
+    try {
+      const existing = await client.models.PinnedTask.list({
+        filter: { date: { eq: this.selectedDate } }
+      });
+      
+      for (const task of existing.data || []) {
+        await client.models.PinnedTask.delete({ id: task.id });
+      }
+      
+      for (const task of this.pinnedTasks) {
+        await client.models.PinnedTask.create({
+          date: this.selectedDate,
+          content: task.content,
+          completed: task.completed
+        });
+      }
+    } catch (error) {
+      console.error('Error saving pinned tasks:', error);
+    }
   }
 }
