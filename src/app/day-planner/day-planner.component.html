@@ -1,6 +1,25 @@
 <div class="planner-container">
   <div class="planner-header">
-    <h2>Day Planner</h2>
+    <div class="header-left">
+      <div class="clock-container">
+        <div class="analog-clock" (click)="onClockClick($event)">
+          <div class="clock-face">
+            <div class="hour-hand" [style.transform]="'rotate(' + hourAngle + 'deg)'" #hourHand></div>
+            <div class="minute-hand" [style.transform]="'rotate(' + minuteAngle + 'deg)'" #minuteHand></div>
+            <div class="center-dot"></div>
+            <div class="hour-marker" *ngFor="let hour of [1,2,3,4,5,6,7,8,9,10,11,12]" 
+                 [style.transform]="'rotate(' + (hour * 30) + 'deg)'">
+              <span [style.transform]="'rotate(' + (-hour * 30) + 'deg)'">{{ hour }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="am-pm-selector">
+          <button (click)="setAmPm('AM')" [class.active]="selectedAmPm === 'AM'" class="am-pm-btn">AM</button>
+          <button (click)="setAmPm('PM')" [class.active]="selectedAmPm === 'PM'" class="am-pm-btn">PM</button>
+        </div>
+      </div>
+      <h2>Day Planner</h2>
+    </div>
     <input type="date" [(ngModel)]="selectedDate" (change)="loadPlan()" class="date-input">
     <div class="view-selector">
       <label>View:</label>

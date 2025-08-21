@@ -47,17 +47,25 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   showDatePicker = false;
   selectedMoveDate = '';
   taskToMoveIndex = -1;
+  hourAngle = 0;
+  minuteAngle = 0;
+  selectedAmPm = 'AM';
+  private clockInterval: any;
 
   ngOnInit() {
     this.onPlannerViewChange();
     this.startAutoRefresh();
     this.loadPinnedTasks();
     this.initializeResize();
+    this.startClock();
   }
 
   ngOnDestroy() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
+    }
+    if (this.clockInterval) {
+      clearInterval(this.clockInterval);
     }
   }
 
@@ -631,6 +639,74 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   onTaskInput(event: Event, slot: TimeSlot) {
     const target = event.target as HTMLElement;
     slot.task = target.innerHTML;
+  }
+
+  private startClock() {
+    this.updateClock();
+    this.clockInterval = setInterval(() => {
+      this.updateClock();
+    }, 1000);
+  }
+
+  private updateClock() {
+    const now = new Date();
+    const hours = now.getHours() % 12;
+    const minutes = now.getMinutes();
+    
+    this.hourAngle = (hours * 30) + (minutes * 0.5);
+    this.minuteAngle = minutes * 6;
+    this.selectedAmPm = now.getHours() >= 12 ? 'PM' : 'AM';
+  }
+
+  onClockClick(event: MouseEvent) {
+    if (this.plannerView !== 'today') return;
+    
+    const clockElement = event.currentTarget as HTMLElement;
+    const rect = clockElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const x = event.clientX - centerX;
+    const y = event.clientY - centerY;
+    
+    let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+    if (angle < 0) angle += 360;
+    
+    const clickedHour = Math.round(angle / 30) % 12;
+    const actualHour = clickedHour === 0 ? 12 : clickedHour;
+    
+    // Convert to 24-hour format based on selected AM/PM
+    let targetHour = actualHour;
+    if (this.selectedAmPm === 'PM' && actualHour !== 12) {
+      targetHour = actualHour + 12;
+    } else if (this.selectedAmPm === 'AM' && actualHour === 12) {
+      targetHour = 0;
+    }
+    
+    const timeSlot = `${targetHour.toString().padStart(2, '0')}:00`;
+    this.navigateToTimeSlot(timeSlot);
+  }
+  
+  private navigateToTimeSlot(timeSlot: string) {
+    this.currentTimeSlotId = timeSlot;
+    
+    setTimeout(() => {
+      const element = document.getElementById(`time-slot-${timeSlot}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('current-time-slot');
+        
+        document.querySelectorAll('.time-slot').forEach(slot => {
+          if (slot.id !== `time-slot-${timeSlot}`) {
+            slot.classList.remove('current-time-slot');
+          }
+        });
+      }
+    }, 100);
+  }
+
+  setAmPm(period: 'AM' | 'PM') {
+    this.selectedAmPm = period;
   }
 
   private initializeResize() {
