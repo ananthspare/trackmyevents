@@ -251,10 +251,6 @@
   height: 20px;
   font-size: 10px;
   cursor: pointer;
-  display: none;
-}
-
-.time-slot:hover .pin-task-btn {
   display: block;
 }
 
