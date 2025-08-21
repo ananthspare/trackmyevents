@@ -52,6 +52,7 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
     this.onPlannerViewChange();
     this.startAutoRefresh();
     this.loadPinnedTasks();
+    this.initializeResize();
   }
 
   ngOnDestroy() {
@@ -630,6 +631,44 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   onTaskInput(event: Event, slot: TimeSlot) {
     const target = event.target as HTMLElement;
     slot.task = target.innerHTML;
+  }
+
+  private initializeResize() {
+    setTimeout(() => {
+      const resizeHandle = document.getElementById('resizeHandle');
+      const pinnedSidebar = document.getElementById('pinnedSidebar');
+      
+      if (!resizeHandle || !pinnedSidebar) return;
+      
+      let isResizing = false;
+      
+      resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        e.preventDefault();
+      });
+      
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isResizing) return;
+        
+        const container = document.querySelector('.planner-body') as HTMLElement;
+        if (!container) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        const newSidebarWidth = containerRect.right - e.clientX;
+        
+        if (newSidebarWidth >= 200 && newSidebarWidth <= 600) {
+          pinnedSidebar.style.width = `${newSidebarWidth}px`;
+        }
+      };
+      
+      const handleMouseUp = () => {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }, 100);
   }
 
   addPinnedTask() {

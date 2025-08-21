@@ -35,7 +35,7 @@
   </div>
 
   <div class="planner-body">
-    <div class="planner-main">
+    <div class="planner-main" id="plannerMain">
       <!-- Day View -->
       <div class="planner-table" #plannerTable *ngIf="plannerView === 'today'">
         <div class="time-slot" 
@@ -102,7 +102,9 @@
       </div>
     </div>
 
-    <div class="pinned-sidebar">
+    <div class="resize-handle" id="resizeHandle"></div>
+
+    <div class="pinned-sidebar" id="pinnedSidebar">
       <div class="pinned-header">
         <h3>Pinned Tasks</h3>
         <span class="pinned-date">{{ selectedDate | date:'MMM d, y' }}</span>
