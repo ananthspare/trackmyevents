@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Teams Meeting Extractor",
+  "version": "1.0",
+  "description": "Extract Teams meetings for Day Planner",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://teams.microsoft.com/*",
+    "https://outlook.office.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://teams.microsoft.com/*", "https://outlook.office.com/*"],
+      "js": ["src/content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup.html"
+  }
+}

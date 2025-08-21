@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
+import { TeamsSyncComponent } from '../teams-sync/teams-sync.component';
 
 const client = generateClient<Schema>();
 
@@ -16,9 +17,10 @@ interface TimeSlot {
 @Component({
   selector: 'app-day-planner',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TeamsSyncComponent],
   template: `
     <div class="planner-container">
+      <app-teams-sync></app-teams-sync>
       <div class="planner-header">
         <h2>Day Planner</h2>
         <input type="date" [(ngModel)]="selectedDate" (change)="loadPlan()" class="date-input">
@@ -1395,10 +1397,20 @@ export class DayPlannerComponent implements OnInit {
       if (result.data && result.data.length > 0) {
         const dayPlan = result.data[0];
         if (dayPlan.tasks) {
-          const tasks = JSON.parse(dayPlan.tasks);
-          this.timeSlots.forEach(slot => {
-            slot.task = tasks[slot.time] || '';
-          });
+          try {
+            const tasks = JSON.parse(dayPlan.tasks);
+            this.timeSlots.forEach(slot => {
+              slot.task = tasks[slot.time] || '';
+            });
+          } catch (error) {
+            // Handle plain text format (from imported meetings)
+            console.log('Tasks in plain text format, converting...');
+            const plainTasks = dayPlan.tasks;
+            // Put all tasks in the first time slot for now
+            if (this.timeSlots.length > 0) {
+              this.timeSlots[0].task = plainTasks;
+            }
+          }
         }
       }
 
