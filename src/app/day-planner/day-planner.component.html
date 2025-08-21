@@ -1,0 +1,106 @@
+<div class="planner-container">
+  <div class="planner-header">
+    <h2>Day Planner</h2>
+    <input type="date" [(ngModel)]="selectedDate" (change)="loadPlan()" class="date-input">
+    <div class="view-selector">
+      <label>View:</label>
+      <select [(ngModel)]="plannerView" (change)="onPlannerViewChange()">
+        <option value="today">Today</option>
+        <option value="week">Whole Week</option>
+        <option value="workweek">Work Week</option>
+        <option value="month">Monthly</option>
+      </select>
+    </div>
+    <div class="time-range">
+      <label>From:</label>
+      <select [(ngModel)]="startHour" (change)="onTimeRangeChange()">
+        <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
+      </select>
+      <label>To:</label>
+      <select [(ngModel)]="endHour" (change)="onTimeRangeChange()">
+        <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
+      </select>
+    </div>
+    <div class="header-actions">
+      <button (click)="copyToNextDay()" [disabled]="copying" class="copy-btn">
+        {{ copying ? 'Copying...' : 'Copy to Next Day' }}
+      </button>
+      <button (click)="copyToWeek()" [disabled]="copying" class="copy-btn">
+        {{ copying ? 'Copying...' : 'Copy to Week' }}
+      </button>
+      <button (click)="saveAllTasks()" [disabled]="saving" class="save-all-btn">
+        {{ saving ? 'Saving...' : 'Save All Tasks' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Day View -->
+  <div class="planner-table" #plannerTable *ngIf="plannerView === 'today'">
+    <div class="time-slot" 
+         *ngFor="let slot of timeSlots; trackBy: trackByTime"
+         [id]="'time-slot-' + slot.time"
+         [class.current-time-slot]="currentTimeSlotId === slot.time">
+      <div class="time-label">{{ slot.timeRange }}</div>
+      <div class="slot-content">
+        <textarea
+          [(ngModel)]="slot.task"
+          class="task-input"
+          placeholder="Add task..."
+          rows="3"></textarea>
+        <div *ngFor="let event of slot.events" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence">
+          <span *ngIf="event.isSnoozeOccurrence">🔔</span>
+          <span *ngIf="!event.isSnoozeOccurrence">📅</span>
+          {{ event.title }}
+          <div class="event-description" *ngIf="event.description">{{ event.description }}</div>
+          <span *ngIf="event.isSnoozeOccurrence" class="original-date">Original: {{ getOriginalDate(event.targetDate) }}</span>
+          <span class="navigate-icon" (click)="navigateToEvent(event.id, event.categoryID)" title="Go to event and category">📁</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week Views -->
+  <div class="week-grid" *ngIf="plannerView === 'week' || plannerView === 'workweek'">
+    <div class="week-header">
+      <div class="time-column-header">Time</div>
+      <div class="day-header" *ngFor="let day of weekDays">{{ day | date:'EEE MMM d' }}</div>
+    </div>
+    <div class="week-row" *ngFor="let slot of filteredTimeSlots">
+      <div class="time-label">{{ slot.timeRange }}</div>
+      <div class="day-cell" *ngFor="let day of weekDays">
+        <div class="task-editor-mini">
+          <textarea
+            [(ngModel)]="dayTasks[day][slot.time]"
+            class="day-task-input-rich"
+            placeholder="Tasks..."
+            rows="2"></textarea>
+        </div>
+        <div *ngFor="let event of getDayEvents(day, slot.time)" class="event-item" [class.snooze-event]="event.isSnoozeOccurrence">
+          <span *ngIf="event.isSnoozeOccurrence">🔔</span>
+          <span *ngIf="!event.isSnoozeOccurrence">📅</span>
+          {{ event.title }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Month View -->
+  <div class="month-grid" *ngIf="plannerView === 'month'">
+    <div class="month-header">
+      <div class="day-name" *ngFor="let dayName of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">{{ dayName }}</div>
+    </div>
+    <div class="month-row" *ngFor="let week of monthWeeks">
+      <div class="month-day" *ngFor="let day of week" (click)="selectDayInMonth(day.date)" [class.other-month]="!day.isCurrentMonth" [class.today]="isToday(day.date)">
+        <div class="day-number">{{ day.day }}</div>
+        <div class="day-tasks-preview">{{ getDayTasksCount(day.date) }} tasks</div>
+        <div class="day-events-preview">{{ getDayEventsCount(day.date) }} events</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="planner-footer">
+    <button (click)="saveAllTasks()" [disabled]="saving" class="save-all-btn">
+      {{ saving ? 'Saving...' : 'Save All Tasks' }}
+    </button>
+  </div>
+</div>
