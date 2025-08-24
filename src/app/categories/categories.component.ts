@@ -857,39 +857,49 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     
     try {
-      const utcDateTime = this.timezoneService.convertToUTC(this.newSnoozeDate);
+      let snoozeData;
       
       if (this.snoozeType === 'once') {
-        // Store single snooze date
-        const snoozeData = {
+        snoozeData = {
           type: 'once',
-          dates: [utcDateTime]
+          startDate: this.newSnoozeDate.split('T')[0]
         };
+      } else if (this.snoozeType === 'daily') {
+        const endDate = this.recurrenceEndDate || (() => {
+          const end = new Date(this.newSnoozeDate.split('T')[0]);
+          end.setDate(end.getDate() + 90);
+          return end.toISOString().split('T')[0];
+        })();
         
-        await client.models.Event.update({
-          id: this.snoozeEvent.id,
-          snoozeDates: JSON.stringify(snoozeData)
-        });
+        snoozeData = {
+          type: 'daily',
+          startDate: this.newSnoozeDate.split('T')[0],
+          endDate: endDate,
+          customInterval: 1,
+          customUnit: 'days',
+          weekdays: [false, false, false, false, false, false, false]
+        };
       } else {
-        // Generate all snooze dates and store with configuration
-        const additionalDates = this.generateSnoozeDates(utcDateTime);
-        const allDates = [utcDateTime, ...additionalDates];
+        const endDate = this.recurrenceEndDate || (() => {
+          const end = new Date(this.newSnoozeDate.split('T')[0]);
+          end.setDate(end.getDate() + 90);
+          return end.toISOString().split('T')[0];
+        })();
         
-        const snoozeData = {
+        snoozeData = {
           type: this.snoozeType,
-          dates: allDates,
+          startDate: this.newSnoozeDate.split('T')[0],
+          endDate: endDate,
           customInterval: this.customInterval,
           customUnit: this.customUnit,
-          endDate: this.recurrenceEndDate,
-          weekdays: this.selectedWeekdays,
-          weeklyTime: this.weeklyTime
+          weekdays: this.selectedWeekdays
         };
-        
-        await client.models.Event.update({
-          id: this.snoozeEvent.id,
-          snoozeDates: JSON.stringify(snoozeData)
-        });
       }
+      
+      await client.models.Event.update({
+        id: this.snoozeEvent.id,
+        snoozeDates: JSON.stringify(snoozeData)
+      });
       
       this.snoozeEvent = null;
     } catch (error) {

@@ -125,18 +125,24 @@ export class CalendarComponent implements OnInit, OnDestroy {
     }
     
     try {
+      let snoozeData;
+      
       if (this.snoozeType === 'once') {
-        const snoozeData = {
+        snoozeData = {
           type: 'once',
           startDate: this.snoozeDate
         };
-        
-        await client.models.Event.update({
-          id: this.snoozeEvent.id,
-          snoozeDates: JSON.stringify(snoozeData)
-        });
+      } else if (this.snoozeType === 'daily') {
+        snoozeData = {
+          type: 'daily',
+          startDate: this.snoozeDate,
+          endDate: this.recurrenceEndDate || this.getDefaultEndDate(),
+          customInterval: 1,
+          customUnit: 'days',
+          weekdays: [false, false, false, false, false, false, false]
+        };
       } else {
-        const snoozeData = {
+        snoozeData = {
           type: this.snoozeType,
           startDate: this.snoozeDate,
           endDate: this.recurrenceEndDate || this.getDefaultEndDate(),
@@ -144,12 +150,12 @@ export class CalendarComponent implements OnInit, OnDestroy {
           customUnit: this.customUnit,
           weekdays: this.selectedWeekdays
         };
-        
-        await client.models.Event.update({
-          id: this.snoozeEvent.id,
-          snoozeDates: JSON.stringify(snoozeData)
-        });
       }
+      
+      await client.models.Event.update({
+        id: this.snoozeEvent.id,
+        snoozeDates: JSON.stringify(snoozeData)
+      });
       
       await this.loadEvents();
       this.snoozeEvent = null;
