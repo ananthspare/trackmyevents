@@ -126,7 +126,6 @@
         
         <div *ngFor="let task of pinnedTasks; let i = index" 
              class="pinned-item" 
-             [class.completed]="task.completed"
              [class.editing]="editingTaskIndex === i"
              draggable="true"
              (dragstart)="onDragStart($event, i)"
@@ -140,11 +139,10 @@
             <div class="pinned-actions">
               <button (click)="togglePinnedComplete(i)" 
                       class="complete-btn" 
-                      [class.completed]="task.completed"
                       title="Mark as complete">
                 ✓
               </button>
-              <button *ngIf="!task.completed" (click)="movePinnedTask(i)" class="move-btn" title="Move to another day">
+              <button (click)="movePinnedTask(i)" class="move-btn" title="Move to another day">
                 →
               </button>
               <button (click)="removePinnedTask(i)" class="remove-btn" title="Remove">
@@ -164,6 +162,24 @@
             <div class="edit-actions">
               <button (click)="saveEditTask()" class="save-edit-btn" title="Save">✓</button>
               <button (click)="cancelEditTask()" class="cancel-edit-btn" title="Cancel">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed Tasks Section -->
+      <div *ngIf="completedTasks.length > 0" class="completed-section">
+        <h4 class="completed-header">Completed Tasks</h4>
+        <div class="completed-list">
+          <div *ngFor="let task of completedTasks; let i = index" class="completed-item">
+            <div class="completed-content">{{ task.content }}</div>
+            <div class="completed-actions">
+              <button (click)="toggleCompletedTask(i)" class="uncomplete-btn" title="Mark as incomplete">
+                ↶
+              </button>
+              <button (click)="removeCompletedTask(i)" class="remove-btn" title="Remove">
+                ×
+              </button>
             </div>
           </div>
         </div>

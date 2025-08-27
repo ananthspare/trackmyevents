@@ -43,6 +43,7 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   private refreshInterval: any;
   currentTimeSlotId: string | null = null;
   pinnedTasks: {content: string, completed: boolean, order: number}[] = [];
+  completedTasks: {content: string, completed: boolean, order: number}[] = [];
   newPinnedTask = '';
   showDatePicker = false;
   selectedMoveDate = '';
@@ -687,7 +688,29 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   }
 
   togglePinnedComplete(index: number) {
-    this.pinnedTasks[index].completed = !this.pinnedTasks[index].completed;
+    const task = this.pinnedTasks[index];
+    task.completed = true;
+    
+    // Move to completed tasks
+    this.completedTasks.push(task);
+    this.pinnedTasks.splice(index, 1);
+    
+    this.savePinnedTasks();
+  }
+
+  toggleCompletedTask(index: number) {
+    const task = this.completedTasks[index];
+    task.completed = false;
+    
+    // Move back to pinned tasks
+    this.pinnedTasks.push(task);
+    this.completedTasks.splice(index, 1);
+    
+    this.savePinnedTasks();
+  }
+
+  removeCompletedTask(index: number) {
+    this.completedTasks.splice(index, 1);
     this.savePinnedTasks();
   }
 
@@ -819,18 +842,24 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
       });
       
       if (result.data && result.data.length > 0 && result.data[0].tasks) {
-        this.pinnedTasks = JSON.parse(result.data[0].tasks);
+        const allTasks = JSON.parse(result.data[0].tasks);
+        this.pinnedTasks = allTasks.filter((task: any) => !task.completed);
+        this.completedTasks = allTasks.filter((task: any) => task.completed);
       } else {
         this.pinnedTasks = [];
+        this.completedTasks = [];
       }
     } catch (error) {
       console.error('Error loading pinned tasks:', error);
       this.pinnedTasks = [];
+      this.completedTasks = [];
     }
   }
 
   async savePinnedTasks() {
     try {
+      const allTasks = [...this.pinnedTasks, ...this.completedTasks];
+      
       const existing = await client.models.PinnedTask.list({
         filter: { date: { eq: this.selectedDate } }
       });
@@ -838,12 +867,12 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
       if (existing.data && existing.data.length > 0) {
         await client.models.PinnedTask.update({
           id: existing.data[0].id,
-          tasks: JSON.stringify(this.pinnedTasks)
+          tasks: JSON.stringify(allTasks)
         });
       } else {
         await client.models.PinnedTask.create({
           date: this.selectedDate,
-          tasks: JSON.stringify(this.pinnedTasks)
+          tasks: JSON.stringify(allTasks)
         });
       }
     } catch (error) {
