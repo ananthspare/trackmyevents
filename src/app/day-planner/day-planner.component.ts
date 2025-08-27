@@ -42,11 +42,13 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   
   private refreshInterval: any;
   currentTimeSlotId: string | null = null;
-  pinnedTasks: {content: string, completed: boolean}[] = [];
+  pinnedTasks: {content: string, completed: boolean, order: number}[] = [];
   newPinnedTask = '';
   showDatePicker = false;
   selectedMoveDate = '';
   taskToMoveIndex = -1;
+  editingTaskIndex = -1;
+  editingTaskContent = '';
 
   ngOnInit() {
     this.onPlannerViewChange();
@@ -673,7 +675,12 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
 
   addPinnedTask() {
     if (this.newPinnedTask.trim()) {
-      this.pinnedTasks.push({ content: this.newPinnedTask.trim(), completed: false });
+      const maxOrder = Math.max(...this.pinnedTasks.map(t => t.order), -1);
+      this.pinnedTasks.push({ 
+        content: this.newPinnedTask.trim(), 
+        completed: false,
+        order: maxOrder + 1
+      });
       this.newPinnedTask = '';
       this.savePinnedTasks();
     }
@@ -691,7 +698,12 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
 
   pinTask(slot: TimeSlot) {
     if (slot.task && slot.task.trim()) {
-      this.pinnedTasks.push({ content: slot.task.trim(), completed: false });
+      const maxOrder = Math.max(...this.pinnedTasks.map(t => t.order), -1);
+      this.pinnedTasks.push({ 
+        content: slot.task.trim(), 
+        completed: false,
+        order: maxOrder + 1
+      });
       this.savePinnedTasks();
     }
   }
@@ -728,16 +740,76 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
       await this.savePinnedTasks();
 
       // Add to target date
-      await client.models.PinnedTask.create({
-        date: targetDate,
-        content: task.content,
-        completed: task.completed
-      })
+      const targetResult = await client.models.PinnedTask.list({
+        filter: { date: { eq: targetDate } }
+      });
+      
+      let targetTasks = [];
+      if (targetResult.data && targetResult.data.length > 0 && targetResult.data[0].tasks) {
+        targetTasks = JSON.parse(targetResult.data[0].tasks);
+      }
+      
+      targetTasks.push({ ...task, order: targetTasks.length });
+      
+      if (targetResult.data && targetResult.data.length > 0) {
+        await client.models.PinnedTask.update({
+          id: targetResult.data[0].id,
+          tasks: JSON.stringify(targetTasks)
+        });
+      } else {
+        await client.models.PinnedTask.create({
+          date: targetDate,
+          tasks: JSON.stringify(targetTasks)
+        });
+      }
 
       alert(`Task moved to ${targetDate}`);
     } catch (error) {
       console.error('Error moving pinned task:', error);
     }
+  }
+
+  onDragStart(event: DragEvent, index: number) {
+    event.dataTransfer?.setData('text/plain', index.toString());
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  onDrop(event: DragEvent, targetIndex: number) {
+    event.preventDefault();
+    const sourceIndex = parseInt(event.dataTransfer?.getData('text/plain') || '-1');
+    
+    if (sourceIndex !== -1 && sourceIndex !== targetIndex) {
+      const [movedTask] = this.pinnedTasks.splice(sourceIndex, 1);
+      this.pinnedTasks.splice(targetIndex, 0, movedTask);
+      
+      this.pinnedTasks.forEach((task, index) => {
+        task.order = index;
+      });
+      
+      this.savePinnedTasks();
+    }
+  }
+
+  startEditTask(index: number) {
+    this.editingTaskIndex = index;
+    this.editingTaskContent = this.pinnedTasks[index].content;
+  }
+
+  saveEditTask() {
+    if (this.editingTaskIndex >= 0 && this.editingTaskContent.trim()) {
+      this.pinnedTasks[this.editingTaskIndex].content = this.editingTaskContent.trim();
+      this.editingTaskIndex = -1;
+      this.editingTaskContent = '';
+      this.savePinnedTasks();
+    }
+  }
+
+  cancelEditTask() {
+    this.editingTaskIndex = -1;
+    this.editingTaskContent = '';
   }
 
   async loadPinnedTasks() {
@@ -746,10 +818,11 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
         filter: { date: { eq: this.selectedDate } }
       });
       
-      this.pinnedTasks = (result.data || []).map(task => ({
-        content: task.content || '',
-        completed: task.completed || false
-      }));
+      if (result.data && result.data.length > 0 && result.data[0].tasks) {
+        this.pinnedTasks = JSON.parse(result.data[0].tasks);
+      } else {
+        this.pinnedTasks = [];
+      }
     } catch (error) {
       console.error('Error loading pinned tasks:', error);
       this.pinnedTasks = [];
@@ -762,15 +835,15 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
         filter: { date: { eq: this.selectedDate } }
       });
       
-      for (const task of existing.data || []) {
-        await client.models.PinnedTask.delete({ id: task.id });
-      }
-      
-      for (const task of this.pinnedTasks) {
+      if (existing.data && existing.data.length > 0) {
+        await client.models.PinnedTask.update({
+          id: existing.data[0].id,
+          tasks: JSON.stringify(this.pinnedTasks)
+        });
+      } else {
         await client.models.PinnedTask.create({
           date: this.selectedDate,
-          content: task.content,
-          completed: task.completed
+          tasks: JSON.stringify(this.pinnedTasks)
         });
       }
     } catch (error) {

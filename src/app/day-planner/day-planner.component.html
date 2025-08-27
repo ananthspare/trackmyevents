@@ -124,21 +124,47 @@
           No pinned tasks yet
         </div>
         
-        <div *ngFor="let task of pinnedTasks; let i = index" class="pinned-item" [class.completed]="task.completed">
-          <div class="pinned-content">{{ task.content }}</div>
-          <div class="pinned-actions">
-            <button (click)="togglePinnedComplete(i)" 
-                    class="complete-btn" 
-                    [class.completed]="task.completed"
-                    title="Mark as complete">
-              ✓
-            </button>
-            <button *ngIf="!task.completed" (click)="movePinnedTask(i)" class="move-btn" title="Move to another day">
-              →
-            </button>
-            <button (click)="removePinnedTask(i)" class="remove-btn" title="Remove">
-              ×
-            </button>
+        <div *ngFor="let task of pinnedTasks; let i = index" 
+             class="pinned-item" 
+             [class.completed]="task.completed"
+             [class.editing]="editingTaskIndex === i"
+             draggable="true"
+             (dragstart)="onDragStart($event, i)"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, i)">
+          
+          <!-- View Mode -->
+          <div *ngIf="editingTaskIndex !== i" class="pinned-view">
+            <div class="drag-handle">⋮⋮</div>
+            <div class="pinned-content" (click)="startEditTask(i)">{{ task.content }}</div>
+            <div class="pinned-actions">
+              <button (click)="togglePinnedComplete(i)" 
+                      class="complete-btn" 
+                      [class.completed]="task.completed"
+                      title="Mark as complete">
+                ✓
+              </button>
+              <button *ngIf="!task.completed" (click)="movePinnedTask(i)" class="move-btn" title="Move to another day">
+                →
+              </button>
+              <button (click)="removePinnedTask(i)" class="remove-btn" title="Remove">
+                ×
+              </button>
+            </div>
+          </div>
+          
+          <!-- Edit Mode -->
+          <div *ngIf="editingTaskIndex === i" class="pinned-edit">
+            <textarea 
+              [(ngModel)]="editingTaskContent" 
+              class="edit-task-input"
+              rows="2"
+              (keyup.enter)="saveEditTask()"
+              (keyup.escape)="cancelEditTask()"></textarea>
+            <div class="edit-actions">
+              <button (click)="saveEditTask()" class="save-edit-btn" title="Save">✓</button>
+              <button (click)="cancelEditTask()" class="cancel-edit-btn" title="Cancel">×</button>
+            </div>
           </div>
         </div>
       </div>

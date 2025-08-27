@@ -47,8 +47,7 @@ const schema = a.schema({
   PinnedTask: a
     .model({
       date: a.string(),
-      content: a.string(),
-      completed: a.boolean().default(false),
+      tasks: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 });
