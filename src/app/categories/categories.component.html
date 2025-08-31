@@ -121,7 +121,7 @@
   </div>
 
   <!-- Resize handle -->
-  <div class="resize-handle" id="resizeHandle" 
+  <div class="resize-handle" id="resizeHandle"
        (touchstart)="onTouchStart($event)"
        (touchmove)="onTouchMove($event)"
        (touchend)="onTouchEnd($event)"></div>
@@ -243,7 +243,6 @@
                 </div>
 
                 <div class="countdown-section">
-                  <div class="countdown-horizontal">
                     <div class="countdown-inline" [ngClass]="{
                       'expired': countdowns[event.id]?.expired,
                       'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
@@ -275,26 +274,24 @@
                     }">
                       {{ event.targetDate | date:'MMM d, y H:mm' }}
                     </div>
-                  </div>
-                </div>
-
-                <div class="event-actions">
-                  <button class="drag-handle"
-                          draggable="true"
-                          (dragstart)="onEventDragStart($event, event.id)"
-                          (dragend)="onEventDragEnd($event)"
-                          title="Drag to move event">
-                    <i class="glyphicon glyphicon-move"></i>
-                  </button>
-                  <button (click)="startEditEvent(event)" class="icon-btn">
-                    <i class="glyphicon glyphicon-pencil"></i>
-                  </button>
-                  <button (click)="showSnoozeModal(event)" class="icon-btn snooze-btn">
-                    <i class="glyphicon glyphicon-time"></i>
-                  </button>
-                  <button (click)="deleteEvent(event.id)" class="icon-btn">
-                    <i class="glyphicon glyphicon-trash"></i>
-                  </button>
+                    <div class="event-actions">
+                      <button class="drag-handle"
+                              draggable="true"
+                              (dragstart)="onEventDragStart($event, event.id)"
+                              (dragend)="onEventDragEnd($event)"
+                              title="Drag to move event">
+                        <i class="glyphicon glyphicon-move"></i>
+                      </button>
+                      <button (click)="startEditEvent(event)" class="icon-btn">
+                        <i class="glyphicon glyphicon-pencil"></i>
+                      </button>
+                      <button (click)="showSnoozeModal(event)" class="icon-btn snooze-btn">
+                        <i class="glyphicon glyphicon-time"></i>
+                      </button>
+                      <button (click)="deleteEvent(event.id)" class="icon-btn">
+                        <i class="glyphicon glyphicon-trash"></i>
+                      </button>
+                    </div>
                 </div>
               </div>
             </div>
