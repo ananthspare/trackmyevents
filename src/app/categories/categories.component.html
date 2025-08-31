@@ -126,7 +126,7 @@
   <!-- Right Column: Events -->
   <div class="events-content">
     <div *ngIf="selectedCategory" class="events-container">
-      <h2>Events for {{ selectedCategory.name }}</h2>
+      <h2>Events and To-dos for {{ selectedCategory.name }}</h2>
       <div *ngIf="selectedCategory.parentCategoryID" class="parent-category-info">
         <span>Subcategory of: {{ getCategoryName(selectedCategory.parentCategoryID) }}</span>
       </div>
@@ -136,11 +136,11 @@
         <div class="todos-header">
           <h3>To-dos for {{ selectedCategory.name }}</h3>
         </div>
-        
+
         <div class="add-todo-form">
-          <input 
-            type="text" 
-            [(ngModel)]="newCategoryTodo" 
+          <input
+            type="text"
+            [(ngModel)]="newCategoryTodo"
             placeholder="Add a to-do for this category..."
             (keyup.enter)="createCategoryTodo()"
             class="todo-input"
@@ -149,17 +149,17 @@
             <i class="glyphicon glyphicon-plus"></i>
           </button>
         </div>
-        
+
         <div class="todos-list">
           <div *ngIf="categoryTodos.length === 0" class="no-todos">
             No to-dos yet. Add one above.
           </div>
-          
+
           <div *ngFor="let todo of categoryTodos" class="todo-item" [class.completed]="todo.isDone">
             <div *ngIf="editingCategoryTodo?.id !== todo.id" class="todo-view">
-              <input 
-                type="checkbox" 
-                [checked]="todo.isDone" 
+              <input
+                type="checkbox"
+                [checked]="todo.isDone"
                 (change)="toggleCategoryTodo(todo)"
                 class="todo-checkbox"
               />
@@ -176,9 +176,9 @@
               </div>
             </div>
             <div *ngIf="editingCategoryTodo?.id === todo.id" class="todo-edit">
-              <input 
-                type="text" 
-                [(ngModel)]="editingCategoryTodo.content" 
+              <input
+                type="text"
+                [(ngModel)]="editingCategoryTodo.content"
                 class="edit-todo-input"
               />
               <div class="edit-todo-actions">
@@ -192,8 +192,8 @@
 
       <!-- Events section -->
       <div class="events-section">
-        <h3>Events and To-dos for {{ selectedCategory.name }}</h3>
-        
+        <h3>Events for {{ selectedCategory.name }}</h3>
+
         <!-- Add new event form -->
       <div class="add-event-form">
         <input
