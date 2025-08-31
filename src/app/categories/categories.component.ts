@@ -27,6 +27,9 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
   events: any[] = [];
   newCategory = { name: '', description: '', parentCategoryID: null as string | null };
   editingCategory: any = null;
+  categoryTodos: any[] = [];
+  newCategoryTodo = '';
+  editingCategoryTodo: any = null;
   newEvent = { title: '', description: '', targetDate: '' };
   editingEvent: any = null;
   countdowns: { [key: string]: any } = {};
@@ -162,6 +165,7 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedCategoryId = categoryId;
     this.selectedCategory = this.categories.find(cat => cat.id === categoryId);
     this.listEvents();
+    this.listCategoryTodos();
   }
 
   listEvents() {
@@ -983,5 +987,78 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     
     return occurrences;
+  }
+
+  listCategoryTodos() {
+    if (!this.selectedCategoryId) return;
+    
+    try {
+      client.models.Todo.observeQuery({
+        filter: { categoryID: { eq: this.selectedCategoryId } }
+      }).subscribe({
+        next: ({ items }) => {
+          this.categoryTodos = items;
+        },
+        error: (error) => console.error('Error fetching category todos', error)
+      });
+    } catch (error) {
+      console.error('Error setting up category todos subscription', error);
+    }
+  }
+
+  async createCategoryTodo() {
+    if (!this.newCategoryTodo.trim() || !this.selectedCategoryId) return;
+    
+    try {
+      await client.models.Todo.create({
+        content: this.newCategoryTodo,
+        categoryID: this.selectedCategoryId,
+        isDone: false
+      });
+      this.newCategoryTodo = '';
+    } catch (error) {
+      console.error('Error creating category todo:', error);
+    }
+  }
+
+  async toggleCategoryTodo(todo: any) {
+    try {
+      await client.models.Todo.update({
+        id: todo.id,
+        isDone: !todo.isDone
+      });
+    } catch (error) {
+      console.error('Error updating category todo:', error);
+    }
+  }
+
+  async deleteCategoryTodo(todoId: string) {
+    try {
+      await client.models.Todo.delete({ id: todoId });
+    } catch (error) {
+      console.error('Error deleting category todo:', error);
+    }
+  }
+
+  startEditCategoryTodo(todo: any) {
+    this.editingCategoryTodo = { ...todo };
+  }
+
+  cancelEditCategoryTodo() {
+    this.editingCategoryTodo = null;
+  }
+
+  async saveEditCategoryTodo() {
+    if (!this.editingCategoryTodo || !this.editingCategoryTodo.content.trim()) return;
+    
+    try {
+      await client.models.Todo.update({
+        id: this.editingCategoryTodo.id,
+        content: this.editingCategoryTodo.content
+      });
+      this.editingCategoryTodo = null;
+    } catch (error) {
+      console.error('Error updating category todo:', error);
+    }
   }
 }

@@ -424,15 +424,15 @@
 }
 
 @keyframes highlight-pulse {
-  0%, 100% { 
+  0%, 100% {
     transform: scale(1);
     box-shadow: 0 0 15px rgba(255, 152, 0, 0.5);
   }
-  25% { 
+  25% {
     transform: scale(1.03);
     box-shadow: 0 0 25px rgba(255, 152, 0, 0.8);
   }
-  75% { 
+  75% {
     transform: scale(1.01);
     box-shadow: 0 0 20px rgba(255, 152, 0, 0.6);
   }
@@ -452,6 +452,7 @@
 .event-text-section {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .event-text-section h3 {
@@ -465,9 +466,10 @@
 .countdown-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   flex-shrink: 0;
-  width: 160px;
+  width: 140px;
+  margin-right: 10px;
 }
 
 @media (max-width: 768px) {
@@ -477,11 +479,11 @@
 }
 
 .countdown-inline {
-  padding: 8px 12px;
+  padding: 6px 8px;
   border-radius: 4px;
   background-color: #e3f2fd;
-  font-size: 20px;
-  text-align: center;
+  font-size: 16px;
+  text-align: left;
   margin-bottom: 5px;
   white-space: nowrap;
   width: 100%;
@@ -533,12 +535,12 @@
 }
 
 .target-date {
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-radius: 4px;
   background-color: #f5f5f5;
   color: #757575;
-  font-size: 13px;
-  text-align: center;
+  font-size: 11px;
+  text-align: left;
   white-space: nowrap;
   width: 100%;
   overflow: hidden;
@@ -568,7 +570,7 @@
   display: flex;
   gap: 3px;
   flex-shrink: 0;
-  width: 100px;
+  width: 195px;
   justify-content: flex-end;
 }
 
@@ -916,4 +918,287 @@
 
 .drag-handle:active {
   cursor: grabbing;
+}
+
+/* Notes section styles */
+.notes-section {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notes-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #495057;
+}
+
+.notes-display {
+  min-height: 40px;
+}
+
+.notes-content {
+  padding: 8px;
+  background-color: white;
+  border-radius: 3px;
+  border: 1px solid #dee2e6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.no-notes {
+  padding: 8px;
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  font-size: 13px;
+}
+
+.notes-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.notes-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.notes-actions .save-btn,
+.notes-actions .cancel-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+/* Category Todos section styles */
+.category-todos-section {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.todos-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #495057;
+}
+
+.add-todo-form {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.add-todo-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.todos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.no-todos {
+  padding: 8px;
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  font-size: 13px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background-color: white;
+  border-radius: 3px;
+  border: 1px solid #dee2e6;
+}
+
+.todo-item.completed {
+  opacity: 0.7;
+}
+
+.todo-checkbox {
+  margin: 0;
+}
+
+.todo-content {
+  flex: 1;
+  font-size: 13px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  min-width: 0;
+}
+
+.todo-content.completed {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.delete-todo-btn {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 12px;
+}
+
+.delete-todo-btn:hover {
+  color: #c82333;
+}
+/* Events section styles */
+.events-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 2px solid #e9ecef;
+}
+
+.events-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #495057;
+}
+/* Category todos edit styles */
+.todo-view {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.todo-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.edit-todo-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 12px;
+}
+
+.edit-todo-btn:hover {
+  color: #0056b3;
+}
+
+.todo-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.edit-todo-input {
+  flex: 1;
+  padding: 4px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.edit-todo-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.edit-todo-actions .save-btn,
+.edit-todo-actions .cancel-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+/* Horizontal countdown layout */
+.countdown-horizontal {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .countdown-horizontal {
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .countdown-inline {
+    margin-bottom: 0;
+  }
+
+  .target-date {
+    margin: 0;
+    font-size: 12px;
+  }
+}
+/* Todo list container within events */
+.todo-list-container {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.todo-list-container .todo-content {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.todo-list-container .todo-content span {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  display: block;
 }

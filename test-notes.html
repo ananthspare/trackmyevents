@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notes Test</title>
+</head>
+<body>
+    <h1>Category Todos Functionality Test</h1>
+    <p>This is a simple test to verify the category todos functionality is working correctly.</p>
+    
+    <h2>Steps to test:</h2>
+    <ol>
+        <li>Run the application: <code>npm start</code></li>
+        <li>Navigate to the Categories page</li>
+        <li>Select a category</li>
+        <li>Look for the "Category To-dos" section in the right panel before the events list</li>
+        <li>Type a todo in the input field and press Enter or click the + button</li>
+        <li>The todo should appear in the list below</li>
+        <li>Click the checkbox to mark todos as complete/incomplete</li>
+        <li>Click the trash icon to delete todos</li>
+        <li>Refresh the page and select the same category - todos should persist</li>
+    </ol>
+    
+    <h2>Expected behavior:</h2>
+    <ul>
+        <li>Category To-dos section appears between category header and events list</li>
+        <li>Todos can be added, completed, and deleted</li>
+        <li>Todos persist after page refresh</li>
+        <li>Todos are stored in DynamoDB with categoryID field</li>
+        <li>Each category/subcategory has its own separate todo list</li>
+    </ul>
+</body>
+</html>

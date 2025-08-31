@@ -25,6 +25,7 @@ const schema = a.schema({
       content: a.string(),
       isDone: a.boolean().default(false),
       eventID: a.string(),
+      categoryID: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 

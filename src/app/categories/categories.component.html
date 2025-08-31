@@ -131,7 +131,70 @@
         <span>Subcategory of: {{ getCategoryName(selectedCategory.parentCategoryID) }}</span>
       </div>
 
-      <!-- Add new event form -->
+      <!-- Category Todos section -->
+      <div class="category-todos-section">
+        <div class="todos-header">
+          <h3>To-dos for {{ selectedCategory.name }}</h3>
+        </div>
+        
+        <div class="add-todo-form">
+          <input 
+            type="text" 
+            [(ngModel)]="newCategoryTodo" 
+            placeholder="Add a to-do for this category..."
+            (keyup.enter)="createCategoryTodo()"
+            class="todo-input"
+          />
+          <button (click)="createCategoryTodo()" class="add-todo-btn">
+            <i class="glyphicon glyphicon-plus"></i>
+          </button>
+        </div>
+        
+        <div class="todos-list">
+          <div *ngIf="categoryTodos.length === 0" class="no-todos">
+            No to-dos yet. Add one above.
+          </div>
+          
+          <div *ngFor="let todo of categoryTodos" class="todo-item" [class.completed]="todo.isDone">
+            <div *ngIf="editingCategoryTodo?.id !== todo.id" class="todo-view">
+              <input 
+                type="checkbox" 
+                [checked]="todo.isDone" 
+                (change)="toggleCategoryTodo(todo)"
+                class="todo-checkbox"
+              />
+              <span class="todo-content" [class.completed]="todo.isDone">
+                {{ todo.content }}
+              </span>
+              <div class="todo-actions">
+                <button (click)="startEditCategoryTodo(todo)" class="edit-todo-btn">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                </button>
+                <button (click)="deleteCategoryTodo(todo.id)" class="delete-todo-btn">
+                  <i class="glyphicon glyphicon-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="editingCategoryTodo?.id === todo.id" class="todo-edit">
+              <input 
+                type="text" 
+                [(ngModel)]="editingCategoryTodo.content" 
+                class="edit-todo-input"
+              />
+              <div class="edit-todo-actions">
+                <button (click)="saveEditCategoryTodo()" class="save-btn">Save</button>
+                <button (click)="cancelEditCategoryTodo()" class="cancel-btn">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Events section -->
+      <div class="events-section">
+        <h3>Events and To-dos for {{ selectedCategory.name }}</h3>
+        
+        <!-- Add new event form -->
       <div class="add-event-form">
         <input
           type="text"
@@ -177,37 +240,38 @@
                 </div>
 
                 <div class="countdown-section">
-                  <div class="countdown-inline" [ngClass]="{
-                    'expired': countdowns[event.id]?.expired,
-                    'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
-                    'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
-                    'caution': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 7 && (countdowns[event.id]?.days || 0) < 14
-                  }">
-                    <div *ngIf="!countdowns[event.id]?.expired" class="countdown-timer-inline">
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.days || 0 }}</strong>d
-                      </span>
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.hours || 0 }}</strong>h
-                      </span>
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.minutes || 0 }}</strong>m
-                      </span>
-                      <span class="countdown-item-inline">
-                        <strong>{{ countdowns[event.id]?.seconds || 0 }}</strong>s
-                      </span>
+                  <div class="countdown-horizontal">
+                    <div class="countdown-inline" [ngClass]="{
+                      'expired': countdowns[event.id]?.expired,
+                      'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
+                      'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
+                      'caution': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 7 && (countdowns[event.id]?.days || 0) < 14
+                    }">
+                      <div *ngIf="!countdowns[event.id]?.expired" class="countdown-timer-inline">
+                        <span class="countdown-item-inline">
+                          <strong>{{ countdowns[event.id]?.days || 0 }}</strong>d
+                        </span>
+                        <span class="countdown-item-inline">
+                          <strong>{{ countdowns[event.id]?.hours || 0 }}</strong>h
+                        </span>
+                        <span class="countdown-item-inline">
+                          <strong>{{ countdowns[event.id]?.minutes || 0 }}</strong>m
+                        </span>
+                        <span class="countdown-item-inline">
+                          <strong>{{ countdowns[event.id]?.seconds || 0 }}</strong>s
+                        </span>
+                      </div>
+                      <div *ngIf="countdowns[event.id]?.expired" class="expired-message-inline">
+                        Event passed!
+                      </div>
                     </div>
-                    <div *ngIf="countdowns[event.id]?.expired" class="expired-message-inline">
-                      Event passed!
+                    <div *ngIf="event.targetDate" class="target-date" [ngClass]="{
+                      'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
+                      'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
+                      'caution': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 7 && (countdowns[event.id]?.days || 0) < 14
+                    }">
+                      {{ event.targetDate | date:'MMM d, y H:mm' }}
                     </div>
-                  </div>
-
-                  <div *ngIf="event.targetDate" class="target-date" [ngClass]="{
-                    'urgent': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) < 3,
-                    'warning': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 3 && (countdowns[event.id]?.days || 0) < 7,
-                    'caution': !countdowns[event.id]?.expired && (countdowns[event.id]?.days || 0) >= 7 && (countdowns[event.id]?.days || 0) < 14
-                  }">
-                    {{ event.targetDate | date:'MMM d, y H:mm' }}
                   </div>
                 </div>
 
@@ -273,6 +337,7 @@
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
