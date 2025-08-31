@@ -1,0 +1,129 @@
+<div class="notes-layout">
+  <!-- Left Sidebar: Notes List -->
+  <div class="notes-sidebar">
+    <div class="sidebar-header">
+      <h2>Notes</h2>
+    </div>
+
+    <!-- Add new note form -->
+    <form (ngSubmit)="createNote()" class="add-note-form">
+      <input
+        type="text"
+        [(ngModel)]="newNote.title"
+        name="noteTitle"
+        placeholder="Note title"
+        required
+      />
+      <select [(ngModel)]="newNote.parentNoteID" name="parentNote" class="parent-select">
+        <option [ngValue]="null">Root Note</option>
+        <option *ngFor="let note of rootNotes" [ngValue]="note.id">
+          {{ note.title }}
+        </option>
+      </select>
+      <button type="submit" class="add-note-btn">
+        <i class="glyphicon glyphicon-plus"></i>
+        Add Note
+      </button>
+    </form>
+
+    <!-- Notes list -->
+    <div class="notes-list">
+      <div *ngIf="notes.length === 0" class="empty-state">
+        No notes yet. Create one to get started!
+      </div>
+
+      <!-- Root notes -->
+      <ng-container *ngFor="let note of rootNotes">
+        <div class="note-item"
+             [class.active]="selectedNote?.id === note.id"
+             (click)="selectNote(note)">
+          <div class="note-header">
+            <div class="note-title-section">
+              <button *ngIf="hasSubNotes(note.id)"
+                      (click)="toggleNoteExpansion(note.id, $event)"
+                      class="expand-btn">
+                <i class="glyphicon"
+                   [class.glyphicon-chevron-down]="expandedNotes.has(note.id)"
+                   [class.glyphicon-chevron-right]="!expandedNotes.has(note.id)"></i>
+              </button>
+              <h3 [title]="note.title">{{ note.title }}</h3>
+            </div>
+            <div class="note-actions">
+              <button (click)="addSubNote(note.id, $event)" class="icon-btn" title="Add sub-note">
+                <i class="glyphicon glyphicon-plus-sign"></i>
+              </button>
+              <button (click)="startEdit(note); $event.stopPropagation()" class="icon-btn" title="Edit note">
+                <i class="glyphicon glyphicon-pencil"></i>
+              </button>
+              <button (click)="deleteNote(note.id); $event.stopPropagation()" class="icon-btn" title="Delete note">
+                <i class="glyphicon glyphicon-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-notes -->
+        <div *ngIf="expandedNotes.has(note.id) && subNotes[note.id]" class="subnotes-container">
+          <div *ngFor="let subNote of subNotes[note.id]"
+               class="note-item subnote-item"
+               [class.active]="selectedNote?.id === subNote.id"
+               (click)="selectNote(subNote)">
+            <div class="note-header">
+              <div class="note-title-section">
+                <h3 [title]="subNote.title">{{ subNote.title }}</h3>
+              </div>
+              <div class="note-actions">
+                <button (click)="startEdit(subNote); $event.stopPropagation()" class="icon-btn" title="Edit note">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                </button>
+                <button (click)="deleteNote(subNote.id); $event.stopPropagation()" class="icon-btn" title="Delete note">
+                  <i class="glyphicon glyphicon-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Right Content: Note Editor -->
+  <div class="note-content">
+    <div *ngIf="selectedNote" class="note-editor">
+      <div class="note-title-bar">
+        <h2>{{ selectedNote.title }}</h2>
+      </div>
+      
+      <div class="note-editor-area">
+        <textarea
+          [(ngModel)]="selectedNote.content"
+          (blur)="saveNoteContent()"
+          placeholder="Start typing your note here..."
+          class="note-textarea"
+        ></textarea>
+      </div>
+    </div>
+
+    <div *ngIf="!selectedNote" class="no-selection">
+      <p>Select a note to view and edit</p>
+    </div>
+  </div>
+</div>
+
+<!-- Edit note modal -->
+<div *ngIf="editingNote" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Edit Note</h3>
+    <input
+      type="text"
+      [(ngModel)]="editingNote.title"
+      name="editTitle"
+      placeholder="Note title"
+      required
+    />
+    <div class="edit-actions">
+      <button (click)="saveEdit()" class="save-btn">Save</button>
+      <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>

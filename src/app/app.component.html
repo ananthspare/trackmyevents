@@ -40,6 +40,12 @@
               (click)="setActiveTab('planner')">
               Planner
             </button>
+            <button
+              class="nav-btn"
+              [class.active]="activeTab === 'notes'"
+              (click)="setActiveTab('notes')">
+              Notes
+            </button>
           </div>
           <h1 class="main-title">Track your events with categories and real-time countdowns</h1>
           <div class="user-info">
@@ -57,6 +63,7 @@
         <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)" (navigateToPlanner)="navigateToPlanner($event)"></app-calendar>
         <app-profile *ngIf="activeTab === 'profile'"></app-profile>
         <app-day-planner *ngIf="activeTab === 'planner'" #plannerRef (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-day-planner>
+        <app-notes *ngIf="activeTab === 'notes'"></app-notes>
       </main>
 
       <footer>

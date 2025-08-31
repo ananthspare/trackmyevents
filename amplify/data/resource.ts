@@ -50,6 +50,15 @@ const schema = a.schema({
       tasks: a.string(),
     })
     .authorization(allow => [allow.owner()]),
+
+  Note: a
+    .model({
+      title: a.string(),
+      content: a.string(),
+      parentNoteID: a.string(),
+      order: a.integer().default(0),
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
