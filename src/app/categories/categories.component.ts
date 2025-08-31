@@ -116,6 +116,30 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
     };
   }
 
+  onTouchStart(event: TouchEvent) {
+    event.preventDefault();
+    this.isDragging = true;
+  }
+
+  onTouchMove(event: TouchEvent) {
+    if (!this.isDragging) return;
+    
+    event.preventDefault();
+    const sidebar = this.elementRef.nativeElement.querySelector('#categoriesSidebar');
+    const containerRect = this.elementRef.nativeElement.querySelector('.two-column-layout').getBoundingClientRect();
+    const touch = event.touches[0];
+    const newWidth = touch.clientX - containerRect.left;
+    
+    if (newWidth >= 200 && newWidth <= 400) {
+      sidebar.style.width = newWidth + 'px';
+    }
+  }
+
+  onTouchEnd(event: TouchEvent) {
+    event.preventDefault();
+    this.isDragging = false;
+  }
+
   listCategories() {
     try {
       // Unsubscribe from previous subscription if exists

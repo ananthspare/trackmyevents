@@ -121,7 +121,10 @@
   </div>
 
   <!-- Resize handle -->
-  <div class="resize-handle" id="resizeHandle"></div>
+  <div class="resize-handle" id="resizeHandle" 
+       (touchstart)="onTouchStart($event)"
+       (touchmove)="onTouchMove($event)"
+       (touchend)="onTouchEnd($event)"></div>
 
   <!-- Right Column: Events -->
   <div class="events-content">

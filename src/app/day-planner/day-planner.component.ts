@@ -879,4 +879,33 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
       console.error('Error saving pinned tasks:', error);
     }
   }
+
+  onTouchStart(event: TouchEvent) {
+    const pinnedSidebar = document.getElementById('pinnedSidebar');
+    if (!pinnedSidebar) return;
+    
+    event.preventDefault();
+  }
+
+  onTouchMove(event: TouchEvent) {
+    const pinnedSidebar = document.getElementById('pinnedSidebar');
+    if (!pinnedSidebar) return;
+    
+    const container = document.querySelector('.planner-body') as HTMLElement;
+    if (!container) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    const touch = event.touches[0];
+    const newSidebarWidth = containerRect.right - touch.clientX;
+    
+    if (newSidebarWidth >= 200 && newSidebarWidth <= 600) {
+      pinnedSidebar.style.width = `${newSidebarWidth}px`;
+    }
+    
+    event.preventDefault();
+  }
+
+  onTouchEnd(event: TouchEvent) {
+    event.preventDefault();
+  }
 }
