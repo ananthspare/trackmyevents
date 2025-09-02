@@ -1,25 +1,27 @@
 <div class="planner-container">
   <div class="planner-header">
     <h2>Day Planner</h2>
-    <input type="date" [(ngModel)]="selectedDate" (change)="loadPlan()" class="date-input">
-    <div class="view-selector">
-      <label>View:</label>
-      <select [(ngModel)]="plannerView" (change)="onPlannerViewChange()">
-        <option value="today">Today</option>
-        <option value="week">Whole Week</option>
-        <option value="workweek">Work Week</option>
-        <option value="month">Monthly</option>
-      </select>
-    </div>
-    <div class="time-range">
-      <label>From:</label>
-      <select [(ngModel)]="startHour" (change)="onTimeRangeChange()">
-        <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
-      </select>
-      <label>To:</label>
-      <select [(ngModel)]="endHour" (change)="onTimeRangeChange()">
-        <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
-      </select>
+    <div class="controls-wrapper">
+      <input type="date" [(ngModel)]="selectedDate" (change)="loadPlan()" class="date-input">
+      <div class="view-selector">
+        <label>View:</label>
+        <select [(ngModel)]="plannerView" (change)="onPlannerViewChange()">
+          <option value="today">Today</option>
+          <option value="week">Whole Week</option>
+          <option value="workweek">Work Week</option>
+          <option value="month">Monthly</option>
+        </select>
+      </div>
+      <div class="time-range">
+        <label>From:</label>
+        <select [(ngModel)]="startHour" (change)="onTimeRangeChange()">
+          <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
+        </select>
+        <label>To:</label>
+        <select [(ngModel)]="endHour" (change)="onTimeRangeChange()">
+          <option *ngFor="let hour of hours" [value]="hour">{{ hour.toString().padStart(2, '0') }}:00</option>
+        </select>
+      </div>
     </div>
     <div class="header-actions">
       <button (click)="copyToNextDay()" [disabled]="copying" class="copy-btn">
@@ -64,11 +66,11 @@
 
       <!-- Week Views -->
       <div class="week-grid" *ngIf="plannerView === 'week' || plannerView === 'workweek'">
-        <div class="week-header">
+        <div class="week-header" [class.full-week]="plannerView === 'week'" [class.work-week]="plannerView === 'workweek'">
           <div class="time-column-header">Time</div>
           <div class="day-header" *ngFor="let day of weekDays">{{ day | date:'EEE MMM d' }}</div>
         </div>
-        <div class="week-row" *ngFor="let slot of filteredTimeSlots">
+        <div class="week-row" [class.full-week]="plannerView === 'week'" [class.work-week]="plannerView === 'workweek'" *ngFor="let slot of filteredTimeSlots">
           <div class="time-label">{{ slot.timeRange }}</div>
           <div class="day-cell" *ngFor="let day of weekDays">
             <div class="task-editor-mini">
