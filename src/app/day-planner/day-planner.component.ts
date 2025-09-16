@@ -50,6 +50,8 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   taskToMoveIndex = -1;
   editingTaskIndex = -1;
   editingTaskContent = '';
+  selectedTaskIndices: Set<number> = new Set();
+  isMultiSelectMode = false;
 
   ngOnInit() {
     this.onPlannerViewChange();
@@ -737,16 +739,45 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
     this.showDatePicker = true;
   }
 
+  toggleMultiSelectMode() {
+    this.isMultiSelectMode = !this.isMultiSelectMode;
+    if (!this.isMultiSelectMode) {
+      this.selectedTaskIndices.clear();
+    }
+  }
+
+  toggleTaskSelection(index: number) {
+    if (this.selectedTaskIndices.has(index)) {
+      this.selectedTaskIndices.delete(index);
+    } else {
+      this.selectedTaskIndices.add(index);
+    }
+  }
+
+  moveSelectedTasks() {
+    if (this.selectedTaskIndices.size === 0) return;
+    this.selectedMoveDate = new Date().toISOString().split('T')[0];
+    this.showDatePicker = true;
+  }
+
   closeDatePicker() {
     this.showDatePicker = false;
     this.taskToMoveIndex = -1;
     this.selectedMoveDate = '';
+    this.selectedTaskIndices.clear();
+    this.isMultiSelectMode = false;
   }
 
   confirmMoveTask() {
-    if (this.selectedMoveDate && this.taskToMoveIndex >= 0) {
-      const task = this.pinnedTasks[this.taskToMoveIndex];
-      this.movePinnedTaskToDate(task, this.selectedMoveDate, this.taskToMoveIndex);
+    if (this.selectedMoveDate) {
+      if (this.selectedTaskIndices.size > 0) {
+        // Move multiple selected tasks
+        this.moveMultipleTasksToDate(this.selectedMoveDate);
+      } else if (this.taskToMoveIndex >= 0) {
+        // Move single task
+        const task = this.pinnedTasks[this.taskToMoveIndex];
+        this.movePinnedTaskToDate(task, this.selectedMoveDate, this.taskToMoveIndex);
+      }
       this.closeDatePicker();
     }
   }
@@ -754,6 +785,51 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   private isValidDate(dateString: string): boolean {
     const date = new Date(dateString);
     return date instanceof Date && !isNaN(date.getTime());
+  }
+
+  private async moveMultipleTasksToDate(targetDate: string) {
+    try {
+      const tasksToMove = Array.from(this.selectedTaskIndices)
+        .sort((a, b) => b - a) // Sort in descending order to avoid index issues
+        .map(index => ({ task: this.pinnedTasks[index], index }));
+
+      // Remove tasks from current date (in reverse order)
+      tasksToMove.forEach(({ index }) => {
+        this.pinnedTasks.splice(index, 1);
+      });
+      await this.savePinnedTasks();
+
+      // Add to target date
+      const targetResult = await client.models.PinnedTask.list({
+        filter: { date: { eq: targetDate } }
+      });
+      
+      let targetTasks = [];
+      if (targetResult.data && targetResult.data.length > 0 && targetResult.data[0].tasks) {
+        targetTasks = JSON.parse(targetResult.data[0].tasks);
+      }
+      
+      // Add all moved tasks
+      tasksToMove.forEach(({ task }) => {
+        targetTasks.push({ ...task, order: targetTasks.length });
+      });
+      
+      if (targetResult.data && targetResult.data.length > 0) {
+        await client.models.PinnedTask.update({
+          id: targetResult.data[0].id,
+          tasks: JSON.stringify(targetTasks)
+        });
+      } else {
+        await client.models.PinnedTask.create({
+          date: targetDate,
+          tasks: JSON.stringify(targetTasks)
+        });
+      }
+
+      alert(`${tasksToMove.length} tasks moved to ${targetDate}`);
+    } catch (error) {
+      console.error('Error moving multiple pinned tasks:', error);
+    }
   }
 
   private async movePinnedTaskToDate(task: any, targetDate: string, index: number) {

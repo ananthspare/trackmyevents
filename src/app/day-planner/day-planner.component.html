@@ -113,6 +113,18 @@
       <div class="pinned-header">
         <h3>Pinned Tasks</h3>
         <span class="pinned-date">{{ selectedDate | date:'MMM d, y' }}</span>
+        <div class="multi-select-controls" *ngIf="pinnedTasks.length > 0">
+          <button (click)="toggleMultiSelectMode()" 
+                  class="multi-select-btn" 
+                  [class.active]="isMultiSelectMode">
+            {{ isMultiSelectMode ? 'Cancel' : 'Select' }}
+          </button>
+          <button *ngIf="isMultiSelectMode && selectedTaskIndices.size > 0" 
+                  (click)="moveSelectedTasks()" 
+                  class="move-selected-btn">
+            Move {{ selectedTaskIndices.size }} tasks
+          </button>
+        </div>
       </div>
       
       <div class="add-pinned-form">
@@ -132,6 +144,8 @@
         <div *ngFor="let task of pinnedTasks; let i = index" 
              class="pinned-item" 
              [class.editing]="editingTaskIndex === i"
+             [class.selected]="selectedTaskIndices.has(i)"
+             [class.multi-select-mode]="isMultiSelectMode"
              draggable="true"
              (dragstart)="onDragStart($event, i)"
              (dragover)="onDragOver($event)"
@@ -139,9 +153,17 @@
           
           <!-- View Mode -->
           <div *ngIf="editingTaskIndex !== i" class="pinned-view">
-            <div class="drag-handle">⋮⋮</div>
-            <div class="pinned-content" (click)="startEditTask(i)">{{ task.content }}</div>
-            <div class="pinned-actions">
+            <div *ngIf="isMultiSelectMode" class="select-checkbox">
+              <input type="checkbox" 
+                     [checked]="selectedTaskIndices.has(i)"
+                     (change)="toggleTaskSelection(i)">
+            </div>
+            <div *ngIf="!isMultiSelectMode" class="drag-handle">⋮⋮</div>
+            <div class="pinned-content" 
+                 (click)="isMultiSelectMode ? toggleTaskSelection(i) : startEditTask(i)">
+              {{ task.content }}
+            </div>
+            <div class="pinned-actions" *ngIf="!isMultiSelectMode">
               <button (click)="togglePinnedComplete(i)" 
                       class="complete-btn" 
                       title="Mark as complete">

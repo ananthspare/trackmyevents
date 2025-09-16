@@ -575,6 +575,50 @@
   background: #f8f9fa;
   border-radius: 8px 8px 0 0;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.multi-select-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.multi-select-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.multi-select-btn.active {
+  background: #f44336;
+}
+
+.multi-select-btn:hover {
+  transform: translateY(-1px);
+}
+
+.move-selected-btn {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.move-selected-btn:hover {
+  background: #f57c00;
+  transform: translateY(-1px);
 }
 
 .pinned-header h3 {
@@ -660,6 +704,28 @@
 
 .pinned-item.completed {
   opacity: 0.6;
+}
+
+.pinned-item.multi-select-mode {
+  cursor: pointer;
+}
+
+.pinned-item.selected {
+  background: #e3f2fd;
+  border-color: #2196F3;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.select-checkbox {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.select-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .pinned-view {
