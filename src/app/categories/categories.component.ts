@@ -1085,4 +1085,23 @@ export class CategoriesComponent implements OnInit, OnDestroy, AfterViewInit {
       console.error('Error updating category todo:', error);
     }
   }
+
+  async importGmailEvents(gmailEvents: any[]) {
+    if (!this.selectedCategoryId || !gmailEvents.length) return;
+
+    try {
+      for (const gmailEvent of gmailEvents) {
+        await client.models.Event.create({
+          title: gmailEvent.title,
+          description: gmailEvent.description || '',
+          targetDate: gmailEvent.targetDate,
+          categoryID: this.selectedCategoryId
+        });
+      }
+      
+      console.log(`Imported ${gmailEvents.length} events from Gmail`);
+    } catch (error) {
+      console.error('Error importing Gmail events:', error);
+    }
+  }
 }

@@ -53,7 +53,10 @@
       </header>
 
       <main>
-        <app-categories *ngIf="activeTab === 'categories'" #categoriesRef></app-categories>
+        <div *ngIf="activeTab === 'categories'">
+          <app-calendar-sync (eventsImported)="categoriesComponent?.importGmailEvents($event)"></app-calendar-sync>
+          <app-categories #categoriesRef></app-categories>
+        </div>
         <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)" (navigateToPlanner)="navigateToPlanner($event)"></app-calendar>
         <app-profile *ngIf="activeTab === 'profile'"></app-profile>
         <app-day-planner *ngIf="activeTab === 'planner'" #plannerRef (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-day-planner>
