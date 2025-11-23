@@ -287,4 +287,53 @@ export class MonthlyRemindersComponent implements OnInit {
       this.toggleEditDescription(reminder.id);
     }
   }
+
+  showCopyReminderModal = false;
+  reminderToCopy: any = null;
+  copyToMonth = new Date().getMonth() + 1;
+  copyToYear = new Date().getFullYear();
+  copyToDay = 1;
+
+  showCopyModal(reminder: any) {
+    this.reminderToCopy = reminder;
+    this.copyToMonth = this.selectedMonth === 12 ? 1 : this.selectedMonth + 1;
+    this.copyToYear = this.selectedMonth === 12 ? this.selectedYear + 1 : this.selectedYear;
+    this.copyToDay = 1;
+    this.showCopyReminderModal = true;
+  }
+
+  closeCopyModal() {
+    this.showCopyReminderModal = false;
+    this.reminderToCopy = null;
+  }
+
+  async confirmCopy() {
+    if (!this.reminderToCopy) return;
+    
+    try {
+      await client.models.MonthlyReminder.create({
+        title: this.reminderToCopy.title,
+        description: this.reminderToCopy.description,
+        month: this.copyToMonth,
+        day: this.copyToDay,
+        year: this.copyToYear,
+        isRecurring: true
+      });
+      
+      this.closeCopyModal();
+    } catch (error) {
+      console.error('Error copying reminder:', error);
+    }
+  }
+
+  getCopyDaysInMonth(): number[] {
+    const daysInMonth = new Date(this.copyToYear, this.copyToMonth, 0).getDate();
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  }
+
+  getCopyFormattedDate(day: number): string {
+    const dayWithSuffix = this.getDayWithSuffix(day);
+    const monthName = this.months.find(m => m.value === this.copyToMonth)?.name || 'Unknown';
+    return `${dayWithSuffix} ${monthName} ${this.copyToYear}`;
+  }
 }
