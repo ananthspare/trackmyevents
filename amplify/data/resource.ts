@@ -61,6 +61,7 @@ const schema = a.schema({
       year: a.integer(),
       isRecurring: a.boolean().default(true),
       isCompleted: a.boolean().default(false),
+      completedAt: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 });

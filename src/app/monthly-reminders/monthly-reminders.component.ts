@@ -25,6 +25,7 @@ export class MonthlyRemindersComponent implements OnInit {
   };
 
   remindersByDay: { [key: number]: any[] } = {};
+  editingCompletionTime: { [key: string]: boolean } = {};
 
   months = [
     { value: 1, name: 'January' },
@@ -110,10 +111,20 @@ export class MonthlyRemindersComponent implements OnInit {
 
   async toggleCompletion(reminder: any) {
     try {
-      await client.models.MonthlyReminder.update({
+      const updateData: any = {
         id: reminder.id,
         isCompleted: !reminder.isCompleted
-      });
+      };
+      
+      if (!reminder.isCompleted) {
+        // Mark as completed - capture current timestamp
+        updateData.completedAt = new Date().toISOString();
+      } else {
+        // Mark as not completed - clear timestamp
+        updateData.completedAt = null;
+      }
+      
+      await client.models.MonthlyReminder.update(updateData);
       this.loadReminders();
     } catch (error) {
       console.error('Error updating reminder:', error);
@@ -180,5 +191,49 @@ export class MonthlyRemindersComponent implements OnInit {
       allReminders.push(...dayReminders.filter(r => r.isCompleted));
     });
     return allReminders.sort((a, b) => a.day - b.day);
+  }
+
+  formatCompletionTime(completedAt: string): string {
+    if (!completedAt) return '';
+    const date = new Date(completedAt);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  async updateCompletionTime(reminder: any, newDateTime: string) {
+    try {
+      await client.models.MonthlyReminder.update({
+        id: reminder.id,
+        completedAt: new Date(newDateTime).toISOString()
+      });
+      this.loadReminders();
+    } catch (error) {
+      console.error('Error updating completion time:', error);
+    }
+  }
+
+  getEditableDateTime(completedAt: string): string {
+    if (!completedAt) return '';
+    const date = new Date(completedAt);
+    return date.toISOString().slice(0, 16);
+  }
+
+  onCompletionTimeChange(reminder: any, event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target?.value) {
+      this.updateCompletionTime(reminder, target.value);
+    }
+  }
+
+  toggleEditCompletionTime(reminderId: string) {
+    this.editingCompletionTime[reminderId] = !this.editingCompletionTime[reminderId];
+  }
+
+  isEditingCompletionTime(reminderId: string): boolean {
+    return !!this.editingCompletionTime[reminderId];
   }
 }

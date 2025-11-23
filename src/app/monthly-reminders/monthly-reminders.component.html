@@ -131,6 +131,33 @@
             </p>
           </div>
           
+          <div class="completion-time">
+            <div class="completion-display">
+              <span class="completion-label">Completed:</span>
+              <div class="completion-field">
+                <span 
+                  *ngIf="!isEditingCompletionTime(reminder.id)" 
+                  class="completion-text">
+                  {{ formatCompletionTime(reminder.completedAt) }}
+                </span>
+                <input 
+                  *ngIf="isEditingCompletionTime(reminder.id)"
+                  type="datetime-local" 
+                  [value]="getEditableDateTime(reminder.completedAt)"
+                  (change)="onCompletionTimeChange(reminder, $event); toggleEditCompletionTime(reminder.id)"
+                  (blur)="toggleEditCompletionTime(reminder.id)"
+                  class="completion-input"
+                  #completionInput>
+                <button 
+                  (click)="toggleEditCompletionTime(reminder.id)"
+                  class="edit-time-btn"
+                  title="Edit completion time">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
           <div class="reminder-actions">
             <button (click)="deleteReminder(reminder.id)" class="delete-btn">
               <i class="glyphicon glyphicon-trash"></i>
