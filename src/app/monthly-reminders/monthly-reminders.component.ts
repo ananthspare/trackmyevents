@@ -26,6 +26,9 @@ export class MonthlyRemindersComponent implements OnInit {
 
   remindersByDay: { [key: number]: any[] } = {};
   editingCompletionTime: { [key: string]: boolean } = {};
+  editingTitle: { [key: string]: boolean } = {};
+  editingDescription: { [key: string]: boolean } = {};
+  editingDay: { [key: string]: boolean } = {};
 
   months = [
     { value: 1, name: 'January' },
@@ -235,5 +238,53 @@ export class MonthlyRemindersComponent implements OnInit {
 
   isEditingCompletionTime(reminderId: string): boolean {
     return !!this.editingCompletionTime[reminderId];
+  }
+
+  toggleEditTitle(reminderId: string) {
+    this.editingTitle[reminderId] = !this.editingTitle[reminderId];
+  }
+
+  toggleEditDescription(reminderId: string) {
+    this.editingDescription[reminderId] = !this.editingDescription[reminderId];
+  }
+
+  toggleEditDay(reminderId: string) {
+    this.editingDay[reminderId] = !this.editingDay[reminderId];
+  }
+
+  async updateReminderField(reminder: any, field: string, value: any) {
+    try {
+      await client.models.MonthlyReminder.update({
+        id: reminder.id,
+        [field]: value
+      });
+      this.loadReminders();
+    } catch (error) {
+      console.error('Error updating reminder:', error);
+    }
+  }
+
+  onTitleChange(reminder: any, event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target?.value !== undefined) {
+      this.updateReminderField(reminder, 'title', target.value);
+      this.toggleEditTitle(reminder.id);
+    }
+  }
+
+  onDayChange(reminder: any, event: Event) {
+    const target = event.target as HTMLSelectElement;
+    if (target?.value !== undefined) {
+      this.updateReminderField(reminder, 'day', target.value);
+      this.toggleEditDay(reminder.id);
+    }
+  }
+
+  onDescriptionChange(reminder: any, event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target?.value !== undefined) {
+      this.updateReminderField(reminder, 'description', target.value);
+      this.toggleEditDescription(reminder.id);
+    }
   }
 }
