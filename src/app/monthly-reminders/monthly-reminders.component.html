@@ -1,0 +1,143 @@
+<div class="monthly-reminders-container">
+  <div class="header-section">
+    <h2>Monthly Reminders</h2>
+    <p class="subtitle">Manage your recurring monthly bills and reminders</p>
+  </div>
+
+  <div class="month-selector">
+    <div class="selector-group">
+      <label>Month:</label>
+      <select [(ngModel)]="selectedMonth" (change)="onMonthYearChange()" class="month-select">
+        <option *ngFor="let month of months" [value]="month.value">
+          {{ month.name }}
+        </option>
+      </select>
+    </div>
+    
+    <div class="selector-group">
+      <label>Year:</label>
+      <select [(ngModel)]="selectedYear" (change)="onMonthYearChange()" class="year-select">
+        <option [value]="2024">2024</option>
+        <option [value]="2025">2025</option>
+        <option [value]="2026">2026</option>
+        <option [value]="2027">2027</option>
+        <option [value]="2028">2028</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="add-reminder-section">
+    <h3>Add New Reminder for {{ getMonthName() }} {{ selectedYear }}</h3>
+    
+    <div class="common-reminders">
+      <label>Quick Select:</label>
+      <div class="common-buttons">
+        <button 
+          *ngFor="let reminder of commonReminders" 
+          (click)="selectCommonReminder(reminder)"
+          class="common-btn"
+          type="button">
+          {{ reminder }}
+        </button>
+      </div>
+    </div>
+
+    <div class="add-form">
+      <div class="form-row">
+        <select [(ngModel)]="selectedDay" class="day-select">
+          <option *ngFor="let day of getDaysInMonth()" [value]="day">
+            {{ getFormattedDate(day) }}
+          </option>
+        </select>
+        
+        <input 
+          [(ngModel)]="newReminder.title" 
+          placeholder="Reminder title (e.g., Phone Bill)"
+          class="title-input"
+          type="text">
+        
+        <input 
+          [(ngModel)]="newReminder.description" 
+          placeholder="Description (optional)"
+          class="description-input"
+          type="text">
+        
+        <button (click)="addReminder()" class="add-btn">
+          <i class="glyphicon glyphicon-plus"></i> Add
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="reminders-list">
+    <h3>Reminders for {{ getMonthName() }} {{ selectedYear }}</h3>
+    
+    <div *ngIf="getAllPendingReminders().length === 0 && getAllCompletedReminders().length === 0" class="no-reminders">
+      No reminders set for this month. Add some above!
+    </div>
+    
+    <div *ngIf="getAllPendingReminders().length > 0" class="main-section">
+      <div class="main-section-header">
+        <h4 class="section-title pending">Pending Reminders ({{ getAllPendingReminders().length }})</h4>
+      </div>
+      
+      <div class="section-reminders">
+        <div *ngFor="let reminder of getAllPendingReminders()" class="reminder-item">
+          <div class="reminder-checkbox">
+            <input 
+              type="checkbox" 
+              [checked]="reminder.isCompleted"
+              (change)="toggleCompletion(reminder)"
+              class="completion-checkbox">
+          </div>
+          
+          <div class="reminder-content">
+            <h5>{{ reminder.title }}</h5>
+            <p class="reminder-date">{{ getFormattedDate(reminder.day) }}</p>
+            <p *ngIf="reminder.description" class="reminder-description">
+              {{ reminder.description }}
+            </p>
+          </div>
+          
+          <div class="reminder-actions">
+            <button (click)="deleteReminder(reminder.id)" class="delete-btn">
+              <i class="glyphicon glyphicon-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="getAllCompletedReminders().length > 0" class="main-section">
+      <div class="main-section-header">
+        <h4 class="section-title completed">Completed Reminders ({{ getAllCompletedReminders().length }})</h4>
+      </div>
+      
+      <div class="section-reminders">
+        <div *ngFor="let reminder of getAllCompletedReminders()" class="reminder-item completed">
+          <div class="reminder-checkbox">
+            <input 
+              type="checkbox" 
+              [checked]="reminder.isCompleted"
+              (change)="toggleCompletion(reminder)"
+              class="completion-checkbox">
+          </div>
+          
+          <div class="reminder-content">
+            <h5 class="completed-text">{{ reminder.title }}</h5>
+            <p class="reminder-date completed-text">{{ getFormattedDate(reminder.day) }}</p>
+            <p *ngIf="reminder.description" class="reminder-description completed-text">
+              {{ reminder.description }}
+            </p>
+          </div>
+          
+          <div class="reminder-actions">
+            <button (click)="deleteReminder(reminder.id)" class="delete-btn">
+              <i class="glyphicon glyphicon-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

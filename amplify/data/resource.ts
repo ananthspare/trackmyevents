@@ -51,6 +51,18 @@ const schema = a.schema({
       tasks: a.string(),
     })
     .authorization(allow => [allow.owner()]),
+
+  MonthlyReminder: a
+    .model({
+      title: a.string(),
+      description: a.string(),
+      month: a.integer(),
+      day: a.integer(),
+      year: a.integer(),
+      isRecurring: a.boolean().default(true),
+      isCompleted: a.boolean().default(false),
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
