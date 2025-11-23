@@ -276,7 +276,7 @@
   display: block;
   margin-bottom: 8px;
   font-weight: bold;
-  color: #333;
+  color: #2887fd;
 }
 
 .common-buttons {
@@ -287,7 +287,7 @@
 
 .common-btn {
   padding: 6px 12px;
-  background-color: #e3f2fd;
+  background-color: #000000;
   border: 1px solid #2196F3;
   border-radius: 4px;
   cursor: pointer;
@@ -359,9 +359,13 @@
 
 .due-date-selector label {
   font-weight: bold;
-  color: #333;
-  font-size: 14px;
+  color: #ff6b35;
+  font-size: 16px;
   white-space: nowrap;
+  background-color: #fff3e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ff6b35;
 }
 
 .day-select {
@@ -503,30 +507,30 @@
     flex-direction: column;
     align-items: center;
   }
-  
+
   .main-section-header h4 {
     font-size: 16px;
   }
-  
+
   .form-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .title-input, .description-input {
     min-width: auto;
   }
-  
+
   .common-buttons {
     justify-content: center;
   }
-  
+
   .reminder-item {
     flex-direction: row;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .reminder-header {
     flex-direction: column;
     align-items: flex-start;
