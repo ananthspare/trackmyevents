@@ -106,7 +106,7 @@
 }
 
 .completion-label {
-  font-size: 11px;
+  font-size: 14px;
   color: #666;
   font-weight: bold;
 }
@@ -121,7 +121,7 @@
 }
 
 .completion-text {
-  font-size: 11px;
+  font-size: 14px;
   color: #333;
   padding: 4px;
   border-radius: 3px;
@@ -173,6 +173,14 @@
 .editable-field p {
   margin: 0;
   flex: 1;
+}
+
+.reminder-layout h5 {
+  font-size: 20px;
+}
+
+.reminder-layout .reminder-date {
+  font-size: 16px;
 }
 
 .edit-btn {
@@ -450,6 +458,24 @@
   flex: 1;
 }
 
+.reminder-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.left-section {
+  display: flex;
+  align-items: center;
+}
+
+.right-section {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
 .completed-text {
   text-decoration: line-through;
   color: #666;
@@ -480,7 +506,7 @@
 .reminder-description {
   margin: 0;
   color: #666;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .reminder-actions {

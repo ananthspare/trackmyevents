@@ -95,40 +95,41 @@
           </div>
           
           <div class="reminder-content">
-            <div class="editable-field">
-              <h5 *ngIf="!editingTitle[reminder.id]">{{ reminder.title }}</h5>
-              <input 
-                *ngIf="editingTitle[reminder.id]"
-                type="text" 
-                [value]="reminder.title"
-                (blur)="onTitleChange(reminder, $event)"
-                (keyup.enter)="onTitleChange(reminder, $event)"
-                class="edit-input title-input">
-              <button (click)="toggleEditTitle(reminder.id)" class="edit-btn" title="Edit title">
-                <i class="glyphicon glyphicon-pencil"></i>
-              </button>
-            </div>
-            
-            <div class="editable-field">
-              <p *ngIf="!editingDay[reminder.id]" class="reminder-date">{{ getFormattedDate(reminder.day) }}</p>
-              <select 
-                *ngIf="editingDay[reminder.id]"
-                [value]="reminder.day"
-                (change)="onDayChange(reminder, $event)"
-                (blur)="toggleEditDay(reminder.id)"
-                class="edit-input day-input">
-                <option *ngFor="let day of getDaysInMonth()" [value]="day">
-                  {{ getFormattedDate(day) }}
-                </option>
-              </select>
-              <button (click)="toggleEditDay(reminder.id)" class="edit-btn" title="Edit day">
-                <i class="glyphicon glyphicon-pencil"></i>
-              </button>
-            </div>
-            
-            <div class="due-date-display">
-              <span class="due-label">Due Date:</span>
-              <span class="due-value">{{ getFormattedDate(reminder.day) }}</span>
+            <div class="reminder-layout">
+              <div class="left-section">
+                <div class="editable-field">
+                  <h5 *ngIf="!editingTitle[reminder.id]">{{ reminder.title }}</h5>
+                  <input 
+                    *ngIf="editingTitle[reminder.id]"
+                    type="text" 
+                    [value]="reminder.title"
+                    (blur)="onTitleChange(reminder, $event)"
+                    (keyup.enter)="onTitleChange(reminder, $event)"
+                    class="edit-input title-input">
+                  <button (click)="toggleEditTitle(reminder.id)" class="edit-btn" title="Edit title">
+                    <i class="glyphicon glyphicon-pencil"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="right-section">
+                <div class="editable-field">
+                  <p *ngIf="!editingDay[reminder.id]" class="reminder-date">{{ getFormattedDate(reminder.day) }}</p>
+                  <select 
+                    *ngIf="editingDay[reminder.id]"
+                    [value]="reminder.day"
+                    (change)="onDayChange(reminder, $event)"
+                    (blur)="toggleEditDay(reminder.id)"
+                    class="edit-input day-input">
+                    <option *ngFor="let day of getDaysInMonth()" [value]="day">
+                      {{ getFormattedDate(day) }}
+                    </option>
+                  </select>
+                  <button (click)="toggleEditDay(reminder.id)" class="edit-btn" title="Edit day">
+                    <i class="glyphicon glyphicon-pencil"></i>
+                  </button>
+                </div>
+              </div>
             </div>
             
             <div *ngIf="reminder.description || editingDescription[reminder.id]" class="editable-field">
@@ -146,11 +147,6 @@
               <button (click)="toggleEditDescription(reminder.id)" class="edit-btn" title="Edit description">
                 <i class="glyphicon glyphicon-pencil"></i>
               </button>
-            </div>
-            
-            <div *ngIf="reminder.dueDate" class="due-date-field">
-              <span class="due-date-label">Due:</span>
-              <span class="due-date-value">{{ reminder.dueDate | date:'MMM d, y' }}</span>
             </div>
           </div>
           
@@ -182,40 +178,41 @@
           </div>
           
           <div class="reminder-content">
-            <div class="editable-field">
-              <h5 *ngIf="!editingTitle[reminder.id]" class="completed-text">{{ reminder.title }}</h5>
-              <input 
-                *ngIf="editingTitle[reminder.id]"
-                type="text" 
-                [value]="reminder.title"
-                (blur)="onTitleChange(reminder, $event)"
-                (keyup.enter)="onTitleChange(reminder, $event)"
-                class="edit-input title-input">
-              <button (click)="toggleEditTitle(reminder.id)" class="edit-btn" title="Edit title">
-                <i class="glyphicon glyphicon-pencil"></i>
-              </button>
-            </div>
-            
-            <div class="editable-field">
-              <p *ngIf="!editingDay[reminder.id]" class="reminder-date completed-text">{{ getFormattedDate(reminder.day) }}</p>
-              <select 
-                *ngIf="editingDay[reminder.id]"
-                [value]="reminder.day"
-                (change)="onDayChange(reminder, $event)"
-                (blur)="toggleEditDay(reminder.id)"
-                class="edit-input day-input">
-                <option *ngFor="let day of getDaysInMonth()" [value]="day">
-                  {{ getFormattedDate(day) }}
-                </option>
-              </select>
-              <button (click)="toggleEditDay(reminder.id)" class="edit-btn" title="Edit day">
-                <i class="glyphicon glyphicon-pencil"></i>
-              </button>
-            </div>
-            
-            <div class="due-date-display">
-              <span class="due-label">Due Date:</span>
-              <span class="due-value completed-text">{{ getFormattedDate(reminder.day) }}</span>
+            <div class="reminder-layout">
+              <div class="left-section">
+                <div class="editable-field">
+                  <h5 *ngIf="!editingTitle[reminder.id]" class="completed-text">{{ reminder.title }}</h5>
+                  <input 
+                    *ngIf="editingTitle[reminder.id]"
+                    type="text" 
+                    [value]="reminder.title"
+                    (blur)="onTitleChange(reminder, $event)"
+                    (keyup.enter)="onTitleChange(reminder, $event)"
+                    class="edit-input title-input">
+                  <button (click)="toggleEditTitle(reminder.id)" class="edit-btn" title="Edit title">
+                    <i class="glyphicon glyphicon-pencil"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="right-section">
+                <div class="editable-field">
+                  <p *ngIf="!editingDay[reminder.id]" class="reminder-date completed-text">{{ getFormattedDate(reminder.day) }}</p>
+                  <select 
+                    *ngIf="editingDay[reminder.id]"
+                    [value]="reminder.day"
+                    (change)="onDayChange(reminder, $event)"
+                    (blur)="toggleEditDay(reminder.id)"
+                    class="edit-input day-input">
+                    <option *ngFor="let day of getDaysInMonth()" [value]="day">
+                      {{ getFormattedDate(day) }}
+                    </option>
+                  </select>
+                  <button (click)="toggleEditDay(reminder.id)" class="edit-btn" title="Edit day">
+                    <i class="glyphicon glyphicon-pencil"></i>
+                  </button>
+                </div>
+              </div>
             </div>
             
             <div *ngIf="reminder.description || editingDescription[reminder.id]" class="editable-field">
@@ -233,11 +230,6 @@
               <button (click)="toggleEditDescription(reminder.id)" class="edit-btn" title="Edit description">
                 <i class="glyphicon glyphicon-pencil"></i>
               </button>
-            </div>
-            
-            <div *ngIf="reminder.dueDate" class="due-date-field">
-              <span class="due-date-label">Due:</span>
-              <span class="due-date-value completed-text">{{ reminder.dueDate | date:'MMM d, y' }}</span>
             </div>
           </div>
           
@@ -269,6 +261,9 @@
           </div>
           
           <div class="reminder-actions">
+            <button (click)="showCopyModal(reminder)" class="copy-btn" title="Copy to another month">
+              <i class="glyphicon glyphicon-copy"></i>
+            </button>
             <button (click)="deleteReminder(reminder.id)" class="delete-btn">
               <i class="glyphicon glyphicon-trash"></i>
             </button>
