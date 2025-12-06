@@ -64,6 +64,24 @@ const schema = a.schema({
       completedAt: a.string(),
     })
     .authorization(allow => [allow.owner()]),
+
+  Goal: a
+    .model({
+      title: a.string(),
+      description: a.string(),
+      dueDate: a.string(),
+      isCompleted: a.boolean().default(false),
+    })
+    .authorization(allow => [allow.owner()]),
+
+  SubTask: a
+    .model({
+      goalID: a.string(),
+      content: a.string(),
+      dueDate: a.string(),
+      isCompleted: a.boolean().default(false),
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

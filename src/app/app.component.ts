@@ -11,6 +11,7 @@ import { TourComponent } from './tour/tour.component';
 import { ProfileComponent } from './profile/profile.component';
 import { DayPlannerComponent } from './day-planner/day-planner.component';
 import { MonthlyRemindersComponent } from './monthly-reminders/monthly-reminders.component';
+import { GoalTrackerComponent } from './goal-tracker/goal-tracker.component';
 import { TourService } from './tour/tour.service';
 import { UserService } from './user/user.service';
 
@@ -30,7 +31,8 @@ Amplify.configure(outputs);
     TourComponent,
     ProfileComponent,
     DayPlannerComponent,
-    MonthlyRemindersComponent
+    MonthlyRemindersComponent,
+    GoalTrackerComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',

@@ -46,6 +46,12 @@
               (click)="setActiveTab('monthly-reminders')">
               Monthly Reminders
             </button>
+            <button
+              class="nav-btn"
+              [class.active]="activeTab === 'goals'"
+              (click)="setActiveTab('goals')">
+              Goal Tracker
+            </button>
           </div>
           <h1 class="main-title">Track your events with categories and real-time countdowns</h1>
           <div class="user-info">
@@ -64,6 +70,7 @@
         <app-profile *ngIf="activeTab === 'profile'"></app-profile>
         <app-day-planner *ngIf="activeTab === 'planner'" #plannerRef (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)"></app-day-planner>
         <app-monthly-reminders *ngIf="activeTab === 'monthly-reminders'"></app-monthly-reminders>
+        <app-goal-tracker *ngIf="activeTab === 'goals'"></app-goal-tracker>
       </main>
 
       <footer>

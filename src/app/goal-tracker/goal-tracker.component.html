@@ -1,0 +1,65 @@
+<div class="goal-tracker-container">
+  <div class="header">
+    <h2>Goal Tracker</h2>
+    <p class="subtitle">Track your learning and work goals</p>
+  </div>
+
+  <div class="add-goal-section">
+    <h3>Add New Goal</h3>
+    <div class="form-row">
+      <input [(ngModel)]="newGoal.title" placeholder="Goal title" class="input-field" />
+      <input [(ngModel)]="newGoal.description" placeholder="Description" class="input-field" />
+      <input [(ngModel)]="newGoal.dueDate" type="date" class="input-field date-input" />
+      <button (click)="addGoal()" class="add-btn">Add Goal</button>
+    </div>
+  </div>
+
+  <div class="goals-list">
+    <div *ngIf="goals.length === 0" class="no-goals">No goals yet. Add your first goal above!</div>
+    
+    <div *ngFor="let goal of goals" class="goal-card" [class.completed]="goal.isCompleted">
+      <div class="goal-header">
+        <div class="goal-left">
+          <input type="checkbox" [checked]="goal.isCompleted" (change)="toggleGoal(goal)" class="checkbox" />
+          <div class="goal-info">
+            <h4 [class.completed-text]="goal.isCompleted">{{ goal.title }}</h4>
+            <p class="goal-description">{{ goal.description }}</p>
+            <div class="goal-meta">
+              <span *ngIf="goal.dueDate" class="due-date">Due: {{ goal.dueDate }}</span>
+              <span class="progress-badge">{{ getCompletedCount(goal) }} tasks</span>
+            </div>
+          </div>
+        </div>
+        <div class="goal-actions">
+          <button (click)="toggleExpand(goal.id)" class="expand-btn">
+            {{ isExpanded(goal.id) ? '▼' : '▶' }}
+          </button>
+          <button (click)="deleteGoal(goal.id)" class="delete-btn">Delete</button>
+        </div>
+      </div>
+
+      <div *ngIf="isExpanded(goal.id)" class="subtasks-section">
+        <div class="add-subtask">
+          <input [ngModel]="newSubTask[goal.id]?.content" 
+                 (ngModelChange)="updateSubTaskContent(goal.id, $event)"
+                 placeholder="Add sub-task" 
+                 class="subtask-input" />
+          <input [ngModel]="newSubTask[goal.id]?.dueDate" 
+                 (ngModelChange)="updateSubTaskDate(goal.id, $event)"
+                 type="date" 
+                 class="subtask-date" />
+          <button (click)="addSubTask(goal.id)" class="add-subtask-btn">Add</button>
+        </div>
+
+        <div *ngIf="goal.subTasks.length === 0" class="no-subtasks">No sub-tasks yet</div>
+        
+        <div *ngFor="let subTask of goal.subTasks" class="subtask-item">
+          <input type="checkbox" [checked]="subTask.isCompleted" (change)="toggleSubTask(goal.id, subTask)" class="checkbox" />
+          <span [class.completed-text]="subTask.isCompleted">{{ subTask.content }}</span>
+          <span *ngIf="subTask.dueDate" class="subtask-due">{{ subTask.dueDate }}</span>
+          <button (click)="deleteSubTask(subTask.id)" class="delete-subtask-btn">×</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

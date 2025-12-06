@@ -1,0 +1,281 @@
+.goal-tracker-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h2 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 28px;
+}
+
+.subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
+.add-goal-section {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.add-goal-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.input-field {
+  flex: 1;
+  min-width: 150px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.date-input {
+  flex: 0 0 180px;
+}
+
+.add-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.add-btn:hover {
+  background-color: #45a049;
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.no-goals {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+  font-style: italic;
+}
+
+.goal-card {
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.goal-card.completed {
+  background: #f0f8f0;
+  border-color: #4CAF50;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.goal-left {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.goal-info {
+  flex: 1;
+}
+
+.goal-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.goal-description {
+  margin: 0 0 8px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.goal-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.due-date {
+  background: #fff3e0;
+  color: #f57c00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.progress-badge {
+  background: #e3f2fd;
+  color: #2196F3;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.goal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.expand-btn {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.expand-btn:hover {
+  background: #e0e0e0;
+}
+
+.delete-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-btn:hover {
+  background: #d32f2f;
+}
+
+.completed-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.subtasks-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.add-subtask {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.subtask-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.subtask-date {
+  flex: 0 0 150px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.add-subtask-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.add-subtask-btn:hover {
+  background: #1976D2;
+}
+
+.no-subtasks {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.subtask-item span {
+  flex: 1;
+  font-size: 14px;
+}
+
+.subtask-due {
+  flex: 0 0 auto;
+  background: #fff3e0;
+  color: #f57c00;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.delete-subtask-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.delete-subtask-btn:hover {
+  background: #d32f2f;
+}
