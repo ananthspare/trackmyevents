@@ -22,15 +22,24 @@
         <div class="goal-left">
           <input type="checkbox" [checked]="goal.isCompleted" (change)="toggleGoal(goal)" class="checkbox" />
           <div class="goal-info">
-            <h4 [class.completed-text]="goal.isCompleted">{{ goal.title }}</h4>
-            <p class="goal-description">{{ goal.description }}</p>
-            <div class="goal-meta">
-              <span *ngIf="goal.dueDate" class="due-date">Due: {{ goal.dueDate }}</span>
-              <span class="progress-badge">{{ getCompletedCount(goal) }} tasks</span>
+            <div *ngIf="!editingGoal[goal.id]">
+              <h4 [class.completed-text]="goal.isCompleted">{{ goal.title }}</h4>
+              <p class="goal-description">{{ goal.description }}</p>
+              <div class="goal-meta">
+                <span *ngIf="goal.dueDate" class="due-date">Due: {{ goal.dueDate }}</span>
+                <span class="progress-badge">{{ getCompletedCount(goal) }} tasks</span>
+              </div>
+            </div>
+            <div *ngIf="editingGoal[goal.id]" class="edit-mode">
+              <input [(ngModel)]="goal.title" class="edit-input title-edit" />
+              <input [(ngModel)]="goal.description" class="edit-input" />
+              <input [(ngModel)]="goal.dueDate" type="date" class="edit-input" />
             </div>
           </div>
         </div>
         <div class="goal-actions">
+          <button *ngIf="!editingGoal[goal.id]" (click)="startEditGoal(goal.id)" class="edit-action-btn">Edit</button>
+          <button *ngIf="editingGoal[goal.id]" (click)="saveGoal(goal)" class="save-btn">Save</button>
           <button (click)="toggleExpand(goal.id)" class="expand-btn">
             {{ isExpanded(goal.id) ? '▼' : '▶' }}
           </button>
@@ -55,8 +64,12 @@
         
         <div *ngFor="let subTask of goal.subTasks" class="subtask-item">
           <input type="checkbox" [checked]="subTask.isCompleted" (change)="toggleSubTask(goal.id, subTask)" class="checkbox" />
-          <span [class.completed-text]="subTask.isCompleted">{{ subTask.content }}</span>
-          <span *ngIf="subTask.dueDate" class="subtask-due">{{ subTask.dueDate }}</span>
+          <span *ngIf="!editingSubTask[subTask.id]" [class.completed-text]="subTask.isCompleted">{{ subTask.content }}</span>
+          <input *ngIf="editingSubTask[subTask.id]" [(ngModel)]="subTask.content" class="subtask-edit-input" />
+          <span *ngIf="subTask.dueDate && !editingSubTask[subTask.id]" class="subtask-due">{{ subTask.dueDate }}</span>
+          <input *ngIf="editingSubTask[subTask.id]" [(ngModel)]="subTask.dueDate" type="date" class="subtask-date-edit" />
+          <button *ngIf="!editingSubTask[subTask.id]" (click)="startEditSubTask(subTask.id)" class="edit-subtask-btn">✎</button>
+          <button *ngIf="editingSubTask[subTask.id]" (click)="saveSubTask(subTask)" class="save-subtask-btn">✓</button>
           <button (click)="deleteSubTask(subTask.id)" class="delete-subtask-btn">×</button>
         </div>
       </div>

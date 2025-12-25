@@ -18,6 +18,7 @@ export class MonthlyRemindersComponent implements OnInit {
   selectedMonth: number = new Date().getMonth() + 1;
   selectedYear: number = new Date().getFullYear();
   selectedDay: number = 1;
+  selectedDate: string = '';
   
   newReminder = {
     title: '',
@@ -57,7 +58,27 @@ export class MonthlyRemindersComponent implements OnInit {
   ];
 
   ngOnInit() {
+    this.initializeSelectedDate();
     this.loadReminders();
+  }
+
+  initializeSelectedDate() {
+    const today = new Date();
+    this.selectedDate = today.toISOString().split('T')[0];
+    this.updateDateFields();
+  }
+
+  onDateChange() {
+    this.updateDateFields();
+  }
+
+  updateDateFields() {
+    if (this.selectedDate) {
+      const date = new Date(this.selectedDate);
+      this.selectedMonth = date.getMonth() + 1;
+      this.selectedYear = date.getFullYear();
+      this.selectedDay = date.getDate();
+    }
   }
 
   async loadReminders() {

@@ -279,3 +279,91 @@
 .delete-subtask-btn:hover {
   background: #d32f2f;
 }
+
+.edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.title-edit {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.edit-action-btn {
+  background: #FF9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.edit-action-btn:hover {
+  background: #F57C00;
+}
+
+.save-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-btn:hover {
+  background: #45a049;
+}
+
+.subtask-edit-input {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #2196F3;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.subtask-date-edit {
+  flex: 0 0 140px;
+  padding: 6px;
+  border: 1px solid #2196F3;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.edit-subtask-btn {
+  background: #FF9800;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.edit-subtask-btn:hover {
+  background: #F57C00;
+}
+
+.save-subtask-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.save-subtask-btn:hover {
+  background: #45a049;
+}

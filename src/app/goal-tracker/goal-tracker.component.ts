@@ -34,6 +34,8 @@ export class GoalTrackerComponent implements OnInit {
   newGoal = { title: '', description: '', dueDate: '' };
   newSubTask: { [goalId: string]: { content: string; dueDate: string } } = {};
   expandedGoals: Set<string> = new Set();
+  editingGoal: { [key: string]: boolean } = {};
+  editingSubTask: { [key: string]: boolean } = {};
 
   async ngOnInit() {
     await this.loadGoals();
@@ -179,5 +181,40 @@ export class GoalTrackerComponent implements OnInit {
   getCompletedCount(goal: Goal): string {
     const completed = goal.subTasks.filter(st => st.isCompleted).length;
     return `${completed}/${goal.subTasks.length}`;
+  }
+
+  startEditGoal(goalId: string) {
+    this.editingGoal[goalId] = true;
+  }
+
+  async saveGoal(goal: Goal) {
+    try {
+      await client.models.Goal.update({
+        id: goal.id,
+        title: goal.title,
+        description: goal.description,
+        dueDate: goal.dueDate
+      });
+      this.editingGoal[goal.id] = false;
+    } catch (error) {
+      console.error('Error updating goal:', error);
+    }
+  }
+
+  startEditSubTask(subTaskId: string) {
+    this.editingSubTask[subTaskId] = true;
+  }
+
+  async saveSubTask(subTask: SubTask) {
+    try {
+      await client.models.SubTask.update({
+        id: subTask.id,
+        content: subTask.content,
+        dueDate: subTask.dueDate
+      });
+      this.editingSubTask[subTask.id] = false;
+    } catch (error) {
+      console.error('Error updating sub-task:', error);
+    }
   }
 }

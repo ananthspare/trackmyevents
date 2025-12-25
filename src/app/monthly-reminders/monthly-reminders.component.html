@@ -46,11 +46,11 @@
       <div class="form-row">
         <div class="due-date-selector">
           <label>Due Date:</label>
-          <select [(ngModel)]="selectedDay" class="day-select">
-            <option *ngFor="let day of getDaysInMonth()" [value]="day">
-              {{ getFormattedDate(day) }}
-            </option>
-          </select>
+          <input 
+            type="date" 
+            [(ngModel)]="selectedDate" 
+            (change)="onDateChange()"
+            class="date-picker">
         </div>
         
         <input 
