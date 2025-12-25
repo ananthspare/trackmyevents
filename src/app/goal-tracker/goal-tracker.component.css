@@ -1,3 +1,114 @@
+/* Two-column layout */
+.two-column-layout {
+  display: flex;
+  height: calc(100vh - 120px);
+  gap: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .two-column-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 120px);
+  }
+}
+
+/* Left Column: Goals */
+.goals-sidebar {
+  width: 350px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 10px;
+  overflow-y: auto;
+  position: relative;
+  min-width: 250px;
+  max-width: 500px;
+  margin-right: 5px;
+}
+
+@media (max-width: 768px) {
+  .goals-sidebar {
+    width: 100%;
+    max-width: none;
+    margin-right: 0;
+    margin-bottom: 10px;
+    max-height: 40vh;
+  }
+}
+
+/* Resize handle between sections */
+.resize-handle {
+  width: 10px;
+  background-color: #e0e0e0;
+  cursor: col-resize;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.resize-handle:hover {
+  background-color: #bdbdbd;
+}
+
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 30px;
+  background-color: #999;
+  border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+  .resize-handle {
+    display: none;
+  }
+}
+
+/* Right Column: SubTasks */
+.subtasks-content {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 10px;
+  overflow-y: auto;
+  margin-left: 5px;
+}
+
+@media (max-width: 768px) {
+  .subtasks-content {
+    margin-left: 0;
+    flex: none;
+  }
+}
+
+.subtasks-container h2 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+}
+
+.no-selection {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #757575;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* Goal item active state */
+.goal-card.active {
+  background-color: #e3f2fd;
+  border-color: #2196F3;
+  border-width: 2px;
+}
+
 .goal-tracker-container {
   padding: 20px;
   max-width: 1200px;
@@ -6,62 +117,62 @@
 
 .header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 
 .header h2 {
   margin: 0 0 5px 0;
   color: #333;
-  font-size: 28px;
+  font-size: 18px;
 }
 
 .subtitle {
   color: #666;
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .add-goal-section {
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
 .add-goal-section h3 {
-  margin: 0 0 15px 0;
-  font-size: 18px;
+  margin: 0 0 8px 0;
+  font-size: 14px;
   color: #333;
 }
 
 .form-row {
   display: flex;
-  gap: 10px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .input-field {
   flex: 1;
-  min-width: 150px;
-  padding: 10px;
+  min-width: 120px;
+  padding: 6px;
   border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 3px;
+  font-size: 12px;
 }
 
 .date-input {
-  flex: 0 0 180px;
+  flex: 0 0 140px;
 }
 
 .add-btn {
   background-color: #4CAF50;
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 10px 20px;
+  border-radius: 3px;
+  padding: 6px 12px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .add-btn:hover {
@@ -84,8 +195,8 @@
 .goal-card {
   background: #fff;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 4px;
+  padding: 8px;
   transition: all 0.3s;
 }
 
@@ -107,10 +218,10 @@
 }
 
 .checkbox {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   cursor: pointer;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .goal-info {
@@ -118,8 +229,8 @@
 }
 
 .goal-info h4 {
-  margin: 0 0 5px 0;
-  font-size: 20px;
+  margin: 0 0 3px 0;
+  font-size: 14px;
   color: #333;
 }
 
@@ -175,10 +286,10 @@
   background: #f44336;
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
+  border-radius: 3px;
+  padding: 4px 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .delete-btn:hover {
@@ -296,10 +407,10 @@
   background: #FF9800;
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
+  border-radius: 3px;
+  padding: 4px 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .edit-action-btn:hover {
