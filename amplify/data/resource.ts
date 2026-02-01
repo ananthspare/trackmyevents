@@ -80,6 +80,7 @@ const schema = a.schema({
       content: a.string(),
       dueDate: a.string(),
       isCompleted: a.boolean().default(false),
+      order: a.integer().default(0),
     })
     .authorization(allow => [allow.owner()]),
 });

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
 const client = generateClient<Schema>();
 
@@ -11,6 +12,7 @@ interface SubTask {
   content: string;
   dueDate: string;
   isCompleted: boolean;
+  order: number;
 }
 
 interface Goal {
@@ -25,7 +27,7 @@ interface Goal {
 @Component({
   selector: 'app-goal-tracker',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DragDropModule],
   templateUrl: './goal-tracker.component.html',
   styleUrl: './goal-tracker.component.css'
 })
@@ -38,6 +40,7 @@ export class GoalTrackerComponent implements OnInit {
   expandedGoals: Set<string> = new Set();
   editingGoal: { [key: string]: boolean } = {};
   editingSubTask: { [key: string]: boolean } = {};
+  sortByDate: { [goalId: string]: boolean } = {};
   
   private isResizing = false;
   private startX = 0;
@@ -54,18 +57,37 @@ export class GoalTrackerComponent implements OnInit {
         const { data: subTasks } = await client.models.SubTask.list({
           filter: { goalID: { eq: goal.id } }
         });
+        const sortedSubTasks = subTasks.map(st => ({
+          id: st.id,
+          content: st.content || '',
+          dueDate: st.dueDate || '',
+          isCompleted: st.isCompleted || false,
+          order: st.order || 0
+        })).sort((a, b) => {
+          // Default sort by due date ascending, then alphabetically
+          if (!a.dueDate && !b.dueDate) {
+            return a.content.localeCompare(b.content);
+          }
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          
+          const dateComparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+          if (dateComparison === 0) {
+            return a.content.localeCompare(b.content);
+          }
+          return dateComparison;
+        });
+        
+        // Initialize sort preference to date sorting
+        this.sortByDate[goal.id] = true;
+        
         return {
           id: goal.id,
           title: goal.title || '',
           description: goal.description || '',
           dueDate: goal.dueDate || '',
           isCompleted: goal.isCompleted || false,
-          subTasks: subTasks.map(st => ({
-            id: st.id,
-            content: st.content || '',
-            dueDate: st.dueDate || '',
-            isCompleted: st.isCompleted || false
-          }))
+          subTasks: sortedSubTasks
         };
       }));
     } catch (error) {
@@ -127,11 +149,15 @@ export class GoalTrackerComponent implements OnInit {
     if (!subTask || !subTask.content.trim()) return;
     
     try {
+      const goal = this.goals.find(g => g.id === goalId);
+      const maxOrder = goal?.subTasks.length ? Math.max(...goal.subTasks.map(st => st.order)) : 0;
+      
       await client.models.SubTask.create({
         goalID: goalId,
         content: subTask.content,
         dueDate: subTask.dueDate,
-        isCompleted: false
+        isCompleted: false,
+        order: maxOrder + 1
       });
       delete this.newSubTask[goalId];
       await this.loadGoals();
@@ -189,6 +215,7 @@ export class GoalTrackerComponent implements OnInit {
     if (!this.newSubTask[goalId]) {
       this.newSubTask[goalId] = { content: '', dueDate: '' };
     }
+    return this.newSubTask[goalId];
   }
 
   updateSubTaskContent(goalId: string, content: string) {
@@ -300,5 +327,60 @@ export class GoalTrackerComponent implements OnInit {
     this.isResizing = false;
     document.removeEventListener('touchmove', this.onTouchMove.bind(this));
     document.removeEventListener('touchend', this.onTouchEnd.bind(this));
+  }
+
+  async onSubTaskDrop(event: CdkDragDrop<SubTask[]>, goalId: string) {
+    if (event.previousIndex === event.currentIndex) return;
+    
+    const goal = this.goals.find(g => g.id === goalId);
+    if (!goal) return;
+    
+    // Switch to manual ordering when user drags
+    this.sortByDate[goalId] = false;
+    
+    moveItemInArray(goal.subTasks, event.previousIndex, event.currentIndex);
+    
+    // Update order values in database
+    try {
+      for (let i = 0; i < goal.subTasks.length; i++) {
+        await client.models.SubTask.update({
+          id: goal.subTasks[i].id,
+          order: i
+        });
+        goal.subTasks[i].order = i;
+      }
+      this.updateSelectedGoal();
+    } catch (error) {
+      console.error('Error updating sub-task order:', error);
+      await this.loadGoals(); // Reload on error
+    }
+  }
+
+  toggleSort(goalId: string) {
+    this.sortByDate[goalId] = !this.sortByDate[goalId];
+    const goal = this.goals.find(g => g.id === goalId);
+    if (!goal) return;
+    
+    if (this.sortByDate[goalId]) {
+      // Sort by due date ascending, then alphabetically
+      goal.subTasks.sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) {
+          return a.content.localeCompare(b.content);
+        }
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        
+        const dateComparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        if (dateComparison === 0) {
+          return a.content.localeCompare(b.content);
+        }
+        return dateComparison;
+      });
+    } else {
+      // Sort by manual order
+      goal.subTasks.sort((a, b) => a.order - b.order);
+    }
+    
+    this.updateSelectedGoal();
   }
 }
