@@ -71,6 +71,10 @@ const schema = a.schema({
       description: a.string(),
       dueDate: a.string(),
       isCompleted: a.boolean().default(false),
+      status: a.string().default('active'), // active | completed | archived
+      priority: a.string().default('medium'), // low | medium | high
+      emoji: a.string(),
+      color: a.string(),
     })
     .authorization(allow => [allow.owner()]),
 
@@ -80,6 +84,26 @@ const schema = a.schema({
       content: a.string(),
       dueDate: a.string(),
       isCompleted: a.boolean().default(false),
+      order: a.integer().default(0),
+      priority: a.string().default('medium'),
+    })
+    .authorization(allow => [allow.owner()]),
+
+  GoalNote: a
+    .model({
+      goalID: a.string(),
+      content: a.string(),
+      updatedAt: a.string(),
+    })
+    .authorization(allow => [allow.owner()]),
+
+  GoalScheduleItem: a
+    .model({
+      goalID: a.string(),
+      title: a.string(),
+      date: a.string(),
+      isCompleted: a.boolean().default(false),
+      order: a.integer().default(0),
     })
     .authorization(allow => [allow.owner()]),
 });

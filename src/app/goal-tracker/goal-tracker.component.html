@@ -1,98 +1,431 @@
-<div class="two-column-layout">
-  <!-- Left Column: Goals -->
-  <div class="goals-sidebar">
-    <div class="sidebar-header">
-      <h2>Goal Tracker</h2>
-      <p class="subtitle">Track your learning and work goals</p>
-    </div>
+<div class="gt-layout">
 
-    <!-- Add new goal form -->
-    <div class="add-goal-section">
-      <h3>Add New Goal</h3>
-      <div class="form-row">
-        <input [(ngModel)]="newGoal.title" placeholder="Goal title" class="input-field" />
-        <input [(ngModel)]="newGoal.description" placeholder="Description" class="input-field" />
-        <input [(ngModel)]="newGoal.dueDate" type="date" class="input-field date-input" />
-        <button (click)="addGoal()" class="add-btn">Add Goal</button>
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
+  <aside class="gt-sidebar">
+
+    <!-- Sidebar Header -->
+    <div class="sidebar-top">
+      <div class="sidebar-title-row">
+        <span class="sidebar-icon">🎯</span>
+        <h2 class="sidebar-title">Goals</h2>
+        <button class="new-goal-btn" (click)="showAddGoalForm = !showAddGoalForm" title="New goal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="sidebar-stats">
+        <div class="stat-chip">
+          <span class="stat-num">{{getActiveGoalsCount()}}</span>
+          <span class="stat-label">Active</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num">{{getCompletedGoalsCount()}}</span>
+          <span class="stat-label">Done</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num">{{getTotalTasksCount()}}</span>
+          <span class="stat-label">Tasks</span>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-row">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" placeholder="Search goals…" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" />
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-row">
+        <button class="filter-pill" [class.active]="filterStatus === 'all'" (click)="filterStatus='all'; onFilterChange()">All</button>
+        <button class="filter-pill" [class.active]="filterStatus === 'active'" (click)="filterStatus='active'; onFilterChange()">Active</button>
+        <button class="filter-pill" [class.active]="filterStatus === 'completed'" (click)="filterStatus='completed'; onFilterChange()">Done</button>
+        <select class="filter-select" [(ngModel)]="filterPriority" (ngModelChange)="onFilterChange()">
+          <option value="all">Any priority</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
       </div>
     </div>
 
-    <!-- Goals list -->
-    <div class="goals-list">
-      <div *ngIf="goals.length === 0" class="no-goals">No goals yet. Add your first goal above!</div>
-      
-      <div *ngFor="let goal of goals" 
-           class="goal-card" 
+    <!-- Add Goal Form -->
+    <div class="add-goal-form" *ngIf="showAddGoalForm">
+      <div class="form-emoji-row">
+        <button class="emoji-picker-trigger" (click)="showEmojiPicker = !showEmojiPicker; $event.stopPropagation()">{{newGoal.emoji}}</button>
+        <div class="emoji-picker" *ngIf="showEmojiPicker" (click)="$event.stopPropagation()">
+          <button *ngFor="let e of goalEmojis" (click)="newGoal.emoji = e; showEmojiPicker = false">{{e}}</button>
+        </div>
+        <input class="form-input title-input" placeholder="Goal title…" [(ngModel)]="newGoal.title" (keyup.enter)="addGoal()" autofocus />
+      </div>
+      <textarea class="form-textarea" placeholder="Description (optional)" [(ngModel)]="newGoal.description" rows="2"></textarea>
+      <div class="form-bottom-row">
+        <input class="form-input" type="date" [(ngModel)]="newGoal.dueDate" title="Due date" />
+        <select class="form-select" [(ngModel)]="newGoal.priority">
+          <option value="high">🔴 High</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+        <div class="color-swatches">
+          <button *ngFor="let c of goalColors" class="color-swatch" [style.background]="c"
+            [class.selected]="newGoal.color === c" (click)="newGoal.color = c" [title]="c"></button>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" (click)="addGoal()">Create goal</button>
+        <button class="btn-ghost" (click)="showAddGoalForm = false">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="sidebar-loading" *ngIf="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Goals List -->
+    <div class="goals-list" *ngIf="!loading">
+      <div *ngIf="filteredGoals.length === 0" class="empty-state">
+        <span class="empty-icon">🎯</span>
+        <p>No goals yet.</p>
+        <button class="btn-primary sm" (click)="showAddGoalForm = true">Create your first goal</button>
+      </div>
+
+      <div *ngFor="let goal of filteredGoals"
+           class="goal-card"
+           [class.selected]="selectedGoalId === goal.id"
            [class.completed]="goal.isCompleted"
-           [class.active]="selectedGoalId === goal.id"
+           [style.--goal-color]="goal.color"
            (click)="selectGoal(goal.id)">
-        <div class="goal-header">
-          <div class="goal-left">
-            <input type="checkbox" [checked]="goal.isCompleted" (change)="toggleGoal(goal)" (click)="$event.stopPropagation()" class="checkbox" />
-            <div class="goal-info">
-              <div *ngIf="!editingGoal[goal.id]">
-                <h4 [class.completed-text]="goal.isCompleted">{{ goal.title }}</h4>
-                <p class="goal-description">{{ goal.description }}</p>
-                <div class="goal-meta">
-                  <span *ngIf="goal.dueDate" class="due-date">Due: {{ goal.dueDate }}</span>
-                  <span class="progress-badge">{{ getCompletedCount(goal) }} tasks</span>
-                </div>
-              </div>
-              <div *ngIf="editingGoal[goal.id]" class="edit-mode">
-                <input [(ngModel)]="goal.title" class="edit-input title-edit" />
-                <input [(ngModel)]="goal.description" class="edit-input" />
-                <input [(ngModel)]="goal.dueDate" type="date" class="edit-input" />
-              </div>
+
+        <div class="goal-card-accent" [style.background]="goal.color"></div>
+
+        <div class="goal-card-body">
+          <!-- Top row -->
+          <div class="goal-card-top">
+            <span class="goal-emoji">{{goal.emoji}}</span>
+            <div class="goal-card-text">
+              <span class="goal-card-title" [class.strikethrough]="goal.isCompleted">{{goal.title}}</span>
+              <span class="goal-card-desc" *ngIf="goal.description">{{goal.description}}</span>
+            </div>
+            <!-- Progress ring -->
+            <div class="progress-ring" [title]="getProgress(goal) + '%'">
+              <svg viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="18" class="ring-bg"/>
+                <circle cx="20" cy="20" r="18" class="ring-fill"
+                  [style.stroke]="goal.color"
+                  [style.stroke-dasharray]="getCircumference()"
+                  [style.stroke-dashoffset]="getStrokeDashoffset(goal)"/>
+              </svg>
+              <span class="ring-pct">{{getProgress(goal)}}%</span>
             </div>
           </div>
-          <div class="goal-actions">
-            <button *ngIf="!editingGoal[goal.id]" (click)="startEditGoal(goal.id); $event.stopPropagation()" class="edit-action-btn">Edit</button>
-            <button *ngIf="editingGoal[goal.id]" (click)="saveGoal(goal); $event.stopPropagation()" class="save-btn">Save</button>
-            <button (click)="deleteGoal(goal.id); $event.stopPropagation()" class="delete-btn">Delete</button>
+
+          <!-- Meta row -->
+          <div class="goal-card-meta">
+            <span class="priority-dot" [style.background]="getPriorityColor(goal.priority)" [title]="goal.priority + ' priority'"></span>
+            <span class="task-count">{{getCompletedCount(goal)}} tasks</span>
+            <span *ngIf="goal.dueDate" class="due-chip" [class]="getDueDateClass(goal.dueDate)">
+              {{getDueDateLabel(goal.dueDate)}}
+            </span>
+            <button class="delete-goal-btn" (click)="deleteGoal(goal.id, $event)" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </aside>
 
-  <!-- Resize handle -->
-  <div class="resize-handle" 
-       (mousedown)="onResizeStart($event)"
-       (touchstart)="onTouchStart($event)"></div>
+  <!-- ── DETAIL PANEL ─────────────────────────────────────────────── -->
+  <main class="gt-detail">
 
-  <!-- Right Column: SubTasks -->
-  <div class="subtasks-content">
-    <div *ngIf="selectedGoal" class="subtasks-container">
-      <h2>Sub-tasks for {{ selectedGoal.title }}</h2>
-
-      <div class="add-subtask">
-        <input [ngModel]="newSubTask[selectedGoal.id]?.content" 
-               (ngModelChange)="updateSubTaskContent(selectedGoal.id, $event)"
-               placeholder="Add sub-task" 
-               class="subtask-input" />
-        <input [ngModel]="newSubTask[selectedGoal.id]?.dueDate" 
-               (ngModelChange)="updateSubTaskDate(selectedGoal.id, $event)"
-               type="date" 
-               class="subtask-date" />
-        <button (click)="addSubTask(selectedGoal.id)" class="add-subtask-btn">Add</button>
-      </div>
-
-      <div *ngIf="selectedGoal.subTasks.length === 0" class="no-subtasks">No sub-tasks yet</div>
-      
-      <div *ngFor="let subTask of selectedGoal.subTasks" class="subtask-item">
-        <input type="checkbox" [checked]="subTask.isCompleted" (change)="toggleSubTask(selectedGoal.id, subTask)" class="checkbox" />
-        <span *ngIf="!editingSubTask[subTask.id]" [class.completed-text]="subTask.isCompleted">{{ subTask.content }}</span>
-        <input *ngIf="editingSubTask[subTask.id]" [(ngModel)]="subTask.content" class="subtask-edit-input" />
-        <span *ngIf="subTask.dueDate && !editingSubTask[subTask.id]" class="subtask-due">{{ subTask.dueDate }}</span>
-        <input *ngIf="editingSubTask[subTask.id]" [(ngModel)]="subTask.dueDate" type="date" class="subtask-date-edit" />
-        <button *ngIf="!editingSubTask[subTask.id]" (click)="startEditSubTask(subTask.id)" class="edit-subtask-btn">✎</button>
-        <button *ngIf="editingSubTask[subTask.id]" (click)="saveSubTask(subTask)" class="save-subtask-btn">✓</button>
-        <button (click)="deleteSubTask(subTask.id)" class="delete-subtask-btn">×</button>
-      </div>
+    <!-- Empty state -->
+    <div *ngIf="!selectedGoal" class="detail-empty">
+      <div class="detail-empty-icon">🎯</div>
+      <h3>Select a goal to get started</h3>
+      <p>Choose a goal from the sidebar, or create a new one.</p>
+      <button class="btn-primary" (click)="showAddGoalForm = true">New goal</button>
     </div>
 
-    <div *ngIf="!selectedGoal" class="no-selection">
-      <p>Select a goal to view sub-tasks</p>
-    </div>
-  </div>
+    <!-- Goal detail -->
+    <div *ngIf="selectedGoal" class="detail-content">
+
+      <!-- Detail Header -->
+      <div class="detail-header" [style.--goal-color]="selectedGoal.color">
+        <div class="detail-header-bar" [style.background]="selectedGoal.color"></div>
+
+        <div class="detail-header-body">
+          <!-- Emoji + title -->
+          <div class="detail-title-row">
+            <div class="emoji-picker-wrap">
+              <button class="detail-emoji emoji-picker-trigger" (click)="showEmojiPicker = !showEmojiPicker; $event.stopPropagation()">{{selectedGoal.emoji}}</button>
+              <div class="emoji-picker" *ngIf="showEmojiPicker" (click)="$event.stopPropagation()">
+                <button *ngFor="let e of goalEmojis" (click)="updateGoalEmoji(e)">{{e}}</button>
+              </div>
+            </div>
+
+            <div class="detail-title-area">
+              <h1 class="detail-title"
+                  *ngIf="!editingGoalTitle"
+                  (click)="editingGoalTitle = true"
+                  [class.strikethrough]="selectedGoal.isCompleted"
+                  title="Click to edit">
+                {{selectedGoal.title}}
+                <svg class="edit-hint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </h1>
+              <input *ngIf="editingGoalTitle"
+                     class="detail-title-input"
+                     [(ngModel)]="selectedGoal.title"
+                     (blur)="saveGoalField('title', selectedGoal.title)"
+                     (keyup.enter)="saveGoalField('title', selectedGoal.title)"
+                     autofocus />
+            </div>
+
+            <!-- Complete toggle -->
+            <button class="complete-toggle" (click)="toggleGoal(selectedGoal)" [class.done]="selectedGoal.isCompleted" [style.border-color]="selectedGoal.color">
+              <svg *ngIf="selectedGoal.isCompleted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span *ngIf="!selectedGoal.isCompleted">Mark done</span>
+            </button>
+          </div>
+
+          <!-- Description -->
+          <p class="detail-desc"
+             *ngIf="!editingGoalDescription && selectedGoal.description"
+             (click)="editingGoalDescription = true"
+             title="Click to edit">
+            {{selectedGoal.description}}
+          </p>
+          <p class="detail-desc placeholder"
+             *ngIf="!editingGoalDescription && !selectedGoal.description"
+             (click)="editingGoalDescription = true">
+            Add a description…
+          </p>
+          <textarea *ngIf="editingGoalDescription"
+                    class="detail-desc-input"
+                    [(ngModel)]="selectedGoal.description"
+                    (blur)="saveGoalField('description', selectedGoal.description)"
+                    rows="2"
+                    autofocus></textarea>
+
+          <!-- Meta chips -->
+          <div class="detail-meta-row">
+            <!-- Due date -->
+            <div class="meta-chip" *ngIf="!editingGoalDueDate" (click)="editingGoalDueDate = true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span *ngIf="selectedGoal.dueDate" [class]="'due-label ' + getDueDateClass(selectedGoal.dueDate)">{{formatDate(selectedGoal.dueDate)}} · {{getDueDateLabel(selectedGoal.dueDate)}}</span>
+              <span *ngIf="!selectedGoal.dueDate" class="placeholder-text">Set due date</span>
+            </div>
+            <input *ngIf="editingGoalDueDate" type="date" class="meta-date-input"
+                   [(ngModel)]="selectedGoal.dueDate"
+                   (blur)="saveGoalField('dueDate', selectedGoal.dueDate)"
+                   (change)="saveGoalField('dueDate', selectedGoal.dueDate)"
+                   autofocus />
+
+            <!-- Priority -->
+            <div class="meta-chip priority-chip">
+              <span class="priority-dot" [style.background]="getPriorityColor(selectedGoal.priority)"></span>
+              <select class="priority-select" [(ngModel)]="selectedGoal.priority" (change)="saveGoalField('priority', selectedGoal.priority)">
+                <option value="high">High priority</option>
+                <option value="medium">Medium priority</option>
+                <option value="low">Low priority</option>
+              </select>
+            </div>
+
+            <!-- Color picker -->
+            <div class="meta-chip color-picker-wrap">
+              <button class="color-picker-trigger" (click)="showColorPicker = !showColorPicker; $event.stopPropagation()">
+                <span class="color-swatch-sm" [style.background]="selectedGoal.color"></span>
+                <span>Color</span>
+              </button>
+              <div class="color-picker" *ngIf="showColorPicker" (click)="$event.stopPropagation()">
+                <button *ngFor="let c of goalColors" class="color-swatch" [style.background]="c"
+                  [class.selected]="selectedGoal.color === c" (click)="updateGoalColor(c)"></button>
+              </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="meta-chip progress-chip">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" [style.width.%]="getProgress(selectedGoal)" [style.background]="selectedGoal.color"></div>
+              </div>
+              <span>{{getProgress(selectedGoal)}}% · {{getCompletedCount(selectedGoal)}} tasks</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'tasks'" (click)="activeTab = 'tasks'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Tasks <span class="tab-count">{{selectedGoal.subTasks.length}}</span>
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'notes'" (click)="activeTab = 'notes'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Notes
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'schedule'" (click)="activeTab = 'schedule'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Schedule <span class="tab-count">{{selectedGoal.scheduleItems.length}}</span>
+        </button>
+      </div>
+
+      <!-- ── TASKS TAB ─────────────────────────────────────── -->
+      <div class="tab-panel" *ngIf="activeTab === 'tasks'">
+
+        <!-- Add task -->
+        <div class="add-task-form">
+          <input class="task-input" placeholder="Add a task…" [(ngModel)]="newSubTaskContent"
+                 (keyup.enter)="addSubTask()" />
+          <input class="task-date" type="date" [(ngModel)]="newSubTaskDueDate" />
+          <select class="task-priority" [(ngModel)]="newSubTaskPriority">
+            <option value="high">🔴</option>
+            <option value="medium">🟡</option>
+            <option value="low">🟢</option>
+          </select>
+          <button class="btn-primary sm" (click)="addSubTask()">Add</button>
+          <button class="sort-btn" (click)="sortSubTasksByDate = !sortSubTasksByDate" [title]="sortSubTasksByDate ? 'Switch to manual order' : 'Sort by date'">
+            {{sortSubTasksByDate ? '📅' : '⠿'}}
+          </button>
+        </div>
+
+        <!-- Tasks -->
+        <div *ngIf="selectedGoal.subTasks.length === 0" class="tab-empty">
+          <span>No tasks yet — add one above</span>
+        </div>
+
+        <div cdkDropList (cdkDropListDropped)="onSubTaskDrop($event)" [cdkDropListDisabled]="sortSubTasksByDate" class="tasks-list">
+          <div *ngFor="let task of getSortedSubTasks()"
+               cdkDrag [cdkDragDisabled]="sortSubTasksByDate"
+               class="task-item"
+               [class.task-done]="task.isCompleted"
+               [class.drag-disabled]="sortSubTasksByDate">
+
+            <div class="drag-handle" *ngIf="!sortSubTasksByDate" cdkDragHandle>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></svg>
+            </div>
+
+            <button class="task-check" [class.checked]="task.isCompleted"
+                    [style.border-color]="task.isCompleted ? selectedGoal.color : null"
+                    [style.background]="task.isCompleted ? selectedGoal.color : null"
+                    (click)="toggleSubTask(task)">
+              <svg *ngIf="task.isCompleted" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+
+            <div class="task-body" *ngIf="!editingSubTask[task.id]">
+              <span class="task-text" [class.strikethrough]="task.isCompleted">{{task.content}}</span>
+              <div class="task-meta">
+                <span class="priority-dot sm" [style.background]="getPriorityColor(task.priority)"></span>
+                <span *ngIf="task.dueDate" class="task-due" [class]="getDueDateClass(task.dueDate)">{{formatDate(task.dueDate)}}</span>
+              </div>
+            </div>
+
+            <div class="task-edit-body" *ngIf="editingSubTask[task.id]">
+              <input class="task-edit-input" [(ngModel)]="task.content" (keyup.enter)="saveSubTask(task)" />
+              <input class="task-edit-date" type="date" [(ngModel)]="task.dueDate" />
+              <select class="task-priority" [(ngModel)]="task.priority">
+                <option value="high">🔴</option>
+                <option value="medium">🟡</option>
+                <option value="low">🟢</option>
+              </select>
+            </div>
+
+            <div class="task-actions">
+              <button *ngIf="!editingSubTask[task.id]" class="icon-btn" (click)="editingSubTask[task.id] = true" title="Edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button *ngIf="editingSubTask[task.id]" class="icon-btn success" (click)="saveSubTask(task)" title="Save">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button class="icon-btn danger" (click)="deleteSubTask(task.id)" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NOTES TAB ─────────────────────────────────────── -->
+      <div class="tab-panel notes-panel" *ngIf="activeTab === 'notes'">
+        <div class="notes-toolbar">
+          <span class="notes-title">Notes</span>
+          <span class="notes-save-status" *ngIf="noteSaving">Saving…</span>
+          <span class="notes-save-status saved" *ngIf="!noteSaving && noteLastSaved">Saved at {{noteLastSaved}}</span>
+        </div>
+        <textarea class="notes-textarea"
+                  [(ngModel)]="noteContent"
+                  (ngModelChange)="onNoteChange()"
+                  placeholder="Write anything about this goal — ideas, references, links, context…
+
+Use plain text or markdown-style formatting:
+  # Heading
+  - bullet
+  **bold**  _italic_
+
+Your notes auto-save as you type."></textarea>
+      </div>
+
+      <!-- ── SCHEDULE TAB ──────────────────────────────────── -->
+      <div class="tab-panel" *ngIf="activeTab === 'schedule'">
+
+        <!-- Add milestone -->
+        <div class="add-schedule-form">
+          <input class="task-input" placeholder="Milestone or deadline…" [(ngModel)]="newScheduleTitle"
+                 (keyup.enter)="addScheduleItem()" />
+          <input class="task-date" type="date" [(ngModel)]="newScheduleDate" />
+          <button class="btn-primary sm" (click)="addScheduleItem()">Add</button>
+        </div>
+
+        <div *ngIf="selectedGoal.scheduleItems.length === 0" class="tab-empty">
+          <span>No schedule items — add milestones and deadlines above</span>
+        </div>
+
+        <div class="schedule-list">
+          <div *ngFor="let item of selectedGoal.scheduleItems"
+               class="schedule-item"
+               [class.schedule-done]="item.isCompleted"
+               [class.schedule-overdue]="isScheduleOverdue(item)">
+
+            <div class="schedule-connector">
+              <button class="task-check sm" [class.checked]="item.isCompleted"
+                      [style.border-color]="item.isCompleted ? selectedGoal.color : null"
+                      [style.background]="item.isCompleted ? selectedGoal.color : null"
+                      (click)="toggleScheduleItem(item)">
+                <svg *ngIf="item.isCompleted" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <div class="timeline-line"></div>
+            </div>
+
+            <div class="schedule-body">
+              <div class="schedule-view" *ngIf="!editingScheduleItem[item.id]">
+                <span class="schedule-title" [class.strikethrough]="item.isCompleted">{{item.title}}</span>
+                <span *ngIf="item.date" class="schedule-date" [class.overdue-text]="isScheduleOverdue(item)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {{formatDate(item.date)}}
+                  <span *ngIf="isScheduleOverdue(item)" class="overdue-badge">Overdue</span>
+                </span>
+              </div>
+              <div class="schedule-edit" *ngIf="editingScheduleItem[item.id]">
+                <input class="task-edit-input" [(ngModel)]="item.title" (keyup.enter)="saveScheduleItem(item)" />
+                <input class="task-edit-date" type="date" [(ngModel)]="item.date" />
+              </div>
+            </div>
+
+            <div class="task-actions">
+              <button *ngIf="!editingScheduleItem[item.id]" class="icon-btn" (click)="editingScheduleItem[item.id] = true" title="Edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button *ngIf="editingScheduleItem[item.id]" class="icon-btn success" (click)="saveScheduleItem(item)" title="Save">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button class="icon-btn danger" (click)="deleteScheduleItem(item.id)" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /detail-content -->
+  </main>
 </div>
