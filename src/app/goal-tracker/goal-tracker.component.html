@@ -1,9 +1,10 @@
 <div class="gt-wrap">
 
-  <!-- ════════════════════ SIDEBAR ════════════════════ -->
+  <!-- ════════ SIDEBAR ════════ -->
   <aside class="gt-sidebar">
-
     <div class="sb-head">
+
+      <!-- Title row -->
       <div class="sb-title-row">
         <span class="sb-icon">🎯</span>
         <h2 class="sb-title">Goals</h2>
@@ -12,21 +13,46 @@
         </button>
       </div>
 
+      <!-- Stats strip -->
       <div class="sb-stats">
         <div class="stat"><span class="stat-n">{{activeCount()}}</span><span class="stat-l">Active</span></div>
         <div class="stat"><span class="stat-n">{{doneCount()}}</span><span class="stat-l">Done</span></div>
         <div class="stat"><span class="stat-n">{{goals.length}}</span><span class="stat-l">Total</span></div>
       </div>
 
+      <!-- Priority mini-stats -->
+      <div class="priority-stats">
+        <div class="pstat" *ngFor="let p of priorities"
+             [class.pstat-active]="filterPriority === p"
+             (click)="filterPriority = (filterPriority===p ? 'all' : p); applyFilters()">
+          <span class="pstat-icon">{{priorityConfig[p].icon}}</span>
+          <span class="pstat-count" [style.color]="priorityConfig[p].color">{{countByPriority(p)}}</span>
+          <span class="pstat-label">{{priorityConfig[p].label}}</span>
+        </div>
+      </div>
+
+      <!-- Search -->
       <div class="search-wrap">
         <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="search-box" placeholder="Search goals…" [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" />
       </div>
 
+      <!-- Status filters -->
       <div class="filter-row">
         <button class="fpill" [class.active]="filterStatus==='all'"    (click)="filterStatus='all';    applyFilters()">All</button>
         <button class="fpill" [class.active]="filterStatus==='active'" (click)="filterStatus='active'; applyFilters()">Active</button>
         <button class="fpill" [class.active]="filterStatus==='done'"   (click)="filterStatus='done';   applyFilters()">Done</button>
+        <button class="fpill group-pill" [class.active]="groupByCategory" (click)="groupByCategory=!groupByCategory" title="Group by category">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+      </div>
+
+      <!-- Category filter -->
+      <div class="cat-filter-row">
+        <button class="cat-pill" [class.active]="filterCategory==='all'" (click)="filterCategory='all'; applyFilters()">All categories</button>
+        <button *ngFor="let c of availableCategories"
+                class="cat-pill" [class.active]="filterCategory===c"
+                (click)="filterCategory=c; applyFilters()">{{c}}</button>
       </div>
     </div>
 
@@ -34,112 +60,83 @@
     <div class="add-form" *ngIf="showAddForm">
       <input class="af-input" placeholder="Goal title *" [(ngModel)]="newGoal.title" (keyup.enter)="addGoal()" autofocus />
       <input class="af-input" placeholder="Description" [(ngModel)]="newGoal.description" />
+
+      <!-- Category + Priority row -->
+      <div class="af-cp-row">
+        <div class="af-field">
+          <label class="af-label">Category</label>
+          <select class="af-select" [(ngModel)]="newGoal.category">
+            <option *ngFor="let c of availableCategories" [value]="c">{{c}}</option>
+          </select>
+        </div>
+        <div class="af-field">
+          <label class="af-label">Priority</label>
+          <select class="af-select" [(ngModel)]="newGoal.priority">
+            <option *ngFor="let p of priorities" [value]="p">{{priorityConfig[p].icon}} {{priorityConfig[p].label}}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Custom category input -->
+      <div class="af-new-cat" *ngIf="!showNewCategoryInput">
+        <button class="af-link-btn" (click)="showNewCategoryInput=true">+ New category</button>
+      </div>
+      <div class="af-new-cat-row" *ngIf="showNewCategoryInput">
+        <input class="af-input af-cat-in" placeholder="Category name…" [(ngModel)]="newCategoryInput"
+               (keyup.enter)="addCustomCategory('new')" />
+        <button class="btn-primary sm" (click)="addCustomCategory('new')">Add</button>
+        <button class="btn-ghost sm" (click)="showNewCategoryInput=false; newCategoryInput=''">✕</button>
+      </div>
+
       <div class="af-row">
         <input class="af-input af-date" type="date" [(ngModel)]="newGoal.dueDate" />
         <button class="btn-primary" (click)="addGoal()">Create</button>
-        <button class="btn-ghost"   (click)="showAddForm = false">Cancel</button>
+        <button class="btn-ghost"   (click)="showAddForm=false">Cancel</button>
       </div>
     </div>
 
     <div class="loading-wrap" *ngIf="loading"><div class="spinner"></div></div>
 
-    <!-- Goal List -->
+    <!-- Goal List — flat or grouped -->
     <div class="goal-list" *ngIf="!loading">
       <div class="empty-goals" *ngIf="filteredGoals.length === 0">
         <span>No goals found.</span>
-        <button class="btn-primary sm" (click)="showAddForm = true">Create one</button>
+        <button class="btn-primary sm" (click)="showAddForm=true">Create one</button>
       </div>
 
-      <div *ngFor="let goal of filteredGoals"
-           class="g-card"
-           [class.g-selected]="selectedGoalId === goal.id"
-           [class.g-done]="goal.isCompleted"
-           [style.--gc]="getMeta(goal.id).color"
-           (click)="selectGoal(goal.id)">
-
-        <div class="g-accent" [style.background]="getMeta(goal.id).color"></div>
-
-        <div class="g-body">
-          <div class="g-top">
-            <div class="picker-anchor">
-              <button class="g-emoji" (click)="showEmojiPicker[goal.id]=!showEmojiPicker[goal.id]; $event.stopPropagation()">{{getMeta(goal.id).emoji}}</button>
-              <div class="epicker" *ngIf="showEmojiPicker[goal.id]" (click)="$event.stopPropagation()">
-                <button *ngFor="let e of emojis" (click)="setEmoji(goal.id, e)">{{e}}</button>
-              </div>
-            </div>
-
-            <div class="g-text">
-              <ng-container *ngIf="editingGoalId !== goal.id">
-                <span class="g-title" [class.g-strike]="goal.isCompleted">{{goal.title}}</span>
-                <span class="g-desc" *ngIf="goal.description">{{goal.description}}</span>
-              </ng-container>
-              <ng-container *ngIf="editingGoalId === goal.id">
-                <input class="g-edit-title" [(ngModel)]="editGoalDraft.title" (click)="$event.stopPropagation()" />
-                <input class="g-edit-desc"  [(ngModel)]="editGoalDraft.description" placeholder="Description" (click)="$event.stopPropagation()" />
-                <input class="g-edit-date"  [(ngModel)]="editGoalDraft.dueDate" type="date" (click)="$event.stopPropagation()" />
-              </ng-container>
-            </div>
-
-            <div class="ring-wrap">
-              <svg viewBox="0 0 36 36" class="ring-svg">
-                <circle cx="18" cy="18" r="16" class="ring-bg"/>
-                <circle cx="18" cy="18" r="16" class="ring-fg"
-                  [style.stroke]="getMeta(goal.id).color"
-                  [style.stroke-dasharray]="getCircumference()"
-                  [style.stroke-dashoffset]="getDashOffset(goal)"/>
-              </svg>
-              <span class="ring-pct">{{getProgress(goal)}}%</span>
-            </div>
+      <!-- ── Grouped by category ── -->
+      <ng-container *ngIf="groupByCategory">
+        <div *ngFor="let cat of getGroupedCategories()" class="cat-group">
+          <div class="cat-group-header">
+            <span class="cat-group-label">{{cat}}</span>
+            <span class="cat-group-count">{{getGoalsForCategory(cat).length}}</span>
           </div>
-
-          <div class="g-meta">
-            <span class="tasks-chip">{{getCompletedCount(goal)}} tasks</span>
-            <span *ngIf="goal.dueDate" class="due-chip" [ngClass]="getDueClass(goal.dueDate)">{{getDueLabel(goal.dueDate)}}</span>
-            <span class="note-dot" *ngIf="goal.note" title="Has notes">📝</span>
-            <span class="spacer"></span>
-
-            <div class="picker-anchor">
-              <button class="color-dot" [style.background]="getMeta(goal.id).color"
-                      (click)="showColorPicker[goal.id]=!showColorPicker[goal.id]; $event.stopPropagation()"></button>
-              <div class="cpicker" *ngIf="showColorPicker[goal.id]" (click)="$event.stopPropagation()">
-                <button *ngFor="let c of colors" class="cswatch" [style.background]="c"
-                        [class.csel]="getMeta(goal.id).color===c" (click)="setColor(goal.id,c)"></button>
-              </div>
-            </div>
-
-            <ng-container *ngIf="editingGoalId !== goal.id">
-              <button class="act-btn" (click)="startEditGoal(goal, $event)" title="Edit">✎</button>
-              <button class="act-btn danger" (click)="deleteGoal(goal.id, $event)" title="Delete">✕</button>
-            </ng-container>
-            <ng-container *ngIf="editingGoalId === goal.id">
-              <button class="act-btn success" (click)="saveGoal(goal, $event)" title="Save">✓</button>
-              <button class="act-btn" (click)="cancelEditGoal(); $event.stopPropagation()">✕</button>
-            </ng-container>
-
-            <button class="act-btn check" [class.checked]="goal.isCompleted"
-                    [style.border-color]="getMeta(goal.id).color"
-                    [style.background]="goal.isCompleted ? getMeta(goal.id).color : ''"
-                    (click)="toggleGoal(goal, $event)" title="Toggle complete">
-              <svg *ngIf="goal.isCompleted" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </button>
-          </div>
+          <ng-container *ngFor="let goal of getGoalsForCategory(cat)">
+            <ng-container *ngTemplateOutlet="goalCard; context:{goal}"></ng-container>
+          </ng-container>
         </div>
-      </div>
+      </ng-container>
+
+      <!-- ── Flat list ── -->
+      <ng-container *ngIf="!groupByCategory">
+        <ng-container *ngFor="let goal of filteredGoals">
+          <ng-container *ngTemplateOutlet="goalCard; context:{goal}"></ng-container>
+        </ng-container>
+      </ng-container>
     </div>
   </aside>
 
   <!-- Resize handle -->
   <div class="resize-handle" (mousedown)="onResizeStart($event)" (touchstart)="onTouchStart($event)"></div>
 
-  <!-- ════════════════════ DETAIL ════════════════════ -->
+  <!-- ════════ DETAIL ════════ -->
   <main class="gt-detail">
 
-    <!-- Nothing selected -->
     <div *ngIf="!selectedGoal" class="detail-empty">
       <div class="de-icon">🎯</div>
       <h3>Select a goal</h3>
       <p>Pick a goal from the sidebar to manage its tasks and notes.</p>
-      <button class="btn-primary" (click)="showAddForm = true">New goal</button>
+      <button class="btn-primary" (click)="showAddForm=true">New goal</button>
     </div>
 
     <ng-container *ngIf="selectedGoal">
@@ -151,6 +148,14 @@
           <div class="d-title-row">
             <span class="d-emoji">{{getMeta(selectedGoal.id).emoji}}</span>
             <h2 class="d-title" [class.g-strike]="selectedGoal.isCompleted">{{selectedGoal.title}}</h2>
+            <!-- Priority badge -->
+            <span class="d-priority-badge"
+                  [style.color]="priorityConfig[selectedGoal.priority].color"
+                  [style.background]="priorityConfig[selectedGoal.priority].bg">
+              {{priorityConfig[selectedGoal.priority].icon}} {{priorityConfig[selectedGoal.priority].label}}
+            </span>
+            <!-- Category badge -->
+            <span class="d-cat-badge">{{selectedGoal.category}}</span>
             <span *ngIf="selectedGoal.dueDate" class="d-due" [ngClass]="getDueClass(selectedGoal.dueDate)">
               📅 {{formatDate(selectedGoal.dueDate)}} · {{getDueLabel(selectedGoal.dueDate)}}
             </span>
@@ -169,21 +174,18 @@
       <div class="tab-bar">
         <button class="tab" [class.active]="activeTab==='tasks'" (click)="activeTab='tasks'">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Tasks
-          <span class="tab-badge" [style.background]="getMeta(selectedGoal.id).color">{{selectedGoal.subTasks.length}}</span>
+          Tasks <span class="tab-badge" [style.background]="getMeta(selectedGoal.id).color">{{selectedGoal.subTasks.length}}</span>
         </button>
         <button class="tab" [class.active]="activeTab==='notes'" (click)="activeTab='notes'; activeTaskNote=null">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Goal Notes
-          <span class="note-saved" *ngIf="goalNoteLastSaved && !goalNoteSaving">✓ {{goalNoteLastSaved}}</span>
+          <span class="note-saved"  *ngIf="goalNoteLastSaved && !goalNoteSaving">✓ {{goalNoteLastSaved}}</span>
           <span class="note-saving" *ngIf="goalNoteSaving">saving…</span>
         </button>
       </div>
 
-      <!-- ── TASKS TAB — split view with slide-in drawer ── -->
+      <!-- ── TASKS TAB ── -->
       <div class="tasks-tab-wrap" *ngIf="activeTab==='tasks'">
-
-        <!-- Task list -->
         <div class="panel tasks-panel">
 
           <div class="add-st-row">
@@ -201,31 +203,22 @@
             </button>
           </div>
 
-          <div class="no-tasks" *ngIf="selectedGoal.subTasks.length === 0">
-            No tasks yet — add one above ☝️
-          </div>
+          <div class="no-tasks" *ngIf="selectedGoal.subTasks.length === 0">No tasks yet — add one above ☝️</div>
 
-          <div cdkDropList
-               (cdkDropListDropped)="onSubTaskDrop($event, selectedGoal.id)"
-               [cdkDropListDisabled]="sortByDate[selectedGoal.id]"
-               class="st-list">
-
+          <div cdkDropList (cdkDropListDropped)="onSubTaskDrop($event, selectedGoal.id)"
+               [cdkDropListDisabled]="sortByDate[selectedGoal.id]" class="st-list">
             <div *ngFor="let st of selectedGoal.subTasks"
                  cdkDrag [cdkDragDisabled]="sortByDate[selectedGoal.id]"
-                 class="st-item"
-                 [class.st-done]="st.isCompleted"
+                 class="st-item" [class.st-done]="st.isCompleted"
                  [class.no-drag]="sortByDate[selectedGoal.id]"
                  [class.st-note-open]="activeTaskNote?.id === st.id"
                  (click)="toggleTaskNote(st)">
 
               <div class="drag-handle" *ngIf="!sortByDate[selectedGoal.id]" cdkDragHandle (click)="$event.stopPropagation()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="9"  cy="5"  r="1" fill="currentColor"/>
-                  <circle cx="9"  cy="12" r="1" fill="currentColor"/>
-                  <circle cx="9"  cy="19" r="1" fill="currentColor"/>
-                  <circle cx="15" cy="5"  r="1" fill="currentColor"/>
-                  <circle cx="15" cy="12" r="1" fill="currentColor"/>
-                  <circle cx="15" cy="19" r="1" fill="currentColor"/>
+                  <circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/>
+                  <circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/>
+                  <circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/>
                 </svg>
               </div>
 
@@ -236,14 +229,12 @@
                 <svg *ngIf="st.isCompleted" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </button>
 
-              <!-- View -->
               <div class="st-body" *ngIf="!editingSubTask[st.id]">
                 <span class="st-text" [class.g-strike]="st.isCompleted">{{st.content}}</span>
                 <span *ngIf="st.dueDate" class="st-due" [ngClass]="getDueClass(st.dueDate)">{{formatDate(st.dueDate)}}</span>
                 <span class="st-has-note" *ngIf="st.note" title="Has note">📝</span>
               </div>
 
-              <!-- Edit -->
               <div class="st-edit-body" *ngIf="editingSubTask[st.id]" (click)="$event.stopPropagation()">
                 <input class="st-edit-in" [(ngModel)]="st.content" (keyup.enter)="saveSubTask(st)" />
                 <input class="st-edit-date" type="date" [(ngModel)]="st.dueDate" />
@@ -253,7 +244,7 @@
                 <button *ngIf="!editingSubTask[st.id]" class="ia-btn" (click)="editingSubTask[st.id]=true" title="Edit">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
-                <button *ngIf="editingSubTask[st.id]" class="ia-btn ok" (click)="saveSubTask(st)" title="Save">
+                <button *ngIf="editingSubTask[st.id]" class="ia-btn ok" (click)="saveSubTask(st)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 </button>
                 <button class="ia-btn del" (click)="deleteSubTask(selectedGoal.id, st)" title="Delete">
@@ -264,7 +255,7 @@
           </div>
         </div>
 
-        <!-- ── Task Note Drawer (slides in from right) ── -->
+        <!-- Task Note Drawer -->
         <div class="task-note-drawer" [class.drawer-open]="activeTaskNote !== null">
           <ng-container *ngIf="activeTaskNote">
             <div class="drawer-header">
@@ -272,42 +263,134 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <span class="drawer-title">Task Note</span>
                 <span class="drawer-saving" *ngIf="activeTaskNote.noteSaving">saving…</span>
-                <button class="drawer-close" (click)="closeTaskNote()" title="Close">
+                <button class="drawer-close" (click)="closeTaskNote()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
-              <div class="drawer-task-name" [class.g-strike]="activeTaskNote.isCompleted">
-                {{activeTaskNote.content}}
-              </div>
+              <div class="drawer-task-name" [class.g-strike]="activeTaskNote.isCompleted">{{activeTaskNote.content}}</div>
               <div class="drawer-task-due" *ngIf="activeTaskNote.dueDate">
                 📅 {{formatDate(activeTaskNote.dueDate)}}
                 <span [ngClass]="getDueClass(activeTaskNote.dueDate)">· {{getDueLabel(activeTaskNote.dueDate)}}</span>
               </div>
             </div>
-
-            <textarea class="drawer-textarea"
-                      [(ngModel)]="activeTaskNote.note"
+            <textarea class="drawer-textarea" [(ngModel)]="activeTaskNote.note"
                       (ngModelChange)="onTaskNoteChange(activeTaskNote)"
                       placeholder="Add notes, links, or context for this task…"></textarea>
           </ng-container>
         </div>
+      </div>
 
-      </div><!-- /tasks-tab-wrap -->
-
-      <!-- ── GOAL NOTES PANEL ── -->
+      <!-- ── NOTES PANEL ── -->
       <div class="panel notes-panel" *ngIf="activeTab==='notes'">
         <div class="notes-header">
           <span class="notes-title">Notes for "{{selectedGoal.title}}"</span>
-          <span class="note-saved-badge" *ngIf="goalNoteLastSaved && !goalNoteSaving">✓ Saved at {{goalNoteLastSaved}}</span>
+          <span class="note-saved-badge"  *ngIf="goalNoteLastSaved && !goalNoteSaving">✓ Saved at {{goalNoteLastSaved}}</span>
           <span class="note-saving-badge" *ngIf="goalNoteSaving">Saving…</span>
         </div>
-        <p class="notes-hint">Auto-saves as you type. Use this for context, links, research — anything relevant to this goal.</p>
-        <textarea class="notes-area"
-                  [(ngModel)]="selectedGoal.note"
-                  (ngModelChange)="onGoalNoteChange()"
-                  placeholder="Start writing…"></textarea>
+        <p class="notes-hint">Auto-saves as you type.</p>
+        <textarea class="notes-area" [(ngModel)]="selectedGoal.note"
+                  (ngModelChange)="onGoalNoteChange()" placeholder="Start writing…"></textarea>
       </div>
 
     </ng-container>
   </main>
 </div>
+
+<!-- ── Goal Card Template ── -->
+<ng-template #goalCard let-goal="goal">
+  <div class="g-card"
+       [class.g-selected]="selectedGoalId === goal.id"
+       [class.g-done]="goal.isCompleted"
+       [style.--gc]="getMeta(goal.id).color"
+       (click)="selectGoal(goal.id)">
+
+    <div class="g-accent" [style.background]="getMeta(goal.id).color"></div>
+
+    <div class="g-body">
+      <div class="g-top">
+        <!-- Emoji picker -->
+        <div class="picker-anchor">
+          <button class="g-emoji" (click)="showEmojiPicker[goal.id]=!showEmojiPicker[goal.id]; $event.stopPropagation()">{{getMeta(goal.id).emoji}}</button>
+          <div class="epicker" *ngIf="showEmojiPicker[goal.id]" (click)="$event.stopPropagation()">
+            <button *ngFor="let e of emojis" (click)="setEmoji(goal.id, e)">{{e}}</button>
+          </div>
+        </div>
+
+        <!-- Title / edit -->
+        <div class="g-text">
+          <ng-container *ngIf="editingGoalId !== goal.id">
+            <span class="g-title" [class.g-strike]="goal.isCompleted">{{goal.title}}</span>
+            <span class="g-desc" *ngIf="goal.description">{{goal.description}}</span>
+          </ng-container>
+          <ng-container *ngIf="editingGoalId === goal.id">
+            <input class="g-edit-title" [(ngModel)]="editGoalDraft.title" (click)="$event.stopPropagation()" />
+            <input class="g-edit-desc"  [(ngModel)]="editGoalDraft.description" placeholder="Description" (click)="$event.stopPropagation()" />
+            <div class="g-edit-cp" (click)="$event.stopPropagation()">
+              <select class="g-edit-select" [(ngModel)]="editGoalDraft.category">
+                <option *ngFor="let c of availableCategories" [value]="c">{{c}}</option>
+              </select>
+              <select class="g-edit-select" [(ngModel)]="editGoalDraft.priority">
+                <option *ngFor="let p of priorities" [value]="p">{{priorityConfig[p].icon}} {{priorityConfig[p].label}}</option>
+              </select>
+            </div>
+            <input class="g-edit-date" [(ngModel)]="editGoalDraft.dueDate" type="date" (click)="$event.stopPropagation()" />
+          </ng-container>
+        </div>
+
+        <!-- Progress ring -->
+        <div class="ring-wrap">
+          <svg viewBox="0 0 36 36" class="ring-svg">
+            <circle cx="18" cy="18" r="16" class="ring-bg"/>
+            <circle cx="18" cy="18" r="16" class="ring-fg"
+              [style.stroke]="getMeta(goal.id).color"
+              [style.stroke-dasharray]="getCircumference()"
+              [style.stroke-dashoffset]="getDashOffset(goal)"/>
+          </svg>
+          <span class="ring-pct">{{getProgress(goal)}}%</span>
+        </div>
+      </div>
+
+      <!-- Meta row -->
+      <div class="g-meta">
+        <!-- Priority badge -->
+        <span class="priority-badge"
+              [style.color]="getPriorityConfig(goal.priority).color"
+              [style.background]="getPriorityConfig(goal.priority).bg">
+          {{getPriorityConfig(goal.priority).icon}} {{getPriorityConfig(goal.priority).label}}
+        </span>
+        <!-- Category badge -->
+        <span class="cat-badge">{{goal.category}}</span>
+        <span class="tasks-chip">{{getCompletedCount(goal)}} tasks</span>
+        <span *ngIf="goal.dueDate" class="due-chip" [ngClass]="getDueClass(goal.dueDate)">{{getDueLabel(goal.dueDate)}}</span>
+        <span class="note-dot" *ngIf="goal.note" title="Has notes">📝</span>
+        <span class="spacer"></span>
+
+        <!-- Colour picker -->
+        <div class="picker-anchor">
+          <button class="color-dot" [style.background]="getMeta(goal.id).color"
+                  (click)="showColorPicker[goal.id]=!showColorPicker[goal.id]; $event.stopPropagation()"></button>
+          <div class="cpicker" *ngIf="showColorPicker[goal.id]" (click)="$event.stopPropagation()">
+            <button *ngFor="let c of colors" class="cswatch" [style.background]="c"
+                    [class.csel]="getMeta(goal.id).color===c" (click)="setColor(goal.id,c)"></button>
+          </div>
+        </div>
+
+        <ng-container *ngIf="editingGoalId !== goal.id">
+          <button class="act-btn" (click)="startEditGoal(goal, $event)" title="Edit">✎</button>
+          <button class="act-btn danger" (click)="deleteGoal(goal.id, $event)" title="Delete">✕</button>
+        </ng-container>
+        <ng-container *ngIf="editingGoalId === goal.id">
+          <button class="act-btn success" (click)="saveGoal(goal, $event)">✓</button>
+          <button class="act-btn" (click)="cancelEditGoal(); $event.stopPropagation()">✕</button>
+        </ng-container>
+
+        <button class="act-btn check" [class.checked]="goal.isCompleted"
+                [style.border-color]="getMeta(goal.id).color"
+                [style.background]="goal.isCompleted ? getMeta(goal.id).color : ''"
+                (click)="toggleGoal(goal, $event)">
+          <svg *ngIf="goal.isCompleted" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-template>

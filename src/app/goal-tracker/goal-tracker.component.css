@@ -423,3 +423,88 @@
   }
   .task-note-drawer.drawer-open { width: 90vw; }
 }
+
+/* ── Priority stats strip ─────────────────────────────────────────────────*/
+.priority-stats {
+  display: flex; gap: 5px; margin-bottom: 10px;
+}
+.pstat {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 1px; padding: 6px 4px; border-radius: 8px;
+  border: 1.5px solid #e4e6ef; cursor: pointer;
+  background: #f8f9fc; transition: all .15s;
+}
+.pstat:hover, .pstat.pstat-active { border-color: currentColor; background: #fff; }
+.pstat-icon  { font-size: 13px; }
+.pstat-count { font-size: 14px; font-weight: 700; line-height: 1; }
+.pstat-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; }
+
+/* ── Category filter pills ────────────────────────────────────────────────*/
+.cat-filter-row {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; padding-bottom: 2px;
+}
+.cat-pill {
+  border: 1px solid #e4e6ef; border-radius: 20px;
+  padding: 2px 9px; font-size: 11px; cursor: pointer;
+  background: #f5f6fb; color: #64748b; white-space: nowrap; transition: all .15s;
+}
+.cat-pill.active, .cat-pill:hover { background: #1e1e2e; color: #fff; border-color: #1e1e2e; }
+
+.group-pill { padding: 3px 8px; }
+.group-pill svg { width: 13px; height: 13px; vertical-align: middle; }
+
+/* ── Add form category/priority ───────────────────────────────────────────*/
+.af-cp-row  { display: flex; gap: 8px; }
+.af-field   { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.af-label   { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
+.af-select  {
+  padding: 7px 8px; border: 1px solid #e4e6ef; border-radius: 8px;
+  font-size: 12px; background: #fff; color: #1e1e2e; outline: none; cursor: pointer;
+}
+.af-select:focus { border-color: #6366f1; }
+
+.af-new-cat { margin: 2px 0; }
+.af-link-btn { background: none; border: none; color: #6366f1; font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; }
+.af-new-cat-row { display: flex; gap: 5px; align-items: center; }
+.af-cat-in { flex: 1; }
+
+/* ── Category group headers ───────────────────────────────────────────────*/
+.cat-group { margin-bottom: 4px; }
+.cat-group-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 4px 4px; margin-bottom: 3px;
+}
+.cat-group-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .6px; }
+.cat-group-count {
+  font-size: 10px; font-weight: 700; background: #e4e6ef; color: #64748b;
+  border-radius: 20px; padding: 1px 6px;
+}
+
+/* ── Priority badge on card ───────────────────────────────────────────────*/
+.priority-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 20px;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── Category badge on card ───────────────────────────────────────────────*/
+.cat-badge {
+  font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px;
+  background: #f0f1ff; color: #4f46e5; white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── Detail header badges ─────────────────────────────────────────────────*/
+.d-priority-badge {
+  font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
+}
+.d-cat-badge {
+  font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 20px;
+  background: #f0f1ff; color: #4f46e5; flex-shrink: 0;
+}
+
+/* ── Inline edit category/priority selects ───────────────────────────────*/
+.g-edit-cp  { display: flex; gap: 5px; margin-bottom: 3px; }
+.g-edit-select {
+  flex: 1; padding: 3px 5px; border: 1px solid #e4e6ef; border-radius: 6px;
+  font-size: 11px; background: #fff; color: #1e1e2e; outline: none; cursor: pointer;
+}
+.g-edit-select:focus { border-color: #6366f1; }

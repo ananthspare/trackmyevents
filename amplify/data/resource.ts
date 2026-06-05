@@ -71,6 +71,8 @@ const schema = a.schema({
       description: a.string(),
       dueDate: a.string(),
       isCompleted: a.boolean().default(false),
+      category: a.string().default('General'),
+      priority: a.string().default('medium'), // low | medium | high
     })
     .authorization(allow => [allow.owner()]),
 
