@@ -423,6 +423,56 @@ Your notes auto-save as you type."></textarea>
               </button>
             </div>
           </div>
+    </div>
+  </div>
+
+  <!-- Resize handle -->
+  <div class="resize-handle" 
+       (mousedown)="onResizeStart($event)"
+       (touchstart)="onTouchStart($event)"></div>
+
+  <!-- Right Column: SubTasks -->
+  <div class="subtasks-content">
+    <div *ngIf="selectedGoal" class="subtasks-container">
+      <div class="subtasks-header">
+        <h2>Sub-tasks for {{ selectedGoal.title }}</h2>
+        <button (click)="toggleSort(selectedGoal.id)" class="sort-toggle-btn">
+          {{ sortByDate[selectedGoal.id] ? '📅 Date Sort' : '🔢 Manual Order' }}
+        </button>
+      </div>
+
+      <div class="add-subtask">
+        <input [ngModel]="(newSubTask[selectedGoal.id] || {}).content || ''" 
+               (ngModelChange)="updateSubTaskContent(selectedGoal.id, $event)"
+               placeholder="Add sub-task" 
+               class="subtask-input" />
+        <input [ngModel]="(newSubTask[selectedGoal.id] || {}).dueDate || ''" 
+               (ngModelChange)="updateSubTaskDate(selectedGoal.id, $event)"
+               type="date" 
+               class="subtask-date" />
+        <button (click)="addSubTask(selectedGoal.id)" class="add-subtask-btn">Add</button>
+      </div>
+
+      <div *ngIf="selectedGoal.subTasks.length === 0" class="no-subtasks">No sub-tasks yet</div>
+      
+      <div cdkDropList 
+           (cdkDropListDropped)="onSubTaskDrop($event, selectedGoal.id)"
+           [cdkDropListDisabled]="sortByDate[selectedGoal.id]"
+           class="subtasks-list">
+        <div *ngFor="let subTask of selectedGoal.subTasks" 
+             cdkDrag 
+             [cdkDragDisabled]="sortByDate[selectedGoal.id]"
+             class="subtask-item" 
+             [class.drag-disabled]="sortByDate[selectedGoal.id]">
+          <div class="drag-handle" *ngIf="!sortByDate[selectedGoal.id]">⋮⋮</div>
+          <input type="checkbox" [checked]="subTask.isCompleted" (change)="toggleSubTask(selectedGoal.id, subTask)" class="checkbox" />
+          <span *ngIf="!editingSubTask[subTask.id]" [class.completed-text]="subTask.isCompleted">{{ subTask.content }}</span>
+          <input *ngIf="editingSubTask[subTask.id]" [(ngModel)]="subTask.content" class="subtask-edit-input" />
+          <span *ngIf="subTask.dueDate && !editingSubTask[subTask.id]" class="subtask-due">{{ subTask.dueDate }}</span>
+          <input *ngIf="editingSubTask[subTask.id]" [(ngModel)]="subTask.dueDate" type="date" class="subtask-date-edit" />
+          <button *ngIf="!editingSubTask[subTask.id]" (click)="startEditSubTask(subTask.id)" class="edit-subtask-btn">✎</button>
+          <button *ngIf="editingSubTask[subTask.id]" (click)="saveSubTask(subTask)" class="save-subtask-btn">✓</button>
+          <button (click)="deleteSubTask(subTask.id)" class="delete-subtask-btn">×</button>
         </div>
       </div>
 
