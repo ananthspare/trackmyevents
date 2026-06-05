@@ -322,6 +322,11 @@
   border: 1px solid #f57c00;
 }
 
+.event-dot.goal-dot {
+  background-color: #10b981;
+  border: 1px solid #059669;
+}
+
 .more-events {
   font-size: 10px;
   color: #666;

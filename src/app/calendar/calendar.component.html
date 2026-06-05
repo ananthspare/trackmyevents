@@ -56,6 +56,24 @@
           </div>
         </div>
       </div>
+
+      <h3 style="margin-top:16px">🎯 Goals</h3>
+      <div class="events-list">
+        <div *ngIf="!goals.length" class="empty-state">No goals with due dates</div>
+        <div *ngFor="let goal of goals; let i = index"
+             class="event-item"
+             [class.even-row]="i % 2 === 0"
+             [class.odd-row]="i % 2 === 1">
+          <div class="event-content">
+            <div class="event-title">
+              🎯 {{ goal.title }}
+              <span *ngIf="goal.isCompleted" style="color:#10b981;font-size:0.75rem"> ✓ Done</span>
+            </div>
+            <div class="event-date">Due: {{ goal.dueDate | date:'MMM d, y' }}</div>
+            <div *ngIf="goal.description" class="event-description">{{ goal.description }}</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -97,7 +115,7 @@
           <div class="planner-btn" (click)="goToPlanner(day.date); $event.stopPropagation()" title="View Day Plan">📅</div>
         </div>
 
-        <div class="events-preview" *ngIf="day.events.length > 0">
+        <div class="events-preview" *ngIf="day.events.length > 0 || day.goals?.length > 0">
           <div
             *ngFor="let event of day.events.slice(0, 2)"
             class="event-dot"
@@ -105,8 +123,14 @@
             [title]="(event.isSnoozeOccurrence ? '🔔 ' : '') + event.title">
             {{ event.title.substring(0, 8) }}{{ event.title.length > 8 ? '...' : '' }}
           </div>
-          <div *ngIf="day.events.length > 2" class="more-events">
-            +{{ day.events.length - 2 }}
+          <div
+            *ngFor="let goal of day.goals?.slice(0, 1)"
+            class="event-dot goal-dot"
+            [title]="'🎯 ' + goal.title">
+            🎯 {{ goal.title.substring(0, 6) }}{{ goal.title.length > 6 ? '...' : '' }}
+          </div>
+          <div *ngIf="day.events.length + (day.goals?.length || 0) > 3" class="more-events">
+            +{{ day.events.length + (day.goals?.length || 0) - 3 }}
           </div>
         </div>
       </div>

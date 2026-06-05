@@ -23,6 +23,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   calendarDays: any[] = [];
   events: any[] = [];
   filteredEvents: any[] = [];
+  goals: any[] = [];
   categories: any[] = [];
   viewType = 'month';
   selectedEvent: any = null;
@@ -235,8 +236,29 @@ export class CalendarComponent implements OnInit, OnDestroy {
     await this.timezoneService.loadUserTimezone();
     this.generateCalendar();
     this.loadCategories();
+    await this.loadGoals();
     this.loadEvents();
     this.filterEvents();
+  }
+
+  async loadGoals() {
+    try {
+      const result = await client.models.Goal.list();
+      this.goals = (result.data || []).filter((g: any) => g.dueDate);
+      this.mapGoalsToCalendar();
+    } catch (error) {
+      console.error('Error loading goals:', error);
+    }
+  }
+
+  mapGoalsToCalendar() {
+    this.calendarDays.forEach(day => {
+      if (!day.goals) day.goals = [];
+      day.goals = this.goals.filter((g: any) => {
+        const d = new Date(g.dueDate + 'T00:00:00');
+        return this.isSameDay(day.date, d);
+      });
+    });
   }
 
   async loadCategories() {
@@ -291,6 +313,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   mapEventsToCalendar() {
     this.calendarDays.forEach(day => {
       day.events = [];
+      if (!day.goals) day.goals = [];
       
       this.events.forEach(event => {
         // Check original target date
@@ -348,6 +371,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     }
     this.generateCalendar();
     this.mapEventsToCalendar();
+    this.mapGoalsToCalendar();
   }
 
   nextMonth() {
@@ -359,6 +383,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     }
     this.generateCalendar();
     this.mapEventsToCalendar();
+    this.mapGoalsToCalendar();
     this.filterEvents();
   }
 

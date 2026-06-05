@@ -45,6 +45,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   
   @ViewChild('categoriesRef') categoriesComponent!: CategoriesComponent;
   @ViewChild('plannerRef') plannerComponent!: DayPlannerComponent;
+  @ViewChild('goalTrackerRef') goalTrackerComponent!: GoalTrackerComponent;
 
   constructor(public authenticator: AuthenticatorService, private tourService: TourService, private userService: UserService) {
     // Subscribe to user updates
@@ -105,6 +106,18 @@ export class AppComponent implements OnInit, AfterViewInit {
     };
     
     setTimeout(trySetDate, 100);
+  }
+
+  navigateToGoalTracker(goalId: string) {
+    this.activeTab = 'goals';
+    const trySelect = () => {
+      if (this.goalTrackerComponent) {
+        this.goalTrackerComponent.selectGoal(goalId);
+      } else {
+        setTimeout(trySelect, 100);
+      }
+    };
+    setTimeout(trySelect, 100);
   }
 
   async getUserDisplayName(user: any): Promise<string> {

@@ -60,6 +60,14 @@
               <span *ngIf="event.isSnoozeOccurrence" class="original-date">Original: {{ getOriginalDate(event.targetDate) }}</span>
               <span class="navigate-icon" (click)="navigateToEvent(event.id, event.categoryID)" title="Go to event and category">📁</span>
             </div>
+            <ng-container *ngIf="slot.time === '08:00'">
+              <div *ngFor="let goal of goalsForDay" class="event-item goal-day-item">
+                🎯 {{ goal.title }}
+                <div class="event-description" *ngIf="goal.description">{{ goal.description }}</div>
+                <span class="goal-priority-badge" [style.background]="priorityColors[goal.priority || 'medium']">{{ goal.priority || 'medium' }}</span>
+                <span class="goal-due-label">Due: {{ goal.dueDate | date:'MMM d' }}</span>
+              </div>
+            </ng-container>
           </div>
         </div>
       </div>
@@ -99,6 +107,7 @@
             <div class="day-number">{{ day.day }}</div>
             <div class="day-tasks-preview">{{ getDayTasksCount(day.date) }} tasks</div>
             <div class="day-events-preview">{{ getDayEventsCount(day.date) }} events</div>
+            <div *ngIf="getGoalsForDay(day.date).length > 0" class="day-goals-preview">🎯 {{ getGoalsForDay(day.date).length }} goal{{ getGoalsForDay(day.date).length > 1 ? 's' : '' }}</div>
           </div>
         </div>
       </div>
@@ -106,7 +115,6 @@
 
     <div class="resize-handle" id="resizeHandle" 
          (touchstart)="onTouchStart($event)"
-         (touchmove)="onTouchMove($event)"
          (touchend)="onTouchEnd($event)"></div>
 
     <div class="pinned-sidebar" id="pinnedSidebar">
@@ -207,6 +215,51 @@
               <button (click)="removeCompletedTask(i)" class="remove-btn" title="Remove">
                 ×
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Goal Tasks Section ── -->
+      <div class="goal-tasks-section">
+        <div class="goal-tasks-header" (click)="showGoalTasks = !showGoalTasks">
+          <span class="goal-tasks-icon">🎯</span>
+          <h3 class="goal-tasks-title">Goal Tasks</h3>
+          <span class="goal-tasks-count" *ngIf="goalGroups.length > 0">{{goalGroups.length}}</span>
+          <button class="goal-tasks-refresh" (click)="loadGoalSubTasks(); $event.stopPropagation()" title="Refresh">↻</button>
+          <button class="gst-expand-all-btn" (click)="expandAllGoals(); $event.stopPropagation()" title="Expand all">⊞</button>
+          <button class="gst-expand-all-btn" (click)="collapseAllGoals(); $event.stopPropagation()" title="Collapse all">⊟</button>
+          <span class="goal-tasks-toggle">{{showGoalTasks ? '▲' : '▼'}}</span>
+        </div>
+
+        <div *ngIf="showGoalTasks">
+          <div *ngIf="goalSubTasksLoading" class="gst-loading">Loading…</div>
+
+          <div *ngIf="!goalSubTasksLoading && goalGroups.length === 0" class="gst-empty">
+            No pending goal tasks
+          </div>
+
+          <div *ngFor="let group of goalGroups" class="gst-goal-group">
+            <div class="gst-goal-group-header" (click)="toggleGoalGroup(group)">
+              <span class="gst-priority-dot" [style.background]="priorityColors[group.goalPriority]"></span>
+              <span class="gst-goal-group-title">{{ group.goalTitle }}</span>
+              <span class="gst-cat">{{ group.goalCategory }}</span>
+              <span *ngIf="group.dueDate" class="gst-due-label" [ngClass]="getGoalSubTaskDueClass(group.dueDate)">{{ getGoalSubTaskDueLabel(group.dueDate) }}</span>
+              <span class="gst-task-count">{{ group.subTasks.length }}</span>
+              <button class="gst-goto-btn" (click)="goToGoal(group.goalId); $event.stopPropagation()" title="Go to goal">🔗</button>
+              <span class="gst-collapse-icon">{{ group.collapsed ? '▼' : '▲' }}</span>
+            </div>
+
+            <div *ngIf="!group.collapsed" class="gst-task-list">
+              <div *ngFor="let st of group.subTasks" class="gst-item">
+                <button class="gst-check" (click)="toggleGoalSubTask(st)" title="Mark complete">✓</button>
+                <div class="gst-body">
+                  <span class="gst-content">{{ st.content }}</span>
+                  <div class="gst-meta" *ngIf="st.dueDate">
+                    <span class="gst-due-label" [ngClass]="getGoalSubTaskDueClass(st.dueDate)">{{ formatGoalDate(st.dueDate) }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

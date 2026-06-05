@@ -13,6 +13,38 @@ interface TimeSlot {
   events: any[];
 }
 
+interface PlannerSubTask {
+  id: string;
+  content: string;
+  dueDate: string;
+  isCompleted: boolean;
+  goalId: string;
+  goalTitle: string;
+  goalCategory: string;
+  goalPriority: string;
+  goalColor: string;
+}
+
+interface GoalGroup {
+  goalId: string;
+  goalTitle: string;
+  goalCategory: string;
+  goalPriority: string;
+  dueDate: string;
+  subTasks: PlannerSubTask[];
+  collapsed: boolean;
+}
+
+const PRIORITY_COLORS: Record<string, string> = {
+  high: '#dc2626', medium: '#d97706', low: '#16a34a'
+};
+const PRIORITY_BG: Record<string, string> = {
+  high: '#fef2f2', medium: '#fffbeb', low: '#f0fdf4'
+};
+const PRIORITY_ICONS: Record<string, string> = {
+  high: '🔴', medium: '🟡', low: '🟢'
+};
+
 @Component({
   selector: 'app-day-planner',
   standalone: true,
@@ -39,6 +71,7 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   hours = Array.from({length: 24}, (_, i) => i);
 
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
+  @Output() navigateToGoal = new EventEmitter<string>();
   
   private refreshInterval: any;
   currentTimeSlotId: string | null = null;
@@ -53,11 +86,21 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   selectedTaskIndices: Set<number> = new Set();
   isMultiSelectMode = false;
 
+  // ── Goal tasks in planner ─────────────────────────────────────────────────
+  goalSubTasks: PlannerSubTask[] = [];
+  goalGroups: GoalGroup[] = [];
+  goalSubTasksLoading = false;
+  showGoalTasks = true;
+  readonly priorityColors = PRIORITY_COLORS;
+  readonly priorityBg = PRIORITY_BG;
+  readonly priorityIcons = PRIORITY_ICONS;
+
   ngOnInit() {
     this.onPlannerViewChange();
     this.startAutoRefresh();
     this.loadPinnedTasks();
     this.initializeResize();
+    this.loadGoalSubTasks();
   }
 
   ngOnDestroy() {
@@ -302,6 +345,7 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
       }
 
       await this.loadEvents();
+      await this.loadGoalsForDay();
       
       // Reload pinned tasks when date changes
       if (this.plannerView === 'today') {
@@ -585,6 +629,8 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
     this.selectedDate = dateStr;
     this.plannerView = 'today';
     this.onPlannerViewChange();
+    this.loadGoalSubTasks();
+    this.loadGoalsForDay();
   }
 
 
@@ -960,13 +1006,6 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
     const pinnedSidebar = document.getElementById('pinnedSidebar');
     if (!pinnedSidebar) return;
     
-    event.preventDefault();
-  }
-
-  onTouchMove(event: TouchEvent) {
-    const pinnedSidebar = document.getElementById('pinnedSidebar');
-    if (!pinnedSidebar) return;
-    
     const container = document.querySelector('.planner-body') as HTMLElement;
     if (!container) return;
     
@@ -983,5 +1022,154 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
 
   onTouchEnd(event: TouchEvent) {
     event.preventDefault();
+  }
+
+  // ── Goals ─────────────────────────────────────────────────────────────────
+  goalsForDay: any[] = [];
+
+  async loadGoalsForDay() {
+    try {
+      const { data: goals } = await client.models.Goal.list();
+      // Show goals that are not completed and whose dueDate is on or after selectedDate
+      this.goalsForDay = goals.filter((g: any) => !g.isCompleted && g.dueDate && g.dueDate >= this.selectedDate);
+    } catch (e) {
+      console.error('Error loading goals for day:', e);
+    }
+  }
+
+  getGoalsForDay(date: string): any[] {
+    // For month view: show goals whose dueDate is exactly that date
+    return this.goalsForDay.filter((g: any) => g.dueDate === date);
+  }
+
+  // ── Goal tasks ────────────────────────────────────────────────────────────
+
+  async loadGoalSubTasks() {
+    this.goalSubTasksLoading = true;
+    try {
+      const { data: goals } = await client.models.Goal.list();
+      const activeGoals = goals.filter(g => !g.isCompleted);
+
+      const allSubTasks: PlannerSubTask[] = [];
+      await Promise.all(activeGoals.map(async (goal) => {
+        const { data: subTasks } = await client.models.SubTask.list({
+          filter: { goalID: { eq: goal.id } }
+        });
+        subTasks.forEach(st => {
+          if (!st.isCompleted) {
+            allSubTasks.push({
+              id: st.id,
+              content: st.content || '',
+              dueDate: st.dueDate || '',
+              isCompleted: false,
+              goalId: goal.id,
+              goalTitle: goal.title || '',
+              goalCategory: (goal as any).category || 'General',
+              goalPriority: (goal as any).priority || 'medium',
+              goalColor: '',
+            });
+          }
+        });
+      }));
+
+      // Sort: due on selected date → overdue → undated → future
+      const sel = this.selectedDate;
+      allSubTasks.sort((a, b) => {
+        const sa = this.dueSortScore(a.dueDate, sel);
+        const sb = this.dueSortScore(b.dueDate, sel);
+        if (sa !== sb) return sa - sb;
+        return (a.dueDate || 'z').localeCompare(b.dueDate || 'z');
+      });
+
+      this.goalSubTasks = allSubTasks;
+
+      // Build per-goal groups
+      const groupMap = new Map<string, GoalGroup>();
+      activeGoals.forEach(goal => {
+        groupMap.set(goal.id, {
+          goalId: goal.id,
+          goalTitle: goal.title || '',
+          goalCategory: (goal as any).category || 'General',
+          goalPriority: (goal as any).priority || 'medium',
+          dueDate: (goal as any).dueDate || '',
+          subTasks: [],
+          collapsed: this.goalGroups.find(g => g.goalId === goal.id)?.collapsed ?? false
+        });
+      });
+      allSubTasks.forEach(st => groupMap.get(st.goalId)?.subTasks.push(st));
+      this.goalGroups = Array.from(groupMap.values()).filter(g => g.subTasks.length > 0);
+
+    } catch (e) {
+      console.error('Error loading goal sub-tasks:', e);
+    } finally {
+      this.goalSubTasksLoading = false;
+    }
+  }
+
+  toggleGoalGroup(group: GoalGroup) {
+    group.collapsed = !group.collapsed;
+  }
+
+  expandAllGoals() {
+    this.goalGroups.forEach(g => g.collapsed = false);
+  }
+
+  collapseAllGoals() {
+    this.goalGroups.forEach(g => g.collapsed = true);
+  }
+
+  goToGoal(goalId: string) {
+    this.navigateToGoal.emit(goalId);
+  }
+
+  private dueSortScore(dueDate: string, selectedDate: string): number {
+    if (!dueDate) return 3;
+    if (dueDate === selectedDate) return 0;
+    if (dueDate < selectedDate) return 1;
+    return 2;
+  }
+
+  async toggleGoalSubTask(subTask: PlannerSubTask) {
+    try {
+      await client.models.SubTask.update({ id: subTask.id, isCompleted: true });
+      this.goalSubTasks = this.goalSubTasks.filter(st => st.id !== subTask.id);
+    } catch (e) {
+      console.error('Error completing goal sub-task:', e);
+    }
+  }
+
+  getGoalSubTaskDueClass(dueDate: string): string {
+    if (!dueDate) return '';
+    const diff = Math.ceil((new Date(dueDate).getTime() - new Date().setHours(0,0,0,0)) / 86400000);
+    if (diff < 0) return 'gst-overdue';
+    if (diff === 0) return 'gst-today';
+    if (diff <= 3) return 'gst-urgent';
+    return 'gst-ok';
+  }
+
+  getGoalSubTaskDueLabel(dueDate: string): string {
+    if (!dueDate) return '';
+    const diff = Math.ceil((new Date(dueDate).getTime() - new Date().setHours(0,0,0,0)) / 86400000);
+    if (diff < 0) return `${Math.abs(diff)}d overdue`;
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    return `${diff}d left`;
+  }
+
+  formatGoalDate(s: string): string {
+    if (!s) return '';
+    return new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  getGoalSubTasksDueToday(): PlannerSubTask[] {
+    return this.goalSubTasks.filter(st => st.dueDate === this.selectedDate);
+  }
+
+  getGoalSubTasksOverdue(): PlannerSubTask[] {
+    return this.goalSubTasks.filter(st => st.dueDate && st.dueDate < this.selectedDate);
+  }
+
+  getGoalSubTasksUpcoming(): PlannerSubTask[] {
+    return this.goalSubTasks.filter(st => !st.dueDate || st.dueDate > this.selectedDate);
   }
 }

@@ -560,10 +560,34 @@
   color: #666;
 }
 
-.day-events-preview {
+.day-goals-preview {
   font-size: 10px;
-  color: #2196f3;
+  color: #10b981;
   margin-top: 2px;
+}
+
+.goal-day-item {
+  background: #f0fdf4;
+  color: #065f46;
+  border-left: 3px solid #10b981;
+}
+
+.goal-priority-badge {
+  display: inline-block;
+  color: white;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.goal-due-label {
+  display: inline-block;
+  font-size: 9px;
+  color: #065f46;
+  margin-left: 6px;
+  font-weight: 600;
 }
 
 .pinned-header {
@@ -1023,3 +1047,173 @@
 .uncomplete-btn:hover {
   background: #f57c00;
 }
+
+/* ── Goal Tasks Section ──────────────────────────────────────────────────── */
+.goal-tasks-section {
+  margin-top: 16px;
+  border-top: 2px solid #e0e0e0;
+  padding-top: 12px;
+}
+
+.goal-tasks-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 2px 8px;
+  user-select: none;
+}
+.goal-tasks-header:hover { background: #f5f5f5; border-radius: 6px; }
+.goal-tasks-icon  { font-size: 16px; }
+.goal-tasks-title { margin: 0; font-size: 15px; color: #333; font-weight: 600; flex: 1; }
+.goal-tasks-count {
+  background: #6366f1; color: #fff;
+  font-size: 10px; font-weight: 700;
+  border-radius: 20px; padding: 1px 7px;
+}
+.goal-tasks-refresh {
+  background: none; border: none; cursor: pointer;
+  color: #6366f1; font-size: 14px; padding: 2px 4px;
+  border-radius: 4px; transition: background .15s;
+}
+.goal-tasks-refresh:hover { background: #eef0ff; }
+.goal-tasks-toggle { font-size: 10px; color: #999; }
+
+.gst-loading, .gst-empty {
+  text-align: center; color: #999;
+  font-size: 12px; font-style: italic; padding: 12px 8px;
+}
+
+/* Groups */
+.gst-group { margin-bottom: 10px; }
+.gst-group-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: #64748b;
+  padding: 4px 0 5px; margin-bottom: 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.gst-today-label   { color: #2563eb; }
+.gst-overdue-label { color: #dc2626; }
+
+/* Per-goal group */
+.gst-goal-group {
+  margin-bottom: 8px;
+  border: 1px solid #e8e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gst-goal-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #f5f5ff;
+  cursor: pointer;
+  user-select: none;
+}
+.gst-goal-group-header:hover { background: #eeeeff; }
+
+.gst-goal-group-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e1e2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gst-task-count {
+  background: #6366f1;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
+.gst-goto-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.gst-goto-btn:hover { background: #ddd6fe; }
+
+.gst-expand-all-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 3px;
+  border-radius: 4px;
+  color: #6366f1;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.gst-expand-all-btn:hover { background: #eef0ff; }
+
+.gst-collapse-icon {
+  font-size: 9px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.gst-task-list {
+  padding: 4px 6px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+}
+
+/* Item */
+.gst-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 6px; border-radius: 6px;
+  border: 1px solid #f0f0f5; background: #fff;
+  margin-bottom: 5px; transition: background .15s;
+}
+.gst-item:hover     { background: #fafbff; border-color: #e0e3ff; }
+.gst-item-overdue   { border-left: 3px solid #dc2626; }
+
+.gst-check {
+  flex-shrink: 0; width: 20px; height: 20px;
+  border: 2px solid #c7d2fe; border-radius: 50%;
+  background: #fff; cursor: pointer; font-size: 10px;
+  color: transparent; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; padding: 0; margin-top: 1px;
+}
+.gst-check:hover { border-color: #6366f1; background: #eef0ff; color: #6366f1; }
+
+.gst-body { flex: 1; min-width: 0; }
+.gst-content {
+  display: block; font-size: 12px; font-weight: 500;
+  color: #1e1e2e; line-height: 1.4; word-break: break-word;
+  margin-bottom: 3px;
+}
+.gst-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.gst-goal-name {
+  font-size: 10px; color: #6366f1; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
+}
+.gst-priority-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.gst-cat {
+  font-size: 10px; color: #94a3b8; background: #f0f1ff;
+  padding: 1px 5px; border-radius: 10px;
+}
+.gst-due-label {
+  font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 10px;
+}
+.gst-due-label.gst-overdue, .gst-overdue { background: #fef2f2; color: #dc2626; }
+.gst-due-label.gst-today    { background: #eff6ff; color: #2563eb; }
+.gst-due-label.gst-urgent   { background: #fff7ed; color: #ea580c; }
+.gst-due-label.gst-ok       { background: #f0fdf4; color: #16a34a; }
