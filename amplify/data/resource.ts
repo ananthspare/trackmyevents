@@ -83,6 +83,14 @@ const schema = a.schema({
       order: a.integer().default(0),
     })
     .authorization(allow => [allow.owner()]),
+
+  GoalNote: a
+    .model({
+      goalID: a.string(),
+      subTaskID: a.string(), // null = goal-level note, set = task-level note
+      content: a.string(),
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -91,8 +99,5 @@ export const data = defineData({
   schema,
   authorizationModes: {
     defaultAuthorizationMode: 'userPool',
-    apiKeyAuthorizationMode: {
-      expiresInDays: 30,
-    },
   },
 });
