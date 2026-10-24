@@ -197,7 +197,25 @@ export class GoalTrackerComponent implements OnInit {
     if (this.filterStatus === 'done')   list = list.filter(g => g.isCompleted);
     if (this.filterPriority !== 'all')  list = list.filter(g => g.priority === this.filterPriority);
     if (this.filterCategory !== 'all')  list = list.filter(g => g.category === this.filterCategory);
-    this.filteredGoals = list;
+    this.filteredGoals = list.sort((a, b) => this.sortGoals(a, b));
+  }
+
+  private sortGoals(a: Goal, b: Goal): number {
+    // 1. category ascending
+    const catCmp = a.category.localeCompare(b.category);
+    if (catCmp !== 0) return catCmp;
+    const today = new Date().toISOString().split('T')[0];
+    // 2. within category: past due (0) → no due date (1) → future (2)
+    const score = (g: Goal) => {
+      if (g.dueDate && g.dueDate < today) return 0;
+      if (!g.dueDate) return 1;
+      return 2;
+    };
+    const scoreCmp = score(a) - score(b);
+    if (scoreCmp !== 0) return scoreCmp;
+    // 3. within same bucket: ascending by dueDate (no-date goals by title)
+    if (!a.dueDate && !b.dueDate) return a.title.localeCompare(b.title);
+    return (a.dueDate || '').localeCompare(b.dueDate || '');
   }
 
   // returns unique categories present in filtered list, sorted by priority order
