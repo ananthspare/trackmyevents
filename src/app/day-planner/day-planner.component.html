@@ -61,7 +61,9 @@
               <span class="navigate-icon" (click)="navigateToEvent(event.id, event.categoryID)" title="Go to event and category">📁</span>
             </div>
             <ng-container *ngIf="slot.time === '08:00'">
-              <div *ngFor="let goal of goalsForDay" class="event-item goal-day-item">
+              <div *ngFor="let goal of goalsForDay" class="event-item goal-day-item"
+                   [class.goal-day-overdue]="goal.dueDate && goal.dueDate < selectedDate"
+                   [class.goal-day-noduedate]="!goal.dueDate">
                 🎯 {{ goal.title }}
                 <div class="event-description" *ngIf="goal.description">{{ goal.description }}</div>
                 <span class="goal-priority-badge" [style.background]="priorityColors[goal.priority || 'medium']">{{ goal.priority || 'medium' }}</span>

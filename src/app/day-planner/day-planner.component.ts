@@ -1030,8 +1030,20 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   async loadGoalsForDay() {
     try {
       const { data: goals } = await client.models.Goal.list();
-      // Show goals that are not completed and whose dueDate is on or after selectedDate
-      this.goalsForDay = goals.filter((g: any) => !g.isCompleted && g.dueDate && g.dueDate >= this.selectedDate);
+      // Show all non-completed goals (including those with no dueDate)
+      const filtered = goals.filter((g: any) => !g.isCompleted);
+      // Order: past due (asc) → no due date → future due (asc)
+      this.goalsForDay = filtered.sort((a: any, b: any) => {
+        const aOverdue = a.dueDate && a.dueDate < this.selectedDate;
+        const bOverdue = b.dueDate && b.dueDate < this.selectedDate;
+        const aFuture = a.dueDate && a.dueDate >= this.selectedDate;
+        const bFuture = b.dueDate && b.dueDate >= this.selectedDate;
+        const aScore = aOverdue ? 0 : !a.dueDate ? 1 : 2;
+        const bScore = bOverdue ? 0 : !b.dueDate ? 1 : 2;
+        if (aScore !== bScore) return aScore - bScore;
+        if (!a.dueDate && !b.dueDate) return 0;
+        return (a.dueDate || '').localeCompare(b.dueDate || '');
+      });
     } catch (e) {
       console.error('Error loading goals for day:', e);
     }
