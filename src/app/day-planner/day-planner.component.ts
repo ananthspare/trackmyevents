@@ -91,6 +91,7 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
   goalGroups: GoalGroup[] = [];
   goalSubTasksLoading = false;
   showGoalTasks = true;
+  activeGoalId: string | null = null;
   readonly priorityColors = PRIORITY_COLORS;
   readonly priorityBg = PRIORITY_BG;
   readonly priorityIcons = PRIORITY_ICONS;
@@ -1105,7 +1106,7 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
           goalPriority: (goal as any).priority || 'medium',
           dueDate: (goal as any).dueDate || '',
           subTasks: [],
-          collapsed: this.goalGroups.find(g => g.goalId === goal.id)?.collapsed ?? false
+          collapsed: this.goalGroups.find(g => g.goalId === goal.id)?.collapsed ?? true
         });
       });
       allSubTasks.forEach(st => groupMap.get(st.goalId)?.subTasks.push(st));
@@ -1120,6 +1121,21 @@ export class DayPlannerComponent implements OnInit, OnDestroy {
 
   toggleGoalGroup(group: GoalGroup) {
     group.collapsed = !group.collapsed;
+  }
+
+  selectGoalOnLeft(goalId: string) {
+    if (this.activeGoalId === goalId) {
+      // clicking same goal toggles it
+      const group = this.goalGroups.find(g => g.goalId === goalId);
+      if (group) group.collapsed = !group.collapsed;
+    } else {
+      // collapse all, expand only the clicked one
+      this.goalGroups.forEach(g => g.collapsed = true);
+      const group = this.goalGroups.find(g => g.goalId === goalId);
+      if (group) group.collapsed = false;
+      this.activeGoalId = goalId;
+      this.showGoalTasks = true;
+    }
   }
 
   expandAllGoals() {

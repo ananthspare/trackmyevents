@@ -570,6 +570,17 @@
   background: #f0fdf4;
   color: #065f46;
   border-left: 3px solid #10b981;
+  cursor: pointer;
+}
+
+.goal-day-item:hover {
+  filter: brightness(0.95);
+}
+
+.goal-day-item.goal-day-active {
+  outline: 2px solid #6366f1;
+  outline-offset: -2px;
+  font-weight: 600;
 }
 
 .goal-day-item.goal-day-overdue {
