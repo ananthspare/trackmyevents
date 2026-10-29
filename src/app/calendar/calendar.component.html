@@ -59,11 +59,12 @@
 
       <h3 style="margin-top:16px">🎯 Goals</h3>
       <div class="events-list">
-        <div *ngIf="!goals.length" class="empty-state">No goals with due dates</div>
-        <div *ngFor="let goal of goals; let i = index"
-             class="event-item"
+        <div *ngIf="!filteredGoalItems.length" class="empty-state">No goals for this period</div>
+        <div *ngFor="let goal of filteredGoalItems; let i = index"
+             class="event-item goal-sidebar-item"
              [class.even-row]="i % 2 === 0"
-             [class.odd-row]="i % 2 === 1">
+             [class.odd-row]="i % 2 === 1"
+             (click)="goToGoal(goal.id)">
           <div class="event-content">
             <div class="event-title">
               🎯 {{ goal.title }}
@@ -71,6 +72,14 @@
             </div>
             <div class="event-date">Due: {{ goal.dueDate | date:'MMM d, y' }}</div>
             <div *ngIf="goal.description" class="event-description">{{ goal.description }}</div>
+            <div *ngIf="goal.subTasks?.length" class="goal-subtasks-preview">
+              <div *ngFor="let st of goal.subTasks" class="goal-subtask-item"
+                   [class.goal-subtask-done]="st.isCompleted"
+                   (click)="goToGoal(goal.id); $event.stopPropagation()">
+                <span>{{ st.isCompleted ? '✓' : '○' }}</span> {{ st.content }}
+                <span *ngIf="st.dueDate" class="goal-subtask-date">{{ st.dueDate | date:'MMM d' }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -115,7 +124,7 @@
           <div class="planner-btn" (click)="goToPlanner(day.date); $event.stopPropagation()" title="View Day Plan">📅</div>
         </div>
 
-        <div class="events-preview" *ngIf="day.events.length > 0 || day.goals?.length > 0">
+        <div class="events-preview" *ngIf="day.events.length > 0 || day.goals?.length > 0 || day.subTasks?.length > 0">
           <div
             *ngFor="let event of day.events.slice(0, 2)"
             class="event-dot"
@@ -126,11 +135,19 @@
           <div
             *ngFor="let goal of day.goals?.slice(0, 1)"
             class="event-dot goal-dot"
-            [title]="'🎯 ' + goal.title">
+            [title]="'🎯 ' + goal.title"
+            (click)="goToGoal(goal.id); $event.stopPropagation()">
             🎯 {{ goal.title.substring(0, 6) }}{{ goal.title.length > 6 ? '...' : '' }}
           </div>
-          <div *ngIf="day.events.length + (day.goals?.length || 0) > 3" class="more-events">
-            +{{ day.events.length + (day.goals?.length || 0) - 3 }}
+          <div
+            *ngFor="let st of day.subTasks?.slice(0, 1)"
+            class="event-dot subtask-dot"
+            [title]="'✅ ' + st.content + ' (' + st.goalTitle + ')'"
+            (click)="goToGoal(st.goalId); $event.stopPropagation()">
+            ✅ {{ st.content.substring(0, 6) }}{{ st.content.length > 6 ? '...' : '' }}
+          </div>
+          <div *ngIf="day.events.length + (day.goals?.length || 0) + (day.subTasks?.length || 0) > 3" class="more-events">
+            +{{ day.events.length + (day.goals?.length || 0) + (day.subTasks?.length || 0) - 3 }}
           </div>
         </div>
       </div>

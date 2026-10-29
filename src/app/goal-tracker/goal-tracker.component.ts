@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { generateClient } from 'aws-amplify/data';
@@ -106,6 +106,8 @@ export class GoalTrackerComponent implements OnInit {
   // ── Sort ──────────────────────────────────────────────────────────────────
   sortByDate: { [goalId: string]: boolean } = {};
 
+  @Input() initialGoalId: string | null = null;
+
   // ── Resize ────────────────────────────────────────────────────────────────
   private isResizing = false;
   private startX = 0;
@@ -172,6 +174,10 @@ export class GoalTrackerComponent implements OnInit {
       this.loading = false;
       this.applyFilters();
       this.syncSelected();
+      if (this.initialGoalId) {
+        this.selectGoal(this.initialGoalId);
+        this.initialGoalId = null;
+      }
     }
   }
 
@@ -201,21 +207,14 @@ export class GoalTrackerComponent implements OnInit {
   }
 
   private sortGoals(a: Goal, b: Goal): number {
-    // 1. category ascending
-    const catCmp = a.category.localeCompare(b.category);
-    if (catCmp !== 0) return catCmp;
-    const today = new Date().toISOString().split('T')[0];
-    // 2. within category: past due (0) → no due date (1) → future (2)
-    const score = (g: Goal) => {
-      if (g.dueDate && g.dueDate < today) return 0;
-      if (!g.dueDate) return 1;
-      return 2;
-    };
-    const scoreCmp = score(a) - score(b);
-    if (scoreCmp !== 0) return scoreCmp;
-    // 3. within same bucket: ascending by dueDate (no-date goals by title)
-    if (!a.dueDate && !b.dueDate) return a.title.localeCompare(b.title);
-    return (a.dueDate || '').localeCompare(b.dueDate || '');
+    // 1. due date ascending (no date goes last)
+    if (a.dueDate && b.dueDate) {
+      const dateCmp = a.dueDate.localeCompare(b.dueDate);
+      if (dateCmp !== 0) return dateCmp;
+    } else if (a.dueDate) return -1;
+    else if (b.dueDate) return 1;
+    // 2. then by category ascending
+    return a.category.localeCompare(b.category);
   }
 
   // returns unique categories present in filtered list, sorted by priority order
@@ -356,6 +355,11 @@ export class GoalTrackerComponent implements OnInit {
   async addSubTask(goalId: string) {
     const st = this.newSubTask[goalId];
     if (!st?.content.trim()) return;
+    const goal = this.goals.find(g => g.id === goalId);
+    if (goal?.dueDate && st.dueDate && st.dueDate > goal.dueDate) {
+      alert(`Task due date cannot be after the goal's target date (${goal.dueDate}).`);
+      return;
+    }
     try {
       const goal = this.goals.find(g => g.id === goalId);
       const maxOrder = goal?.subTasks.length ? Math.max(...goal.subTasks.map(s => s.order)) + 1 : 0;
@@ -374,6 +378,11 @@ export class GoalTrackerComponent implements OnInit {
   }
 
   async saveSubTask(subTask: SubTask) {
+    const goal = this.goals.find(g => g.subTasks.some((s: SubTask) => s.id === subTask.id));
+    if (goal?.dueDate && subTask.dueDate && subTask.dueDate > goal.dueDate) {
+      alert(`Task due date cannot be after the goal's target date (${goal.dueDate}).`);
+      return;
+    }
     try {
       await client.models.SubTask.update({ id: subTask.id, content: subTask.content, dueDate: subTask.dueDate });
       this.editingSubTask[subTask.id] = false;
@@ -453,7 +462,19 @@ export class GoalTrackerComponent implements OnInit {
     this.showColorPicker = {};
     this.goalNoteLastSaved = '';
     this.activeTaskNote = null;
+    const goal = this.goals.find(g => g.id === goalId);
+    if (goal) {
+      this.filterStatus = goal.isCompleted ? 'done' : 'active';
+      this.filterCategory = 'all';
+      this.filterPriority = 'all';
+      this.searchQuery = '';
+    }
+    this.applyFilters();
     this.syncSelected();
+    setTimeout(() => {
+      const el = document.querySelector('.g-card.g-selected') as HTMLElement;
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
   }
 
   syncSelected() {

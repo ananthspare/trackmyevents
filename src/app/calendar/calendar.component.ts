@@ -24,6 +24,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
   events: any[] = [];
   filteredEvents: any[] = [];
   goals: any[] = [];
+  filteredGoalItems: any[] = [];
   categories: any[] = [];
   viewType = 'month';
   selectedEvent: any = null;
@@ -63,6 +64,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     
   @Output() navigateToCategories = new EventEmitter<{eventId: string, categoryId: string}>();
   @Output() navigateToPlanner = new EventEmitter<string>();
+  @Output() navigateToGoal = new EventEmitter<string>();
 
   constructor(private timezoneService: TimezoneService) {}
   
@@ -244,8 +246,14 @@ export class CalendarComponent implements OnInit, OnDestroy {
   async loadGoals() {
     try {
       const result = await client.models.Goal.list();
-      this.goals = (result.data || []).filter((g: any) => g.dueDate);
+      const goalsData = result.data || [];
+      // fetch subtasks for each goal
+      this.goals = await Promise.all(goalsData.map(async (g: any) => {
+        const { data: subTasks } = await client.models.SubTask.list({ filter: { goalID: { eq: g.id } } });
+        return { ...g, subTasks: subTasks || [] };
+      }));
       this.mapGoalsToCalendar();
+      this.filterGoals();
     } catch (error) {
       console.error('Error loading goals:', error);
     }
@@ -254,10 +262,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
   mapGoalsToCalendar() {
     this.calendarDays.forEach(day => {
       if (!day.goals) day.goals = [];
-      day.goals = this.goals.filter((g: any) => {
-        const d = new Date(g.dueDate + 'T00:00:00');
-        return this.isSameDay(day.date, d);
-      });
+      if (!day.subTasks) day.subTasks = [];
+      const dayStr = day.date.toISOString().split('T')[0];
+      day.goals = this.goals.filter((g: any) => g.dueDate === dayStr);
+      day.subTasks = this.goals.flatMap((g: any) =>
+        (g.subTasks || []).filter((st: any) => st.dueDate === dayStr && !st.isCompleted)
+          .map((st: any) => ({ ...st, goalTitle: g.title }))
+      );
     });
   }
 
@@ -372,6 +383,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.generateCalendar();
     this.mapEventsToCalendar();
     this.mapGoalsToCalendar();
+    this.filterGoals();
   }
 
   nextMonth() {
@@ -401,6 +413,69 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   onViewChange() {
     this.filterEvents();
+    this.filterGoals();
+  }
+
+  filterGoals() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const toDateStr = (d: Date) => d.toISOString().split('T')[0];
+
+    let list = this.goals.filter((g: any) => !g.isCompleted && g.dueDate);
+
+    switch (this.viewType) {
+      case 'day':
+        const dayStr = toDateStr(this.selectedDate);
+        list = list.filter((g: any) => g.dueDate === dayStr);
+        break;
+      case 'week':
+        const wStart = this.getWeekStart(today);
+        const wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 6);
+        list = list.filter((g: any) => g.dueDate >= toDateStr(wStart) && g.dueDate <= toDateStr(wEnd));
+        break;
+      case 'next2':
+        const n2End = new Date(today); n2End.setDate(today.getDate() + 2);
+        list = list.filter((g: any) => g.dueDate >= toDateStr(today) && g.dueDate <= toDateStr(n2End));
+        break;
+      case 'next7':
+        const n7End = new Date(today); n7End.setDate(today.getDate() + 7);
+        list = list.filter((g: any) => g.dueDate >= toDateStr(today) && g.dueDate <= toDateStr(n7End));
+        break;
+      case 'next30':
+        const n30End = new Date(today); n30End.setDate(today.getDate() + 30);
+        list = list.filter((g: any) => g.dueDate >= toDateStr(today) && g.dueDate <= toDateStr(n30End));
+        break;
+      case 'nextMonth':
+        const nmStart = toDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 1));
+        const nmEnd = toDateStr(new Date(now.getFullYear(), now.getMonth() + 2, 0));
+        list = list.filter((g: any) => g.dueDate >= nmStart && g.dueDate <= nmEnd);
+        break;
+      case 'past2':
+        const p2Start = new Date(today); p2Start.setDate(today.getDate() - 2);
+        list = list.filter((g: any) => g.dueDate >= toDateStr(p2Start) && g.dueDate < toDateStr(today));
+        break;
+      case 'pastWeek':
+        const pwStart = new Date(today); pwStart.setDate(today.getDate() - 7);
+        list = list.filter((g: any) => g.dueDate >= toDateStr(pwStart) && g.dueDate < toDateStr(today));
+        break;
+      case 'pastMonth':
+        const pmStart = toDateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+        const pmEnd = toDateStr(new Date(now.getFullYear(), now.getMonth(), 0));
+        list = list.filter((g: any) => g.dueDate >= pmStart && g.dueDate <= pmEnd);
+        break;
+      case 'allPassed':
+        list = list.filter((g: any) => g.dueDate < toDateStr(today));
+        break;
+      case 'month':
+      default:
+        list = list.filter((g: any) => {
+          const d = new Date(g.dueDate + 'T00:00:00');
+          return d.getMonth() === this.currentMonth && d.getFullYear() === this.currentYear;
+        });
+        break;
+    }
+    list.sort((a: any, b: any) => a.dueDate.localeCompare(b.dueDate));
+    this.filteredGoalItems = list;
   }
 
   filterEvents() {
@@ -517,6 +592,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     }
     
     this.filteredEvents.sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime());
+    this.filterGoals();
   }
 
   getWeekStart(date: Date): Date {
@@ -698,6 +774,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
   goToPlanner(date: Date) {
     const dateStr = date.toISOString().split('T')[0];
     this.navigateToPlanner.emit(dateStr);
+  }
+
+  goToGoal(goalId: string) {
+    this.navigateToGoal.emit(goalId);
   }
   
   onDragStart(event: any, dragEvent: DragEvent) {
