@@ -195,7 +195,8 @@
                    (keyup.enter)="addSubTask(selectedGoal.id)" />
             <input class="st-date" type="date"
                    [ngModel]="getNewSubTask(selectedGoal.id).dueDate"
-                   (ngModelChange)="getNewSubTask(selectedGoal.id).dueDate=$event" />
+                   (ngModelChange)="getNewSubTask(selectedGoal.id).dueDate=$event"
+                   [max]="selectedGoal.dueDate || ''" />
             <button class="btn-primary sm" (click)="addSubTask(selectedGoal.id)">Add</button>
             <button class="sort-btn" (click)="toggleSort(selectedGoal.id)"
                     [title]="sortByDate[selectedGoal.id] ? 'Switch to manual order' : 'Sort by date'">
@@ -237,7 +238,7 @@
 
               <div class="st-edit-body" *ngIf="editingSubTask[st.id]" (click)="$event.stopPropagation()">
                 <input class="st-edit-in" [(ngModel)]="st.content" (keyup.enter)="saveSubTask(st)" />
-                <input class="st-edit-date" type="date" [(ngModel)]="st.dueDate" />
+                <input class="st-edit-date" type="date" [(ngModel)]="st.dueDate" [max]="selectedGoal.dueDate || ''" />
               </div>
 
               <div class="st-actions" (click)="$event.stopPropagation()">

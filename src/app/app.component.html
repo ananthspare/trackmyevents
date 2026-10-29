@@ -66,11 +66,11 @@
 
       <main>
         <app-categories *ngIf="activeTab === 'categories'" #categoriesRef></app-categories>
-        <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)" (navigateToPlanner)="navigateToPlanner($event)"></app-calendar>
+        <app-calendar *ngIf="activeTab === 'calendar'" (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)" (navigateToPlanner)="navigateToPlanner($event)" (navigateToGoal)="navigateToGoalTracker($event)"></app-calendar>
         <app-profile *ngIf="activeTab === 'profile'"></app-profile>
         <app-day-planner *ngIf="activeTab === 'planner'" #plannerRef (navigateToCategories)="navigateToEventInCategories($event.eventId, $event.categoryId)" (navigateToGoal)="navigateToGoalTracker($event)"></app-day-planner>
         <app-monthly-reminders *ngIf="activeTab === 'monthly-reminders'"></app-monthly-reminders>
-        <app-goal-tracker *ngIf="activeTab === 'goals'" #goalTrackerRef></app-goal-tracker>
+        <app-goal-tracker *ngIf="activeTab === 'goals'" #goalTrackerRef [initialGoalId]="pendingGoalId"></app-goal-tracker>
       </main>
 
       <footer>

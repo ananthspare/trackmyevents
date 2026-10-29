@@ -42,6 +42,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   currentYear = new Date().getFullYear();
   activeTab = 'categories';
   userDisplayName = '';
+  pendingGoalId: string | null = null;
   
   @ViewChild('categoriesRef') categoriesComponent!: CategoriesComponent;
   @ViewChild('plannerRef') plannerComponent!: DayPlannerComponent;
@@ -109,15 +110,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   navigateToGoalTracker(goalId: string) {
+    this.pendingGoalId = goalId;
     this.activeTab = 'goals';
-    const trySelect = () => {
-      if (this.goalTrackerComponent) {
-        this.goalTrackerComponent.selectGoal(goalId);
-      } else {
-        setTimeout(trySelect, 100);
-      }
-    };
-    setTimeout(trySelect, 100);
   }
 
   async getUserDisplayName(user: any): Promise<string> {
