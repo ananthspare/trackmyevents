@@ -18,14 +18,19 @@
   flex-direction: column;
   background: #fff;
   border-right: 1px solid #e4e6ef;
-  overflow: hidden;
   flex-shrink: 0;
+  overflow-y: auto;
+  height: 100%;
 }
 
 .sb-head {
   padding: 14px 14px 10px;
   border-bottom: 1px solid #e4e6ef;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
 }
 .sb-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .sb-icon { font-size: 20px; }
@@ -96,8 +101,10 @@
 @keyframes spin { to { transform:rotate(360deg); } }
 
 .goal-list {
-  flex:1; overflow-y:auto; padding:10px 10px 24px;
-  display:flex; flex-direction:column; gap:6px;
+  padding: 10px 10px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .empty-goals {
   text-align:center; padding:40px 20px; color:#94a3b8;
