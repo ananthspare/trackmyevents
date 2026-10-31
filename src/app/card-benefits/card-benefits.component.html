@@ -1,0 +1,206 @@
+<div class="page-container">
+
+  <!-- ===== TOP SECTION: Card Manager (two-column) ===== -->
+  <div class="cards-section">
+    <div class="section-header">
+      <h3>My Credit Cards</h3>
+    </div>
+    <div class="two-column-layout">
+
+      <!-- Left: Card list -->
+      <div class="cards-sidebar">
+        <div class="add-card-form">
+          <input [(ngModel)]="newCard.name" placeholder="Card name (e.g. Chase Sapphire)" class="card-input" />
+          <input [(ngModel)]="newCard.lastFour" placeholder="Last 4 digits" maxlength="4" class="card-input short" />
+          <input [(ngModel)]="newCard.network" placeholder="Network (Visa/MC/Amex)" class="card-input short" />
+          <input [(ngModel)]="newCard.color" type="color" class="card-color" title="Card color" />
+          <button (click)="addCard()" class="add-card-btn">
+            <i class="glyphicon glyphicon-plus"></i> Add
+          </button>
+        </div>
+
+        <div class="cards-list">
+          <div *ngIf="cards.length === 0" class="empty-state">No cards yet. Add one above.</div>
+          <div *ngFor="let card of cards"
+               class="card-item"
+               [class.active]="selectedCardId === card.id"
+               (click)="selectCard(card.id)">
+            <div class="card-chip" [style.background]="card.color"></div>
+            <div class="card-info">
+              <span class="card-name">{{ card.name }}</span>
+              <span class="card-meta">•••• {{ card.lastFour }} &nbsp;|&nbsp; {{ card.network }}</span>
+            </div>
+            <div class="card-actions">
+              <span class="todo-count">{{ getTodoCount(card.id) }}</span>
+              <button (click)="deleteCard(card.id); $event.stopPropagation()" class="icon-btn" title="Delete">
+                <i class="glyphicon glyphicon-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resize handle -->
+      <div class="resize-handle-v"></div>
+
+      <!-- Right: Todos for selected card -->
+      <div class="todos-panel">
+        <div *ngIf="!selectedCardId" class="no-selection">Select a card to view its to-dos</div>
+        <div *ngIf="selectedCardId">
+          <h4>To-dos for {{ getCardName(selectedCardId) }}</h4>
+          <div class="add-todo-row">
+            <input [(ngModel)]="newTodoContent"
+                   placeholder="Add a to-do..."
+                   class="todo-input"
+                   (keyup.enter)="addTodo()" />
+            <button (click)="addTodo()" class="add-todo-btn">
+              <i class="glyphicon glyphicon-plus"></i>
+            </button>
+          </div>
+          <div class="todos-list">
+            <div *ngIf="selectedCardTodos.length === 0" class="empty-state">No to-dos yet.</div>
+            <div *ngFor="let todo of selectedCardTodos" class="todo-item" [class.done]="todo.isDone">
+              <input type="checkbox" [checked]="todo.isDone" (change)="toggleTodo(todo)" class="todo-check" />
+              <span *ngIf="editingTodoId !== todo.id" class="todo-content" [class.done-text]="todo.isDone">{{ todo.content }}</span>
+              <input *ngIf="editingTodoId === todo.id"
+                     [(ngModel)]="editingTodoContent"
+                     class="todo-edit-input"
+                     (keyup.enter)="saveTodo(todo)"
+                     (blur)="saveTodo(todo)" />
+              <div class="todo-actions">
+                <button *ngIf="editingTodoId !== todo.id" (click)="startEditTodo(todo)" class="icon-btn">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                </button>
+                <button (click)="deleteTodo(todo.id)" class="icon-btn del">
+                  <i class="glyphicon glyphicon-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BOTTOM SECTION: Amex Benefits Table ===== -->
+  <div class="benefits-section">
+    <div class="benefits-header">
+      <div class="header-left">
+        <h3>Amex Platinum Benefits Tracker</h3>
+        <span class="progress-badge">{{ completedCount }}/{{ benefits.length }} completed</span>
+      </div>
+      <div class="year-toggle">
+        <button [class.active]="selectedYear === 2026" (click)="selectedYear = 2026">2026</button>
+        <button [class.active]="selectedYear === 2027" (click)="selectedYear = 2027">2027</button>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="loading">Loading benefits...</div>
+    <div *ngIf="loadError" class="error-box">
+      <p>⚠️ {{ loadError }}</p>
+      <p>Please run <code>npx amplify sandbox</code> to deploy the updated schema, then refresh.</p>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!isLoading && !loadError">
+      <table class="benefits-table">
+        <thead>
+          <tr>
+            <th class="col-check">✓ {{ selectedYear }}</th>
+            <th class="col-name">Benefit Name</th>
+            <th class="col-details">Benefit Details</th>
+            <th class="col-criteria">Criteria / Action Required</th>
+            <th class="col-completion">Completion By</th>
+            <th class="col-balance">{{ selectedYear }} Remaining Balance</th>
+            <th class="col-tracking">Tracking Period</th>
+            <th class="col-periods">{{ selectedYear }} Period Tracking</th>
+            <th class="col-notes">Remarks / Notes</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let benefit of benefits"
+              [class.completed-row]="selectedYear === 2026 ? benefit.completed2026 : benefit.completed2027">
+
+            <!-- View mode -->
+            <ng-container *ngIf="editingId !== benefit.id">
+              <td class="col-check">
+                <input type="checkbox"
+                       [checked]="selectedYear === 2026 ? benefit.completed2026 : benefit.completed2027"
+                       (change)="toggleCompleted(benefit, selectedYear)"
+                       class="benefit-checkbox">
+              </td>
+              <td class="col-name">{{ benefit.benefitName }}</td>
+              <td class="col-details">
+                <span class="tooltip-cell">
+                  {{ benefit.benefitDetails }}
+                  <span *ngIf="getTooltip(benefit.benefitName)" class="tooltip-icon">ℹ</span>
+                  <span *ngIf="getTooltip(benefit.benefitName)" class="tooltip-box">{{ getTooltip(benefit.benefitName) }}</span>
+                </span>
+              </td>
+              <td class="col-criteria">{{ benefit.criteriaAction }}</td>
+              <td class="col-completion">{{ benefit.completionBy }}</td>
+              <td class="col-balance">{{ selectedYear === 2026 ? benefit.remainingBalance2026 : benefit.remainingBalance2027 }}</td>
+              <td class="col-tracking">{{ benefit.trackingPeriod }}</td>
+              <td class="col-periods">
+                <div class="period-checks">
+                  <label *ngFor="let label of getPeriodLabels(benefit); let i = index" class="period-label">
+                    <input type="checkbox"
+                           [checked]="benefit.periodChecks[selectedYear][i]"
+                           (change)="togglePeriodCheck(benefit, i)"
+                           class="period-checkbox">
+                    <span [class.checked-label]="benefit.periodChecks[selectedYear][i]">{{ label }}</span>
+                  </label>
+                </div>
+              </td>
+              <td class="col-notes">{{ benefit.notes }}</td>
+              <td class="col-actions">
+                <button (click)="startEdit(benefit)" class="edit-btn" title="Edit">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                </button>
+              </td>
+            </ng-container>
+
+            <!-- Edit mode -->
+            <ng-container *ngIf="editingId === benefit.id && editingBenefit">
+              <td class="col-check">
+                <input type="checkbox"
+                       [checked]="selectedYear === 2026 ? benefit.completed2026 : benefit.completed2027"
+                       (change)="toggleCompleted(benefit, selectedYear)"
+                       class="benefit-checkbox">
+              </td>
+              <td class="col-name"><input [(ngModel)]="editingBenefit.benefitName" class="edit-input" /></td>
+              <td class="col-details"><textarea [(ngModel)]="editingBenefit.benefitDetails" class="edit-textarea"></textarea></td>
+              <td class="col-criteria"><textarea [(ngModel)]="editingBenefit.criteriaAction" class="edit-textarea"></textarea></td>
+              <td class="col-completion"><input [(ngModel)]="editingBenefit.completionBy" class="edit-input" /></td>
+              <td class="col-balance">
+                <input *ngIf="selectedYear === 2026" [(ngModel)]="editingBenefit.remainingBalance2026" class="edit-input" />
+                <input *ngIf="selectedYear === 2027" [(ngModel)]="editingBenefit.remainingBalance2027" class="edit-input" />
+              </td>
+              <td class="col-tracking"><textarea [(ngModel)]="editingBenefit.trackingPeriod" class="edit-textarea"></textarea></td>
+              <td class="col-periods">
+                <div class="period-checks">
+                  <label *ngFor="let label of getPeriodLabels(benefit); let i = index" class="period-label">
+                    <input type="checkbox"
+                           [checked]="benefit.periodChecks[selectedYear][i]"
+                           (change)="togglePeriodCheck(benefit, i)"
+                           class="period-checkbox">
+                    <span [class.checked-label]="benefit.periodChecks[selectedYear][i]">{{ label }}</span>
+                  </label>
+                </div>
+              </td>
+              <td class="col-notes"><textarea [(ngModel)]="editingBenefit.notes" class="edit-textarea"></textarea></td>
+              <td class="col-actions">
+                <button (click)="saveEdit()" class="save-btn" title="Save">
+                  <i class="glyphicon glyphicon-ok"></i>
+                </button>
+                <button (click)="cancelEdit()" class="cancel-btn" title="Cancel">
+                  <i class="glyphicon glyphicon-remove"></i>
+                </button>
+              </td>
+            </ng-container>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

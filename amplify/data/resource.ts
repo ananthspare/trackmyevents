@@ -93,6 +93,40 @@ const schema = a.schema({
       content: a.string(),
     })
     .authorization(allow => [allow.owner()]),
+
+  CardBenefit: a
+    .model({
+      benefitName: a.string(),
+      benefitDetails: a.string(),
+      criteriaAction: a.string(),
+      completionBy: a.string(),
+      remainingBalance2026: a.string(),
+      remainingBalance2027: a.string(),
+      trackingPeriod: a.string(),
+      completed2026: a.boolean().default(false),
+      completed2027: a.boolean().default(false),
+      notes: a.string(),
+      order: a.integer().default(0),
+      periodChecks: a.string(),
+    })
+    .authorization(allow => [allow.owner()]),
+
+  CreditCard: a
+    .model({
+      name: a.string(),
+      lastFour: a.string(),
+      network: a.string(),
+      color: a.string().default('#1565c0'),
+    })
+    .authorization(allow => [allow.owner()]),
+
+  CardTodo: a
+    .model({
+      cardID: a.string(),
+      content: a.string(),
+      isDone: a.boolean().default(false),
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

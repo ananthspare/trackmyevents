@@ -12,6 +12,7 @@ import { ProfileComponent } from './profile/profile.component';
 import { DayPlannerComponent } from './day-planner/day-planner.component';
 import { MonthlyRemindersComponent } from './monthly-reminders/monthly-reminders.component';
 import { GoalTrackerComponent } from './goal-tracker/goal-tracker.component';
+import { CardBenefitsComponent } from './card-benefits/card-benefits.component';
 import { TourService } from './tour/tour.service';
 import { UserService } from './user/user.service';
 
@@ -32,7 +33,8 @@ Amplify.configure(outputs);
     ProfileComponent,
     DayPlannerComponent,
     MonthlyRemindersComponent,
-    GoalTrackerComponent
+    GoalTrackerComponent,
+    CardBenefitsComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
